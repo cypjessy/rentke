@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import BottomNavAndMenu from "@/app/components/BottomNavAndMenu";
 import { useRouter } from "next/navigation";
 import {
   Megaphone,
@@ -448,34 +449,8 @@ export default function NoticesPage() {
             </div>
           </div>
 
-          {/* ====== BOTTOM NAV ====== */}
-          <div className="app-bottom-nav">
-            <div className="bottom-nav">
-              <div className="flex">
-                {[
-                  { key: "home", icon: LayoutDashboard, label: "Home", path: "/dashboard" },
-                  { key: "properties", icon: Building2, label: "Properties", path: "/properties" },
-                  { key: "notices", icon: Megaphone, label: "Notices" },
-                  { key: "more", icon: Menu, label: "More" },
-                ].map((item) => (
-                  <div
-                    key={item.key}
-                    className={`nav-item ${activeTab === item.key ? "active" : ""}`}
-                    onClick={() => {
-                      if (item.key === "more") { openSheet("moreMenu"); return; }
-                      setActiveTab(item.key);
-                      if (item.path) router.push(item.path);
-                    }}
-                  >
-                    {activeTab === item.key && <div className="nav-indicator" />}
-                    <item.icon className="w-5 h-5 nav-icon" />
-                    <span className="nav-label">{item.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <BottomNavAndMenu />
+      </div>
 
         {/* ============================================ */}
         {/* SHEET: CREATE / EDIT NOTICE */}
@@ -935,45 +910,7 @@ export default function NoticesPage() {
         </div>
 
         {/* ============================================ */}
-        {/* MORE MENU SHEET */}
-        {/* ============================================ */}
-        <div className={`sheet-overlay ${activeSheet === "moreMenu" ? "active" : ""}`} onClick={closeSheet} />
-        <div className={`bottom-sheet ${activeSheet === "moreMenu" ? "active" : ""}`}>
-          <div className="bottom-sheet-handle" />
-          <div className="p-5 pb-2">
-            <h3 className="text-lg font-bold text-white">More</h3>
-            <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>All modules &amp; settings</p>
-          </div>
-          <div className="px-3 pb-8">
-            {[
-              { icon: MessageCircle, label: "Inquiries", desc: "3 new inquiries", color: "#047857", path: "/inquiries" },
-              { icon: Layers, label: "Units", desc: "8 units across 4 properties", color: "#3b82f6", path: "/units" },
-              { icon: CalendarDays, label: "Viewings", desc: "8 viewing requests", color: "#eab308", path: "/viewings" },
-              { icon: CalendarDays, label: "Calendar", desc: "Viewings & schedule", color: "#eab308", path: "/calendar" },
-              { icon: MessageSquare, label: "Messages", desc: "18 conversations", color: "#a855f7", path: "/messages" },
-              { icon: DoorOpen, label: "Vacating", desc: "Move-out management", color: "#f97316", path: "/vacating" },
-              { icon: BadgeCheck, label: "Rent Verification", desc: "Review & confirm payments", color: "#6366f1", path: "/rent-verification" },
-              { icon: MessageSquareWarning, label: "Complaints", desc: "Tenant issues & maintenance", color: "#ef4444", path: "/complaints" },
-              { icon: Settings, label: "Settings", desc: "Account & preferences", color: "#525252", path: "/settings" },
-            ].map((item, i) => (
-              <button
-                key={i}
-                onClick={() => { closeSheet(); if (item.path) router.push(item.path); }}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl mt-1"
-                style={{ background: "rgba(255,255,255,0.03)" }}
-              >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(4,120,87,0.08)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <item.icon className="w-5 h-5" style={{ color: item.color }} />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="text-sm font-semibold text-white">{item.label}</p>
-                  <p className="text-xs" style={{ color: "#a3a3a3" }}>{item.desc}</p>
-                </div>
-                {item.path && <ChevronRight className="w-4 h-4" style={{ color: "#525252" }} />}
-              </button>
-            ))}
-          </div>
-        </div>
+
 
         {/* SNACKBAR */}
         {snackbarVisible && (

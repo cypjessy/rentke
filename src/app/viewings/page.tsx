@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import BottomNavAndMenu from "@/app/components/BottomNavAndMenu";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
@@ -677,33 +678,7 @@ export default function ViewingRequests() {
           <span className="text-sm font-semibold text-white">New Viewing</span>
         </button>
 
-        {/* ====== BOTTOM NAV ====== */}
-        <div className="app-bottom-nav">
-          <div className="bottom-nav">
-            <div className="flex">
-              {[
-                { key: "home", icon: LayoutDashboard, label: "Home", path: "/dashboard" },
-                { key: "properties", icon: Building2, label: "Properties", path: "/properties" },
-                { key: "listings", icon: List, label: "Listings", path: "/listings" },
-                { key: "more", icon: Menu, label: "More" },
-              ].map((item) => (
-                <div
-                  key={item.key}
-                  className={`nav-item ${activeTab === item.key ? "active" : ""}`}
-                  onClick={() => {
-                    if (item.key === "more") { openSheet("moreMenu"); return; }
-                    setActiveTab(item.key);
-                    if (item.path) router.push(item.path);
-                  }}
-                >
-                  {activeTab === item.key && <div className="nav-indicator" />}
-                  <item.icon className="w-5 h-5 nav-icon" />
-                  <span className="nav-label">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <BottomNavAndMenu />
       </div>
 
       {/* =============================================== */}
