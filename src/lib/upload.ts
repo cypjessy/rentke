@@ -1,9 +1,13 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
-
 // ─── Photo Source Types ───────────────────────────────────────────────────────
 
 export type PhotoSource = "camera" | "gallery";
+
+// ─── Upload Result ────────────────────────────────────────────────────────────
+
+export interface UploadResult {
+  url: string;
+  path: string;
+}
 
 // ─── Web File Input ───────────────────────────────────────────────────────────
 
@@ -98,17 +102,12 @@ async function takePhotoWeb(source: PhotoSource): Promise<File | null> {
   }
 }
 
-// ─── Firebase Storage Upload ──────────────────────────────────────────────────
-
-export interface UploadResult {
-  url: string;
-  path: string;
-}
+// ─── Bunny.net Upload (via API route) ────────────────────────────────────────
 
 /**
- * Upload a File/Blob to Firebase Storage and return the download URL.
+ * Upload a File to Bunny.net via our internal API route.
  *
- * @param file      - The File or Blob to upload
+ * @param file      - The File to upload
  * @param folder    - Storage folder path (e.g., "properties", "units", "profiles")
  * @param userId    - The user's UID for namespacing
  * @param fileName  - Optional custom filename (default: auto-generated)
@@ -119,19 +118,35 @@ export async function uploadPhoto(
   userId: string,
   fileName?: string
 ): Promise<UploadResult> {
-  const ext = file instanceof File ? file.name.split(".").pop() || "jpg" : "jpg";
-  const name = fileName || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const path = `uploads/${userId}/${folder}/${name}`;
-  const fileRef = ref(storage, path);
+  // Convert Blob to File if needed
+  const photoFile =
+    file instanceof File
+      ? file
+      : new File([file], fileName || `photo_${Date.now()}.jpg`, {
+          type: file.type || "image/jpeg",
+        });
 
-  const snapshot = await uploadBytes(fileRef, file);
-  const url = await getDownloadURL(snapshot.ref);
+  const formData = new FormData();
+  formData.append("file", photoFile);
+  formData.append("folder", folder);
+  formData.append("userId", userId);
 
-  return { url, path };
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => "Unknown error");
+    throw new Error(`Upload failed (${response.status}): ${errBody}`);
+  }
+
+  const result: UploadResult = await response.json();
+  return result;
 }
 
 /**
- * Upload multiple files in parallel.
+ * Upload multiple files in parallel to Bunny.net.
  */
 export async function uploadPhotos(
   files: File[],
