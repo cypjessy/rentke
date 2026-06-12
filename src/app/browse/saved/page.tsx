@@ -142,6 +142,7 @@ export default function SavedPage() {
     for (const lid of selectedIds) {
       await toggleFavoriteFS(user.uid, {
         listingId: lid,
+        propertyId: "",
         propertyName: "",
         title: "",
         location: "",
@@ -167,6 +168,7 @@ export default function SavedPage() {
     if (!user) return;
     await toggleFavoriteFS(user.uid, {
       listingId,
+      propertyId: "",
       propertyName: "",
       title: "",
       location: "",

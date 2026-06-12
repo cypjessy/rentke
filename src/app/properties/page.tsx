@@ -71,6 +71,9 @@ import {
   type UnitFormData,
 } from "../../lib/units";
 import { pickAndUploadPhoto } from "../../lib/upload";
+import ViewPropertySheet from "./ViewPropertySheet";
+import AddPropertySheet from "./AddPropertySheet";
+import EditPropertySheet from "./EditPropertySheet";
 
 type ViewMode = "list" | "grid";
 type SnackbarType = "success" | "error" | "info";
@@ -243,28 +246,9 @@ export default function PropertiesPage() {
 
   const hideSnackbar = () => setSnackbar({ show: false, message: "", type: "info" });
 
-  // ---- Add Property Form State ----
-  const [formName, setFormName] = useState("");
-  const [formLocation, setFormLocation] = useState("");
-  const [formCounty, setFormCounty] = useState("Nairobi");
-  const [formType, setFormType] = useState("Apartment");
-  const [formUnits, setFormUnits] = useState("");
-  const [formRentMin, setFormRentMin] = useState("");
-  const [formRentMax, setFormRentMax] = useState("");
-  const [formDescription, setFormDescription] = useState("");
-  const [formAmenities, setFormAmenities] = useState<string[]>([]);
 
-  const resetForm = () => {
-    setFormName("");
-    setFormLocation("");
-    setFormCounty("Nairobi");
-    setFormType("Apartment");
-    setFormUnits("");
-    setFormRentMin("");
-    setFormRentMax("");
-    setFormDescription("");
-    setFormAmenities([]);
-  };
+
+
 
   // ---- Add Unit Form State ----
   const [formUnitName, setFormUnitName] = useState("");
@@ -293,20 +277,11 @@ export default function PropertiesPage() {
     setFormUnitAmenities([]);
   };
 
-  const toggleFormAmenity = (amenity: string) => {
-    setFormAmenities((prev) =>
-      prev.includes(amenity)
-        ? prev.filter((a) => a !== amenity)
-        : [...prev, amenity]
-    );
-  };
+
 
   // ---- Sheet Management ----
   const openSheet = (name: string) => setActiveSheet(name);
   const closeSheet = () => {
-    if (activeSheet === "addProperty") {
-      setTimeout(() => resetForm(), 300);
-    }
     if (activeSheet === "addUnit") {
       setTimeout(() => resetUnitForm(), 300);
     }
@@ -321,43 +296,6 @@ export default function PropertiesPage() {
     setFormLoading(id);
 
     try {
-      if (id === "add-prop" && user) {
-        await addProperty(user.uid, {
-          name: formName,
-          location: formLocation,
-          county: formCounty,
-          type: formType,
-          description: formDescription,
-          totalUnits: parseInt(formUnits) || 0,
-          rentMin: parseInt(formRentMin.replace(/,/g, "")) || 0,
-          rentMax: parseInt(formRentMax.replace(/,/g, "")) || 0,
-          amenities: formAmenities,
-        });
-        resetForm();
-        setFormLoading(null);
-        closeSheet();
-        setTimeout(() => showSnackbar("Property added successfully! 🎉", "success"), 300);
-        return;
-      }
-
-      if (id === "edit-prop" && selectedProperty) {
-        await updateProperty(selectedProperty.id, {
-          name: formName,
-          location: formLocation,
-          county: formCounty,
-          type: formType,
-          description: formDescription,
-          totalUnits: parseInt(formUnits) || 0,
-          rentMin: parseInt(formRentMin.replace(/,/g, "")) || 0,
-          rentMax: parseInt(formRentMax.replace(/,/g, "")) || 0,
-          amenities: formAmenities,
-        });
-        setFormLoading(null);
-        closeSheet();
-        setTimeout(() => showSnackbar("Property updated! ✅", "success"), 300);
-        return;
-      }
-
       if (id === "delete" && selectedProperty) {
         await deleteProperty(selectedProperty.id);
         setSelectedProperty(null);
@@ -429,20 +367,7 @@ export default function PropertiesPage() {
     return () => unsub();
   }, [selectedProperty]);
 
-  // ---- Pre-fill edit form when selected property changes ----
-  useEffect(() => {
-    if (activeSheet === "editProperty" && selectedProperty) {
-      setFormName(selectedProperty.name);
-      setFormLocation(selectedProperty.location);
-      setFormCounty(selectedProperty.county);
-      setFormType(selectedProperty.type);
-      setFormUnits(String(selectedProperty.totalUnits));
-      setFormRentMin(String(selectedProperty.rentMin));
-      setFormRentMax(String(selectedProperty.rentMax));
-      setFormDescription(selectedProperty.description);
-      setFormAmenities(selectedProperty.amenities || []);
-    }
-  }, [activeSheet, selectedProperty]);
+
 
   // ---- Ripple ----
   useEffect(() => {
@@ -955,230 +880,73 @@ export default function PropertiesPage() {
       </div>
 
       {/* ADD PROPERTY SHEET */}
-      <div className={`sheet-overlay ${activeSheet === "addProperty" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "addProperty" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
-        <div className="sheet-handle" />
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-white">Add Property</h3>
-            <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formName} onChange={(e) => setFormName(e.target.value)} />
-              <label>Property Name</label>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formLocation} onChange={(e) => setFormLocation(e.target.value)} />
-              <label>Location / Estate</label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>County</label>
-                <select className="android-select" value={formCounty} onChange={(e) => setFormCounty(e.target.value)}>
-                  {COUNTY_OPTIONS.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Type</label>
-                <select className="android-select" value={formType} onChange={(e) => setFormType(e.target.value)}>
-                  {PROPERTY_TYPE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formUnits} onChange={(e) => setFormUnits(e.target.value)} />
-              <label>Number of Units</label>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Rent Range (KSh)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="input-group">
-                  <input type="text" className="android-input" placeholder=" " value={formRentMin} onChange={(e) => setFormRentMin(e.target.value)} style={{ paddingLeft: "44px" }} />
-                  <label style={{ left: "44px" }}>Min</label>
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#525252" }}>KSh</span>
-                </div>
-                <div className="input-group">
-                  <input type="text" className="android-input" placeholder=" " value={formRentMax} onChange={(e) => setFormRentMax(e.target.value)} style={{ paddingLeft: "44px" }} />
-                  <label style={{ left: "44px" }}>Max</label>
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#525252" }}>KSh</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Description</label>
-              <textarea className="android-input" style={{ minHeight: "80px", borderRadius: "14px" }} placeholder="Describe your property, location highlights, nearby amenities..." value={formDescription} onChange={(e) => setFormDescription(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Photos</label>
-              <div className="flex gap-3">
-                <div
-                  className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
-                  onClick={async () => { if (user) { const url = await pickAndUploadPhoto('properties', user.uid); if (url) showSnackbar('Photo added ✅', 'success'); } }}
-                >
-                  <Plus className="w-5 h-5" style={{ color: "#525252" }} />
-                  <span className="text-xs mt-1" style={{ color: "#525252" }}>Add</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Amenities</label>
-              <div className="flex flex-wrap gap-2">
-                {PROPERTY_AMENITIES.map((a) => {
-                  const selected = formAmenities.includes(a);
-                  return (
-                  <span
-                    key={a}
-                    className="chip cursor-pointer"
-                    style={{
-                      background: selected ? "rgba(4,120,87,0.15)" : "rgba(255,255,255,0.05)",
-                      color: selected ? "#047857" : "#a3a3a3",
-                      border: selected ? "1px solid rgba(4,120,87,0.3)" : "1px solid transparent",
-                    }}
-                    onClick={() => toggleFormAmenity(a)}
-                  >
-                    {a}
-                  </span>
-                )})}
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <div>
-                <p className="text-sm font-medium text-white">Visible on listings</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>Property is publicly visible</p>
-              </div>
-              <div className="toggle-track active" onClick={(e) => e.currentTarget.classList.toggle("active")}>
-                <div className="toggle-thumb" />
-              </div>
-            </div>
-            <button onClick={() => handleForm("add-prop")} className="btn-primary ripple-container mt-2" disabled={formLoading === "add-prop"}>
-              {formLoading === "add-prop" ? <div className="spinner mx-auto" /> : <span>Add Property</span>}
-            </button>
-          </div>
-        </div>
-      </div>
+      {user && (
+        <AddPropertySheet
+          isOpen={activeSheet === "addProperty"}
+          onClose={closeSheet}
+          onSubmit={async (data) => {
+            setFormLoading("add-prop");
+            try {
+              await addProperty(user.uid, {
+                name: data.name,
+                location: data.location,
+                county: data.county,
+                type: data.type,
+                description: data.description,
+                totalUnits: parseInt(data.units) || 0,
+                rentMin: parseInt(data.rentMin.replace(/,/g, "")) || 0,
+                rentMax: parseInt(data.rentMax.replace(/,/g, "")) || 0,
+                amenities: data.amenities,
+                images: data.images,
+              });
+              setFormLoading(null);
+              closeSheet();
+              setTimeout(() => showSnackbar("Property added successfully! 🎉", "success"), 300);
+            } catch (err: any) {
+              setFormLoading(null);
+              showSnackbar(err.message || "Something went wrong", "error");
+            }
+          }}
+          loading={formLoading === "add-prop"}
+          showSnackbar={showSnackbar}
+          userId={user.uid}
+        />
+      )}
 
       {/* EDIT PROPERTY SHEET */}
-      <div className={`sheet-overlay ${activeSheet === "editProperty" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "editProperty" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
-        <div className="sheet-handle" />
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-white">Edit Property</h3>
-            <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formName} onChange={(e) => setFormName(e.target.value)} />
-              <label style={{ top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Property Name</label>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formLocation} onChange={(e) => setFormLocation(e.target.value)} />
-              <label style={{ top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Location</label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>County</label>
-                <select className="android-select" value={formCounty} onChange={(e) => setFormCounty(e.target.value)}>
-                  {COUNTY_OPTIONS.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Type</label>
-                <select className="android-select" value={formType} onChange={(e) => setFormType(e.target.value)}>
-                  {PROPERTY_TYPE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formUnits} onChange={(e) => setFormUnits(e.target.value)} />
-              <label style={{ top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Number of Units</label>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Rent Range (KSh)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="input-group">
-                  <input type="text" className="android-input" placeholder=" " value={formRentMin} onChange={(e) => setFormRentMin(e.target.value)} style={{ paddingLeft: "44px" }} />
-                  <label style={{ left: "44px", top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Min</label>
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#525252" }}>KSh</span>
-                </div>
-                <div className="input-group">
-                  <input type="text" className="android-input" placeholder=" " value={formRentMax} onChange={(e) => setFormRentMax(e.target.value)} style={{ paddingLeft: "44px" }} />
-                  <label style={{ left: "44px", top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Max</label>
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#525252" }}>KSh</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Description</label>
-              <textarea className="android-input" style={{ minHeight: "80px", borderRadius: "14px" }} placeholder="Describe your property..." value={formDescription} onChange={(e) => setFormDescription(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Photos</label>
-              <div className="flex gap-3">
-                {selectedProperty?.id ? ["1", "2", "3"].map((n) => (
-                  <div key={n} className="w-20 h-20 rounded-xl overflow-hidden relative">
-                    <img src={`https://picsum.photos/seed/${selectedProperty.id}-${n}/160/160.jpg`} className="w-full h-full object-cover" />
-                    <button className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}>
-                      <XIcon className="w-3 h-3 text-white" />
-                    </button>
-                  </div>
-                )) : ["1", "2", "3"].map((n) => (
-                  <div key={n} className="w-20 h-20 rounded-xl overflow-hidden relative">
-                    <img src={`https://picsum.photos/seed/prop-${n}/160/160.jpg`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-                <div
-                  className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
-                  onClick={async () => { if (user) { const url = await pickAndUploadPhoto('properties', user.uid); if (url) showSnackbar('Photo added ✅', 'success'); } }}
-                >
-                  <Plus className="w-5 h-5" style={{ color: "#525252" }} />
-                  <span className="text-xs mt-1" style={{ color: "#525252" }}>Add</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Amenities</label>
-              <div className="flex flex-wrap gap-2">
-                {PROPERTY_AMENITIES.map((a) => {
-                  const selected = formAmenities.includes(a);
-                  return (
-                  <span
-                    key={a}
-                    className="chip cursor-pointer"
-                    style={{
-                      background: selected ? "rgba(4,120,87,0.15)" : "rgba(255,255,255,0.05)",
-                      color: selected ? "#047857" : "#a3a3a3",
-                      border: selected ? "1px solid rgba(4,120,87,0.3)" : "1px solid transparent",
-                    }}
-                    onClick={() => toggleFormAmenity(a)}
-                  >
-                    {a}
-                  </span>
-                )})}
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <div>
-                <p className="text-sm font-medium text-white">Visible on listings</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>Property is publicly visible</p>
-              </div>
-              <div className="toggle-track active" onClick={(e) => e.currentTarget.classList.toggle("active")}>
-                <div className="toggle-thumb" />
-              </div>
-            </div>
-            <button onClick={() => handleForm("edit-prop")} className="btn-primary ripple-container mt-2" disabled={formLoading === "edit-prop"}>
-              {formLoading === "edit-prop" ? <div className="spinner mx-auto" /> : <span>Save Changes</span>}
-            </button>
-          </div>
-        </div>
-      </div>
+      {user && selectedProperty && (
+        <EditPropertySheet
+          isOpen={activeSheet === "editProperty"}
+          onClose={closeSheet}
+          onSubmit={async (data) => {
+            setFormLoading("edit-prop");
+            try {
+              await updateProperty(selectedProperty.id, {
+                name: data.name,
+                location: data.location,
+                county: data.county,
+                type: data.type,
+                description: data.description,
+                totalUnits: parseInt(data.units) || 0,
+                rentMin: parseInt(data.rentMin.replace(/,/g, "")) || 0,
+                rentMax: parseInt(data.rentMax.replace(/,/g, "")) || 0,
+                amenities: data.amenities,
+                images: data.images,
+              });
+              setFormLoading(null);
+              closeSheet();
+              setTimeout(() => showSnackbar("Property updated! ✅", "success"), 300);
+            } catch (err: any) {
+              setFormLoading(null);
+              showSnackbar(err.message || "Something went wrong", "error");
+            }
+          }}
+          property={selectedProperty}
+          loading={formLoading === "edit-prop"}
+          showSnackbar={showSnackbar}
+          userId={user.uid}
+        />
+      )}
 
       {/* SHARE SHEET */}
       <div className={`sheet-overlay ${activeSheet === "share" ? "active" : ""}`} onClick={closeSheet} />
@@ -1464,282 +1232,18 @@ export default function PropertiesPage() {
         </div>
       </div>
 
-      {/* ENHANCED DETAIL SHEET */}
-      <div className={`sheet-overlay ${activeSheet === "detail" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "detail" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
-        {selectedProperty && (() => {
-          const pd = selectedProperty;
-          const d = deriveProp(pd);
-          return (
-        <>
-        <div className="sheet-handle" />
-        <div className="relative" style={{ height: "180px" }}>
-          <img src={`https://picsum.photos/seed/${d.img}/600/360.jpg`} className="w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top,#1A1D21 0%,transparent 50%)" }} />
-          <div className="absolute top-3 left-3">
-            <span className="chip text-white" style={{ background: d.statusColor, backdropFilter: "blur(8px)" }}>{d.statusLabel}</span>
-          </div>
-          <div className="absolute top-3 right-3 flex gap-2">
-            <button onClick={() => openSheet("editProperty")} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
-              <Pencil className="w-4 h-4 text-white" />
-            </button>
-            <button onClick={() => openSheet("share")} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
-              <Share2 className="w-4 h-4 text-white" />
-            </button>
-          </div>
-        </div>
-        <div className="px-5 -mt-6 relative z-10">
-          <h2 className="text-xl font-bold text-white">{pd.name}</h2>
-          <p className="text-sm mt-1 flex items-center gap-1" style={{ color: "#a3a3a3" }}>
-            <MapPin className="w-4 h-4" /> {pd.location}
-          </p>
-          <div className="flex items-center gap-2 mt-3">
-            <span className="chip" style={{ background: "rgba(255,255,255,0.04)", color: "#a3a3a3" }}>{pd.type}</span>
-            <span className="chip" style={{ background: "rgba(255,255,255,0.04)", color: "#a3a3a3" }}>{pd.totalUnits} Units</span>
-            <span className="chip" style={{ background: "rgba(4,120,87,0.1)", color: "#047857" }}>KSh {pd.rentMin.toLocaleString()}–{pd.rentMax.toLocaleString()}</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            <div className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <p className="text-lg font-bold" style={{ color: "#047857" }}>KSh {d.revenueLabel}</p>
-              <p className="text-xs" style={{ color: "#a3a3a3" }}>Revenue</p>
-            </div>
-            <div className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <p className="text-lg font-bold text-white">{pd.occupiedUnits}/{pd.totalUnits}</p>
-              <p className="text-xs" style={{ color: "#a3a3a3" }}>Occupied</p>
-            </div>
-            <div className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
-              <p className="text-lg font-bold text-white">{d.occupancyPct}%</p>
-              <p className="text-xs" style={{ color: "#a3a3a3" }}>Occupancy</p>
-            </div>
-          </div>
-          <div className="flex mt-5 -mx-5 px-5 overflow-x-auto" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
-            {["overview", "units", "payments", "activity", "documents"].map((tab) => (
-              <div
-                key={tab}
-                className={`detail-tab ${activeDetailTab === tab ? "active" : ""}`}
-                onClick={() => switchDetailTab(tab)}
-              >
-                {tab === "overview" ? "Overview" : tab === "units" ? `Units (${pd.totalUnits})` : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </div>
-            ))}
-          </div>
-
-          {/* OVERVIEW TAB */}
-          {activeDetailTab === "overview" && (
-            <div className="pt-4 pb-6">
-              <h4 className="text-sm font-bold text-white mb-2">Description</h4>
-              <p className="text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>
-                {pd.description || "No description added yet."}
-              </p>
-              <h4 className="text-sm font-bold text-white mt-4 mb-2">Amenities</h4>
-              <div className="flex flex-wrap gap-2">
-                {pd.amenities && pd.amenities.length > 0 ? (
-                  pd.amenities.map((a) => (
-                    <span key={a} className="chip" style={{ background: "rgba(4,120,87,0.08)", color: "#047857" }}>{a}</span>
-                  ))
-                ) : (
-                  <p className="text-xs" style={{ color: "#525252" }}>No amenities listed</p>
-                )}
-              </div>
-
-              {/* Photo Gallery */}
-              <h4 className="text-sm font-bold text-white mt-5 mb-3">Photos</h4>
-              <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <div key={n} className="flex-shrink-0 w-28 h-28 rounded-xl overflow-hidden relative" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <img src={`https://picsum.photos/seed/${pd.id}-${n}/224/224.jpg`} className="w-full h-full object-cover" />
-                    {n === 1 && (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)" }}>
-                        <span className="chip text-white" style={{ background: "rgba(4,120,87,0.9)", fontSize: "10px" }}>Cover</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <div className="flex-shrink-0 w-28 h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  <Plus className="w-5 h-5" style={{ color: "#525252" }} />
-                  <span className="text-xs mt-1" style={{ color: "#525252" }}>Add</span>
-                </div>
-              </div>
-
-              {/* Current Leases */}
-              <h4 className="text-sm font-bold text-white mt-5 mb-3">Leases</h4>
-              <div className="flex flex-col items-center py-6">
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>Lease management will be available in the next update</p>
-              </div>
-              <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-bold text-white">Units Snapshot</h4>
-                  <button onClick={() => switchDetailTab("units")} className="text-xs font-semibold" style={{ color: "#047857" }}>View All →</button>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Occupied", value: pd.occupiedUnits, color: "#047857", bg: "rgba(4,120,87,0.06)", border: "rgba(4,120,87,0.15)" },
-                    { label: "Vacant", value: pd.totalUnits - pd.occupiedUnits, color: "#ef4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.15)" },
-                    { label: "Revenue", value: `KSh ${d.revenueLabel}`, color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.15)" },
-                  ].map((s, i) => (
-                    <div key={i} className="p-3 rounded-xl text-center" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
-                      <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
-                      <p className="text-xs" style={{ color: s.color }}>{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* UNITS TAB */}
-          {activeDetailTab === "units" && (
-            <div className="pt-4 pb-6">
-              <button
-                onClick={() => openSheet("addUnit")}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl mb-4"
-                style={{ background: "rgba(4,120,87,0.06)", border: "1px dashed rgba(4,120,87,0.25)", cursor: "pointer" }}
-              >
-                <Plus className="w-4 h-4" style={{ color: "#047857" }} />
-                <span className="text-sm font-semibold" style={{ color: "#047857" }}>Add Unit</span>
-              </button>
-
-              {unitsLoading ? (
-                <div className="flex flex-col items-center py-10">
-                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#047857" }} />
-                  <p className="text-sm mt-3" style={{ color: "#a3a3a3" }}>Loading units...</p>
-                </div>
-              ) : propertyUnits.length === 0 ? (
-                <div className="flex flex-col items-center py-10">
-                  <Layers className="w-10 h-10 mb-3" style={{ color: "#525252" }} />
-                  <p className="text-sm font-medium text-white">No units yet</p>
-                  <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>Add your first unit to this property</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {propertyUnits.map((unit) => (
-                    <div
-                      key={unit.id}
-                      className="flex items-center gap-3 p-3 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-                      onClick={() => { setSelectedUnit(unit); openSheet("unitDetail"); }}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(4,120,87,0.1)" }}>
-                        <span className="text-xs font-bold" style={{ color: "#047857" }}>{unit.name.slice(0,2).toUpperCase()}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{unit.name}</p>
-                        <p className="text-xs" style={{ color: "#a3a3a3" }}>{unit.type} · KSh {unit.rent.toLocaleString()}/mo</p>
-                      </div>
-                      <span
-                        className="text-xs font-medium px-2.5 py-1 rounded-full"
-                        style={{
-                          background: unit.status === "Occupied" ? "rgba(4,120,87,0.15)" : unit.status === "Maintenance" ? "rgba(234,179,8,0.15)" : "rgba(239,68,68,0.15)",
-                          color: unit.status === "Occupied" ? "#047857" : unit.status === "Maintenance" ? "#eab308" : "#ef4444",
-                        }}
-                      >
-                        {unit.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* PAYMENTS TAB */}
-          {activeDetailTab === "payments" && (
-            <div className="pt-4 pb-6">
-              <div className="space-y-3">
-                <p className="text-sm" style={{ color: "#a3a3a3" }}>Recent payments for {pd.name}</p>
-                {(() => {
-                  const propPayments = propertyUnits.filter(u => u.payment).slice(0, 5);
-                  return propPayments.length === 0 ? (
-                    <div className="flex flex-col items-center py-8">
-                      <Check className="w-8 h-8 mb-2" style={{ color: "#525252" }} />
-                      <p className="text-sm" style={{ color: "#525252" }}>No payment records yet</p>
-                    </div>
-                  ) : (
-                    propPayments.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-                        <div>
-                          <p className="text-sm font-medium text-white">{u.tenantName || u.name}</p>
-                          <p className="text-xs" style={{ color: "#a3a3a3" }}>{u.name} · {u.payment}</p>
-                        </div>
-                        <span className="text-sm font-semibold" style={{ color: u.payment === "Paid" ? "#047857" : u.payment === "Overdue" ? "#ef4444" : "#eab308" }}>
-                          KSh {u.rent.toLocaleString()}
-                        </span>
-                      </div>
-                    ))
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* ACTIVITY TAB */}
-          {activeDetailTab === "activity" && (
-            <div className="pt-4 pb-6">
-              <div className="space-y-3">
-                <p className="text-sm" style={{ color: "#a3a3a3" }}>Recent activity for {pd.name}</p>
-                {(() => {
-                  const act = [
-                    ...propertyUnits.filter(u => u.updatedAt).map(u => ({
-                      icon: "+ ",
-                      title: u.tenantName ? `${u.tenantName} moved in` : `${u.name} updated`,
-                      desc: `${u.name} — KSh ${u.rent.toLocaleString()}/mo`,
-                      time: u.updatedAt?.toDate().toLocaleDateString() || "Recently",
-                      color: u.status === "Occupied" ? "#047857" : "#eab308",
-                    })),
-                  ].slice(0, 5);
-                  return act.length === 0 ? (
-                    <div className="flex flex-col items-center py-8">
-                      <Clock className="w-8 h-8 mb-2" style={{ color: "#525252" }} />
-                      <p className="text-sm" style={{ color: "#525252" }}>No recent activity</p>
-                    </div>
-                  ) : (
-                    act.map((a, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(4,120,87,0.1)" }}>
-                          <span style={{ color: a.color }}>{a.icon}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-white">{a.title}</p>
-                          <p className="text-xs" style={{ color: "#a3a3a3" }}>{a.desc}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "#525252" }}>{a.time}</p>
-                        </div>
-                      </div>
-                    ))
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* DOCUMENTS TAB */}
-          {activeDetailTab === "documents" && (
-            <div className="pt-4 pb-6">
-              <div className="space-y-3">
-                <p className="text-sm" style={{ color: "#a3a3a3" }}>Lease documents for {pd.name}</p>
-                {propertyUnits.filter(u => u.tenantName).map((u) => (
-                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(59,130,246,0.1)" }}>
-                      <FileText className="w-5 h-5" style={{ color: "#3b82f6" }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white">{u.tenantName} — {u.name}</p>
-                      <p className="text-xs" style={{ color: "#a3a3a3" }}>{u.leaseTerm} lease · Started {u.leaseStart?.toDate().toLocaleDateString() || "—"}</p>
-                    </div>
-                    <span className="chip" style={{ background: "rgba(4,120,87,0.1)", color: "#047857", fontSize: "10px" }}>{u.status}</span>
-                  </div>
-                ))}
-                {propertyUnits.filter(u => u.tenantName).length === 0 && (
-                  <div className="flex flex-col items-center py-8">
-                    <FileText className="w-8 h-8 mb-2" style={{ color: "#525252" }} />
-                    <p className="text-sm" style={{ color: "#525252" }}>No lease documents yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        </> ); })() }
-      </div>
+      {/* DETAIL SHEET */}
+      {selectedProperty && (
+        <ViewPropertySheet
+          isOpen={activeSheet === "detail"}
+          onClose={closeSheet}
+          onEdit={() => openSheet("editProperty")}
+          onShare={() => openSheet("share")}
+          onAddUnit={() => openSheet("addUnit")}
+          onUnitClick={(unit) => { setSelectedUnit(unit); openSheet("unitDetail"); }}
+          property={selectedProperty}
+        />
+      )}
 
       {/* MORE MENU SHEET */}
       <div className={`sheet-overlay ${activeSheet === "moreMenu" ? "active" : ""}`} onClick={closeSheet} />

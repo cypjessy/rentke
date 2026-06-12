@@ -31,7 +31,7 @@ export type BrowseContextType = {
   // Favorites (shared between home, explore, and saved pages)
   favorites: number[];
   favoriteIds: string[];
-  toggleFavorite: (id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string }) => void;
+  toggleFavorite: (id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string; propertyId?: string }) => void;
   isFavorite: (id: number) => boolean;
 
   // Recently Viewed (populated from explore/home, shown on home)
@@ -177,7 +177,7 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
     .filter((n) => !isNaN(n));
 
   const toggleFavorite = useCallback(
-    async (id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string }) => {
+    async (id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string; propertyId?: string }) => {
       if (!user) return;
       const strId = String(id);
       const isCurrentlyFav = favoriteIds.includes(strId);
@@ -186,6 +186,7 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
           user.uid,
           {
             listingId: strId,
+            propertyId: metadata?.propertyId || "",
             propertyName: metadata?.title || "",
             title: metadata?.title || "",
             location: metadata?.location || "",

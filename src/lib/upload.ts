@@ -81,7 +81,7 @@ async function takePhotoWeb(source: PhotoSource): Promise<File | null> {
     input.type = "file";
     input.accept = "image/*";
     if (source === "camera") {
-      input.capture = "environment";
+      input.setAttribute("capture", "environment");
     }
 
     const files = await new Promise<File[]>((resolve, reject) => {
@@ -161,27 +161,52 @@ export async function uploadPhotos(
     .map((r) => (r as PromiseFulfilledResult<UploadResult>).value);
 }
 
+// ─── User-Facing Source Chooser ──────────────────────────────────────────────
+// Returns true for camera, false for gallery.
+export async function askPhotoSource(): Promise<PhotoSource> {
+  try {
+    if (isCapacitorAvailable()) {
+      const { ActionSheet, ActionSheetButtonStyle } = await import("@capacitor/action-sheet");
+      const result = await ActionSheet.showActions({
+        title: "Add Photo",
+        message: "Choose how you want to add a photo",
+        options: [
+          { title: "📷 Take Photo", style: ActionSheetButtonStyle.Default },
+          { title: "🖼️ Choose from Gallery", style: ActionSheetButtonStyle.Default },
+          { title: "Cancel", style: ActionSheetButtonStyle.Cancel },
+        ],
+      });
+      if (result.index === 0) return "camera";
+      if (result.index === 1) return "gallery";
+      return "camera";
+    }
+  } catch {
+    // Fall through
+  }
+  return "camera";
+}
+
 // ─── Camera Action Handler (for use in bottom sheets / action sheets) ─────────
 
 /**
- * Presents a small action sheet / bottom-sheet-style picker for
- * "Take Photo" vs "Choose from Gallery".
+ * Shows a chooser (Camera vs Gallery) then uploads the selected photo.
  * Returns the uploaded URL, or null if cancelled.
  */
 export async function pickAndUploadPhoto(
   folder: string,
   userId: string
 ): Promise<string | null> {
-  const file = await takePhoto("camera");
-  if (file) {
-    const result = await uploadPhoto(file, folder, userId);
-    return result.url;
-  }
+  const source = await askPhotoSource();
 
-  const galleryFile = await takePhoto("gallery");
-  if (galleryFile) {
-    const result = await uploadPhoto(galleryFile, folder, userId);
-    return result.url;
+  const file = await takePhoto(source);
+  if (file) {
+    try {
+      const result = await uploadPhoto(file, folder, userId);
+      return result.url;
+    } catch (err) {
+      console.error("Upload failed after taking photo:", err);
+      return null;
+    }
   }
 
   return null;

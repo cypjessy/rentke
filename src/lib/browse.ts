@@ -21,6 +21,7 @@ import type { ListingData } from "./listings";
 
 export interface FavoriteData {
   listingId: string;
+  propertyId: string;
   propertyName: string;
   title: string;
   location: string;
@@ -31,6 +32,40 @@ export interface FavoriteData {
 }
 
 const favoritesRef = collection(db, "favorites");
+
+/** Listen to favorites for a landlord's properties in real-time. */
+export function listenToLandlordFavorites(
+  landlordId: string,
+  onData: (favorites: FavoriteData[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  const q = query(
+    favoritesRef,
+    where("landlordId", "==", landlordId)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const list: FavoriteData[] = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          listingId: data.listingId || "",
+          propertyId: data.propertyId || "",
+          propertyName: data.propertyName || "",
+          title: data.title || "",
+          location: data.location || "",
+          price: data.price || 0,
+          image: data.image || "",
+          landlordId: data.landlordId || "",
+          savedAt: data.savedAt || null,
+        };
+      });
+      onData(list);
+    },
+    (err) => onError(err)
+  );
+}
 
 /** Listen to a tenant's favorites in real-time. */
 export function listenToFavorites(
@@ -51,6 +86,7 @@ export function listenToFavorites(
         const data = d.data();
         return {
           listingId: data.listingId || "",
+          propertyId: data.propertyId || "",
           propertyName: data.propertyName || "",
           title: data.title || "",
           location: data.location || "",
@@ -71,6 +107,7 @@ export async function toggleFavorite(
   tenantId: string,
   listing: {
     listingId: string;
+    propertyId?: string;
     propertyName: string;
     title: string;
     location: string;
@@ -88,7 +125,14 @@ export async function toggleFavorite(
   } else {
     await setDoc(ref, {
       tenantId,
-      ...listing,
+      listingId: listing.listingId,
+      propertyId: listing.propertyId || "",
+      propertyName: listing.propertyName,
+      title: listing.title,
+      location: listing.location,
+      price: listing.price,
+      image: listing.image,
+      landlordId: listing.landlordId,
       savedAt: serverTimestamp(),
     });
   }

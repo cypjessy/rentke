@@ -44,6 +44,7 @@ export interface PropertyFormData {
   rentMin: number;
   rentMax: number;
   amenities: string[];
+  images?: string[];
 }
 
 const propertiesRef = collection(db, "properties");
@@ -102,7 +103,7 @@ export async function addProperty(
     ...data,
     occupiedUnits: 0,
     revenue: 0,
-    images: [],
+    images: data.images || [],
     status: "vacant",
     landlordId,
     createdAt: serverTimestamp(),
@@ -114,7 +115,7 @@ export async function addProperty(
 /** Update an existing property. */
 export async function updateProperty(
   propertyId: string,
-  data: Partial<PropertyFormData>
+  data: Partial<PropertyFormData> & { images?: string[]; status?: string }
 ): Promise<void> {
   await updateDoc(doc(propertiesRef, propertyId), {
     ...data,

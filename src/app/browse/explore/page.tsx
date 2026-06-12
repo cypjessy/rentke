@@ -294,7 +294,7 @@ function ExplorePageInner() {
     document.body.style.overflow = "";
   };
 
-  const handleFavorite = (e: React.MouseEvent, id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string }) => {
+  const handleFavorite = (e: React.MouseEvent, id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string; propertyId?: string }) => {
     e.stopPropagation();
     toggleFavorite(id, metadata);
     showSnackbar(
@@ -614,7 +614,7 @@ function ExplorePageInner() {
                     <div>
                       <div className="flex items-center justify-between">
                         <h3 className="font-bold text-white text-sm pr-2">{item.title}</h3>
-                        <button                    onClick={(e) => handleFavorite(e, item.id, { title: item.title, location: item.location, price: parseInt(item.price.replace(/,/g, '')), image: item.img, landlordId: allListings.find((l) => l.id === item.listingId)?.landlordId || "" })}
+                        <button                    onClick={(e) => handleFavorite(e, item.id, { title: item.title, location: item.location, price: parseInt(item.price.replace(/,/g, '')), image: item.img, landlordId: allListings.find((l) => l.id === item.listingId)?.landlordId || "", propertyId: allListings.find((l) => l.id === item.listingId)?.propertyId || "" })}
                         className="p-1 flex-shrink-0">
                           <Heart className="w-4 h-4" style={{ color: favorites.includes(item.id) ? "#ef4444" : "#525252", fill: favorites.includes(item.id) ? "#ef4444" : "transparent" }} />
                         </button>

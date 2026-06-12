@@ -306,6 +306,7 @@ export default function LandlordDashboard() {
   const [addFormRentMax, setAddFormRentMax] = useState("");
   const [addFormDescription, setAddFormDescription] = useState("");
   const [addFormAmenities, setAddFormAmenities] = useState<string[]>([]);
+  const [addFormImages, setAddFormImages] = useState<string[]>([]);
   const [addPropertyLoading, setAddPropertyLoading] = useState(false);
 
   // ---- Add Unit Form State ----
@@ -360,6 +361,7 @@ export default function LandlordDashboard() {
     setAddFormRentMax("");
     setAddFormDescription("");
     setAddFormAmenities([]);
+    setAddFormImages([]);
   };
   const resetAddUnit = () => {
     setAddUPropId("");
@@ -513,6 +515,7 @@ export default function LandlordDashboard() {
         rentMax: parseInt(addFormRentMax.replace(/,/g, "")) || 0,
         description: addFormDescription,
         amenities: addFormAmenities,
+        images: addFormImages,
       });
       resetAddProperty();
       setAddPropertyLoading(false);
@@ -2402,6 +2405,31 @@ export default function LandlordDashboard() {
                 <input type="text" className="android-input" placeholder=" " style={{ paddingLeft: "60px" }} value={addFormRentMax} onChange={(e) => setAddFormRentMax(e.target.value)} />
                 <label style={{ left: "60px" }}>Max Rent (KSh)</label>
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>KSh</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Photos</label>
+              <div className="flex gap-3 flex-wrap">
+                {addFormImages.map((imgUrl, idx) => (
+                  <div key={idx} className="w-20 h-20 rounded-xl overflow-hidden relative">
+                    <img src={imgUrl} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => setAddFormImages(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(0,0,0,0.6)" }}
+                    >
+                      <XIcon className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+                <div
+                  className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
+                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                  onClick={async () => { if (user) { const url = await pickAndUploadPhoto('properties', user.uid); if (url) { setAddFormImages(prev => [...prev, url]); showSnackbar('Photo added ✅', 'success'); } } }}
+                >
+                  <Plus className="w-5 h-5" style={{ color: "#525252" }} />
+                  <span className="text-xs mt-1" style={{ color: "#525252" }}>Add</span>
+                </div>
               </div>
             </div>
             <div>

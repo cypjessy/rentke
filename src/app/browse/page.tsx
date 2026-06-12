@@ -229,7 +229,7 @@ export default function BrowseHome() {
   };
 
   // ---- Favorite Toggle ----
-  const handleFavorite = (e: React.MouseEvent, id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string }) => {
+  const handleFavorite = (e: React.MouseEvent, id: number, metadata?: { title?: string; location?: string; price?: number; image?: string; landlordId?: string; propertyId?: string }) => {
     e.stopPropagation();
     toggleFavorite(id, metadata);
     showSnackbar(
@@ -517,7 +517,7 @@ export default function BrowseHome() {
                     </div>
                   )}
                   <button
-                    onClick={(e) => handleFavorite(e, listing.id, { title: listing.title, location: listing.location, price: parseInt(listing.price.replace(/,/g, '')), image: listing.img, landlordId: allListings.find((l) => l.id === listing.listingId)?.landlordId || "" })}
+                    onClick={(e) => handleFavorite(e, listing.id, { title: listing.title, location: listing.location, price: parseInt(listing.price.replace(/,/g, '')), image: listing.img, landlordId: allListings.find((l) => l.id === listing.listingId)?.landlordId || "", propertyId: allListings.find((l) => l.id === listing.listingId)?.propertyId || "" })}
                     className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
                   >
@@ -693,7 +693,7 @@ export default function BrowseHome() {
                   <div>
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-white text-sm">{listing.title}</h3>
-                      <button onClick={(e) => handleFavorite(e, listing.id, { title: listing.title, location: listing.location, price: parseInt(listing.price.replace(/,/g, '')), image: listing.img, landlordId: allListings.find((l) => l.id === listing.listingId)?.landlordId || "" })} className="p-1">
+                      <button onClick={(e) => handleFavorite(e, listing.id, { title: listing.title, location: listing.location, price: parseInt(listing.price.replace(/,/g, '')), image: listing.img, landlordId: allListings.find((l) => l.id === listing.listingId)?.landlordId || "", propertyId: allListings.find((l) => l.id === listing.listingId)?.propertyId || "" })} className="p-1">
                         <Heart
                           className="w-4 h-4"
                           style={{
