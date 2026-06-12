@@ -15,6 +15,7 @@ import {
   Pencil,
   Layers,
   EyeOff,
+  Play,
   Share2,
   Trash2,
   Clock,
@@ -135,7 +136,6 @@ export default function PropertiesPage() {
   const propertyStats = {
     total: properties.length,
     totalUnits: properties.reduce((sum, p) => sum + p.totalUnits, 0),
-    totalRevenue: properties.reduce((sum, p) => sum + p.revenue, 0),
     occupiedUnits: properties.reduce((sum, p) => sum + p.occupiedUnits, 0),
     vacantUnits: properties.reduce((sum, p) => sum + (p.totalUnits - p.occupiedUnits), 0),
   };
@@ -177,7 +177,10 @@ export default function PropertiesPage() {
     const occupancyPct = total > 0 ? Math.round((occupied / total) * 100) : 0;
     let statusLabel: string;
     let statusColor: string;
-    if (occupancyPct >= 80) {
+    if (p.paused) {
+      statusLabel = "Paused";
+      statusColor = "rgba(234,179,8,0.9)";
+    } else if (occupancyPct >= 80) {
       statusLabel = "Active";
       statusColor = "rgba(4,120,87,0.9)";
     } else if (occupancyPct >= 30) {
@@ -192,6 +195,7 @@ export default function PropertiesPage() {
       statusLabel,
       statusColor,
       occupancyPct,
+      isPaused: p.paused,
       revenueLabel: p.revenue >= 1000000
         ? (p.revenue / 1000000).toFixed(1) + "M"
         : p.revenue >= 1000
@@ -329,13 +333,18 @@ export default function PropertiesPage() {
       }
 
       if (id === "pause" && selectedProperty) {
-        await updateProperty(selectedProperty.id, {
-          status: "vacant",
-          pausedAt: new Date().toISOString(),
-        } as any);
+        await updateProperty(selectedProperty.id, { paused: true });
         setFormLoading(null);
         closeSheet();
         setTimeout(() => showSnackbar("Property listing paused", "success"), 300);
+        return;
+      }
+
+      if (id === "resume" && selectedProperty) {
+        await updateProperty(selectedProperty.id, { paused: false });
+        setFormLoading(null);
+        closeSheet();
+        setTimeout(() => showSnackbar("Property listing resumed!", "success"), 300);
         return;
       }
     } catch (err: any) {
@@ -485,9 +494,9 @@ export default function PropertiesPage() {
               <p className="text-base font-bold" style={{ color: "#ef4444" }}>{propertyStats.vacantUnits}</p>
               <p className="text-xs" style={{ color: "#ef4444" }}>Vacant</p>
             </div>
-            <div className="p-2.5 rounded-xl text-center" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.15)" }}>
-              <p className="text-base font-bold" style={{ color: "#eab308" }}>KSh {Math.round(propertyStats.totalRevenue / 1000)}K</p>
-              <p className="text-xs" style={{ color: "#eab308" }}>Revenue</p>
+            <div className="p-2.5 rounded-xl text-center" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
+              <p className="text-base font-bold" style={{ color: "#a855f7" }}>{propertyStats.total}</p>
+              <p className="text-xs" style={{ color: "#a855f7" }}>Properties</p>
             </div>
           </div>
 
@@ -566,13 +575,13 @@ export default function PropertiesPage() {
                 onClick={() => { setSelectedProperty(prop); openSheet("detail"); }}
               >
                 {viewMode === "list" ? (
-                  <div className="flex">
+                  <div className="flex" style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative flex-shrink-0" style={{ width: "120px" }}>
                       <img
-                        src={`https://picsum.photos/seed/${d.img}/240/240.jpg`}
+                        src={prop.images?.[0] || `https://picsum.photos/seed/prop-${prop.id}/240/240.jpg`}
                         alt=""
                         className="w-full h-full object-cover"
-                        style={{ minHeight: "140px" }}
+                        style={{ minHeight: "140px", filter: d.isPaused ? "grayscale(40%)" : "none" }}
                       />
                       <div className="absolute top-2 left-2">
                         <span
@@ -650,13 +659,13 @@ export default function PropertiesPage() {
                   </div>
                 ) : (
                   /* Grid view card */
-                  <>
+                  <div style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative">
                       <img
-                        src={`https://picsum.photos/seed/${d.img}/240/240.jpg`}
+                        src={prop.images?.[0] || `https://picsum.photos/seed/prop-${prop.id}/240/240.jpg`}
                         alt=""
                         className="w-full property-img object-cover"
-                        style={{ height: "110px" }}
+                        style={{ height: "110px", filter: d.isPaused ? "grayscale(40%)" : "none" }}
                       />
                       <div className="absolute top-2 left-2">
                         <span className="chip text-white" style={{ background: d.statusColor, fontSize: "10px", padding: "3px 7px" }}>
@@ -674,7 +683,7 @@ export default function PropertiesPage() {
                         <p className="text-xs" style={{ color: "#a3a3a3" }}>{d.occupancyPct}%</p>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             );})}
@@ -843,13 +852,18 @@ export default function PropertiesPage() {
         <div className="sheet-handle" />
         <div className="p-5 pb-2"><h3 className="text-base font-bold text-white">Property Actions</h3></div>
         <div className="px-3 pb-8">
-          {[
-            { icon: Pencil, color: "#3b82f6", bg: "rgba(59,130,246,0.12)", title: "Edit Property", desc: "Update details & photos", action: "editProperty" },
-            { icon: Layers, color: "#047857", bg: "rgba(4,120,87,0.12)", title: "Manage Units", desc: "Add, edit or remove units", action: "navigate:/units" },
-            { icon: EyeOff, color: "#eab308", bg: "rgba(234,179,8,0.12)", title: "Pause Listing", desc: "Temporarily hide from tenants", action: "pauseProperty" },
-            { icon: Share2, color: "#a855f7", bg: "rgba(168,85,247,0.12)", title: "Share Listing", desc: "Copy link or share", action: "share" },
-            { icon: Trash2, color: "#ef4444", bg: "rgba(239,68,68,0.12)", title: "Delete Property", desc: "Permanently remove", action: "deleteConfirm" },
-          ].map((action, i) => (
+          {(() => {
+            const isPaused = selectedProperty?.paused;
+            return [
+              { icon: Pencil, color: "#3b82f6", bg: "rgba(59,130,246,0.12)", title: "Edit Property", desc: "Update details & photos", action: "editProperty" },
+              { icon: Layers, color: "#047857", bg: "rgba(4,120,87,0.12)", title: "Manage Units", desc: "Add, edit or remove units", action: "navigate:/units" },
+              isPaused
+                ? { icon: Play, color: "#047857", bg: "rgba(4,120,87,0.12)", title: "Resume Listing", desc: "Show on tenant browse again", action: "resumeConfirm" }
+                : { icon: EyeOff, color: "#eab308", bg: "rgba(234,179,8,0.12)", title: "Pause Listing", desc: "Temporarily hide from tenants", action: "pauseProperty" },
+              { icon: Share2, color: "#a855f7", bg: "rgba(168,85,247,0.12)", title: "Share Listing", desc: "Copy link or share", action: "share" },
+              { icon: Trash2, color: "#ef4444", bg: "rgba(239,68,68,0.12)", title: "Delete Property", desc: "Permanently remove", action: "deleteConfirm" },
+            ];
+          })().map((action, i) => (
             <button
               key={i}
               onClick={() => {      closeSheet();
@@ -857,6 +871,8 @@ export default function PropertiesPage() {
         setTimeout(() => showSnackbar(action.action.replace("snack:", ""), action.action.includes("paused") ? "success" : "info"), 300);
       } else if (action.action.startsWith("navigate:")) {
         router.push(action.action.replace("navigate:", ""));
+      } else if (action.action === "resumeConfirm") {
+        setTimeout(() => openSheet("resumeProperty"), 300);
       } else {
         setTimeout(() => openSheet(action.action), 300);
       }
@@ -1000,19 +1016,62 @@ export default function PropertiesPage() {
           <div className="flex gap-3 mt-6">
             <button onClick={closeSheet} className="btn-secondary flex-1" style={{ padding: "14px" }}>Cancel</button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                if (!selectedProperty) return;
                 setFormLoading("pause");
-                setTimeout(() => {
-                  setFormLoading(null);
+                try {
+                  await updateProperty(selectedProperty.id, { paused: true });
                   closeSheet();
                   setTimeout(() => showSnackbar("Property listing paused", "success"), 300);
-                }, 1500);
+                } catch (err: any) {
+                  showSnackbar(err.message || "Failed to pause listing", "error");
+                } finally {
+                  setFormLoading(null);
+                }
               }}
               className="btn-danger flex-1"
               style={{ padding: "14px", background: "rgba(234,179,8,0.1)", borderColor: "rgba(234,179,8,0.2)", color: "#eab308" }}
               disabled={formLoading === "pause"}
             >
               {formLoading === "pause" ? <div className="spinner mx-auto" /> : <span>Pause</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* RESUME PROPERTY SHEET */}
+      <div className={`sheet-overlay ${activeSheet === "resumeProperty" ? "active" : ""}`} onClick={closeSheet} />
+      <div className={`bottom-sheet ${activeSheet === "resumeProperty" ? "active" : ""}`}>
+        <div className="sheet-handle" />
+        <div className="p-5 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "rgba(4,120,87,0.1)", border: "1px solid rgba(4,120,87,0.2)" }}>
+            <Play className="w-8 h-8" style={{ color: "#047857" }} />
+          </div>
+          <h3 className="text-lg font-bold text-white">Resume Listing?</h3>
+          <p className="text-sm mt-2 leading-relaxed" style={{ color: "#a3a3a3" }}>
+            This will make <strong className="text-white">{selectedProperty?.name || "this property"}</strong> visible on the public browse page again.
+          </p>
+          <div className="flex gap-3 mt-6">
+            <button onClick={closeSheet} className="btn-secondary flex-1" style={{ padding: "14px" }}>Cancel</button>
+            <button
+              onClick={async () => {
+                if (!selectedProperty) return;
+                setFormLoading("resume");
+                try {
+                  await updateProperty(selectedProperty.id, { paused: false });
+                  closeSheet();
+                  setTimeout(() => showSnackbar("Property listing resumed!", "success"), 300);
+                } catch (err: any) {
+                  showSnackbar(err.message || "Failed to resume listing", "error");
+                } finally {
+                  setFormLoading(null);
+                }
+              }}
+              className="btn-primary flex-1"
+              style={{ padding: "14px" }}
+              disabled={formLoading === "resume"}
+            >
+              {formLoading === "resume" ? <div className="spinner mx-auto" /> : <span>Resume</span>}
             </button>
           </div>
         </div>

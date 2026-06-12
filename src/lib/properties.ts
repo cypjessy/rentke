@@ -30,6 +30,7 @@ export interface PropertyData {
   amenities: string[];
   images: string[];
   landlordId: string;
+  paused: boolean;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 }
@@ -82,6 +83,7 @@ export function listenToProperties(
           amenities: data.amenities || [],
           images: data.images || [],
           landlordId: data.landlordId || "",
+          paused: data.paused || false,
           createdAt: data.createdAt || null,
           updatedAt: data.updatedAt || null,
         };
@@ -115,7 +117,7 @@ export async function addProperty(
 /** Update an existing property. */
 export async function updateProperty(
   propertyId: string,
-  data: Partial<PropertyFormData> & { images?: string[]; status?: string }
+  data: Partial<PropertyFormData> & { images?: string[]; status?: string; paused?: boolean }
 ): Promise<void> {
   await updateDoc(doc(propertiesRef, propertyId), {
     ...data,
