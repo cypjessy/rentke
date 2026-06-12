@@ -34,6 +34,7 @@ import {
   Shield,
   Star,
   LogOut,
+  HardDrive,
   AlertTriangle,
   Pencil,
   User,
@@ -156,6 +157,9 @@ export default function SettingsPage() {
   // ---- Loading ----
   const [formLoading, setFormLoading] = useState<string | null>(null);
 
+  // ---- Bunny.net Test Connection ----
+  const [bunnyTesting, setBunnyTesting] = useState(false);
+
   // ---- Snackbar ----
   useEffect(() => {
     if (snackbar.show) {
@@ -180,6 +184,24 @@ export default function SettingsPage() {
   };
 
   const hideSnackbar = () => setSnackbar({ show: false, message: "", type: "info" });
+
+  // ---- Bunny.net Test Connection Handler ----
+  const handleTestBunnyConnection = async () => {
+    setBunnyTesting(true);
+    try {
+      const res = await fetch("/api/test-bunny-connection");
+      const data = await res.json();
+      if (data.success) {
+        showSnackbar(data.message, "success");
+      } else {
+        showSnackbar(data.message, "error");
+      }
+    } catch (err: any) {
+      showSnackbar("Failed to test connection: " + (err.message || "Network error"), "error");
+    } finally {
+      setBunnyTesting(false);
+    }
+  };
 
   // ---- Sheets ----
   const openSheet = (name: string) => setActiveSheet(name);
@@ -586,6 +608,33 @@ export default function SettingsPage() {
               <SettingsRow icon={Globe} color="#06b6d4" title="Language" desc="App display language" value="English" onClick={() => openSheet("language")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
               <SettingsRow icon={Trash2} color="#6b7280" title="Clear Cache" desc="Free up storage space" value="24 MB" onClick={() => showSnackbar("Cache cleared — 24 MB freed", "success")} />
+            </div>
+          </div>
+
+          {/* STORAGE & INTEGRATIONS */}
+          <div className="px-5 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>Storage & Integrations</p>
+            <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
+              <button
+                onClick={handleTestBunnyConnection}
+                disabled={bunnyTesting}
+                style={{ ...settingsRowStyle, opacity: bunnyTesting ? 0.5 : 1 }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(244,114,182,0.1)" }}>
+                  {bunnyTesting ? (
+                    <div className="spinner w-5 h-5" style={{ borderTopColor: "#f472b6", borderColor: "rgba(244,114,182,0.3)" }} />
+                  ) : (
+                    <HardDrive className="w-5 h-5" style={{ color: "#f472b6" }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">Test Bunny.net Connection</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#525252" }}>
+                    {bunnyTesting ? "Testing..." : "Verify storage credentials are working"}
+                  </p>
+                </div>
+                {!bunnyTesting && <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: "#525252" }} />}
+              </button>
             </div>
           </div>
 
