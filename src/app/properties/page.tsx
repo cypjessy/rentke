@@ -41,6 +41,7 @@ import {
   ShieldCheck,
   ScrollText,
   X as XIcon,
+  Zap,
   Loader2,
 } from "lucide-react";
 
@@ -48,11 +49,6 @@ import { useRouter } from "next/navigation";
 import {
   PROPERTY_TYPE_OPTIONS,
   PROPERTY_AMENITIES,
-  UNIT_TYPE_OPTIONS,
-  UNIT_AMENITIES,
-  UNIT_STATUS_OPTIONS,
-  BATHROOM_OPTIONS,
-  FLOOR_OPTIONS,
   COUNTY_OPTIONS,
 } from "../constants";
 import AuthGuard from "../components/AuthGuard";
@@ -69,12 +65,11 @@ import {
   listenToPropertyUnits,
   addUnit,
   type UnitData,
-  type UnitFormData,
 } from "../../lib/units";
-import { pickAndUploadPhoto } from "../../lib/upload";
 import ViewPropertySheet from "./ViewPropertySheet";
 import AddPropertySheet from "./AddPropertySheet";
 import EditPropertySheet from "./EditPropertySheet";
+import AddUnitSheet from "./AddUnitSheet";
 
 type ViewMode = "list" | "grid";
 type SnackbarType = "success" | "error" | "info";
@@ -254,41 +249,12 @@ export default function PropertiesPage() {
 
 
 
-  // ---- Add Unit Form State ----
-  const [formUnitName, setFormUnitName] = useState("");
-  const [formUnitType, setFormUnitType] = useState("Bedsitter");
-  const [formUnitStatus, setFormUnitStatus] = useState("Vacant");
-  const [formUnitRent, setFormUnitRent] = useState("");
-  const [formUnitDeposit, setFormUnitDeposit] = useState("");
-  const [formUnitServiceCharge, setFormUnitServiceCharge] = useState("");
-  const [formUnitBathrooms, setFormUnitBathrooms] = useState("1");
-  const [formUnitFloor, setFormUnitFloor] = useState("Ground");
-  const [formUnitArea, setFormUnitArea] = useState("");
-  const [formUnitDescription, setFormUnitDescription] = useState("");
-  const [formUnitAmenities, setFormUnitAmenities] = useState<string[]>([]);
-
-  const resetUnitForm = () => {
-    setFormUnitName("");
-    setFormUnitType("Bedsitter");
-    setFormUnitStatus("Vacant");
-    setFormUnitRent("");
-    setFormUnitDeposit("");
-    setFormUnitServiceCharge("");
-    setFormUnitBathrooms("1");
-    setFormUnitFloor("Ground");
-    setFormUnitArea("");
-    setFormUnitDescription("");
-    setFormUnitAmenities([]);
-  };
 
 
 
   // ---- Sheet Management ----
   const openSheet = (name: string) => setActiveSheet(name);
   const closeSheet = () => {
-    if (activeSheet === "addUnit") {
-      setTimeout(() => resetUnitForm(), 300);
-    }
     if (activeSheet === "unitDetail" || activeSheet === "detail") {
       setSelectedUnit(null);
     }
@@ -306,29 +272,6 @@ export default function PropertiesPage() {
         setFormLoading(null);
         closeSheet();
         setTimeout(() => showSnackbar("Property deleted permanently", "error"), 300);
-        return;
-      }
-
-      if (id === "add-unit" && selectedProperty && user) {
-        await addUnit(user.uid, {
-          propertyId: selectedProperty.id,
-          propertyName: selectedProperty.name,
-          name: formUnitName,
-          type: formUnitType as UnitFormData['type'],
-          status: formUnitStatus as UnitFormData['status'],
-          rent: parseInt(formUnitRent.replace(/,/g, "")) || 0,
-          deposit: parseInt(formUnitDeposit.replace(/,/g, "")) || 0,
-          serviceCharge: parseInt(formUnitServiceCharge.replace(/,/g, "")) || 0,
-          bathrooms: (BATHROOM_OPTIONS as readonly string[]).indexOf(formUnitBathrooms) + 1 || 1,
-          floor: formUnitFloor,
-          area: parseInt(formUnitArea) || 0,
-          description: formUnitDescription,
-          amenities: formUnitAmenities,
-        });
-        resetUnitForm();
-        setFormLoading(null);
-        closeSheet();
-        setTimeout(() => showSnackbar("Unit added successfully! 🎉", "success"), 300);
         return;
       }
 
@@ -857,6 +800,7 @@ export default function PropertiesPage() {
             return [
               { icon: Pencil, color: "#3b82f6", bg: "rgba(59,130,246,0.12)", title: "Edit Property", desc: "Update details & photos", action: "editProperty" },
               { icon: Layers, color: "#047857", bg: "rgba(4,120,87,0.12)", title: "Manage Units", desc: "Add, edit or remove units", action: "navigate:/units" },
+              { icon: Zap, color: "#f59e0b", bg: "rgba(245,158,11,0.12)", title: "List on Marketplace", desc: "Create a listing from this property", action: "navigateToListings" },
               isPaused
                 ? { icon: Play, color: "#047857", bg: "rgba(4,120,87,0.12)", title: "Resume Listing", desc: "Show on tenant browse again", action: "resumeConfirm" }
                 : { icon: EyeOff, color: "#eab308", bg: "rgba(234,179,8,0.12)", title: "Pause Listing", desc: "Temporarily hide from tenants", action: "pauseProperty" },
@@ -869,6 +813,8 @@ export default function PropertiesPage() {
               onClick={() => {      closeSheet();
       if (action.action.startsWith("snack:")) {
         setTimeout(() => showSnackbar(action.action.replace("snack:", ""), action.action.includes("paused") ? "success" : "info"), 300);
+      } else if (action.action === "navigateToListings" && selectedProperty) {
+        router.push(`/listings?createFromProperty=${selectedProperty.id}&propertyName=${encodeURIComponent(selectedProperty.name)}`);
       } else if (action.action.startsWith("navigate:")) {
         router.push(action.action.replace("navigate:", ""));
       } else if (action.action === "resumeConfirm") {
@@ -1099,115 +1045,42 @@ export default function PropertiesPage() {
       </div>
 
       {/* ADD UNIT SHEET */}
-      <div className={`sheet-overlay ${activeSheet === "addUnit" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "addUnit" ? "active" : ""}`}>
-        <div className="sheet-handle" />
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-white">Add Unit</h3>
-            <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div className="input-group"><input type="text" className="android-input" placeholder=" " value={formUnitName} onChange={(e) => setFormUnitName(e.target.value)} /><label>Unit Number / Name</label></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Unit Type</label>
-                <select className="android-select" value={formUnitType} onChange={(e) => setFormUnitType(e.target.value)}>
-                  {UNIT_TYPE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Status</label>
-                <select className="android-select" value={formUnitStatus} onChange={(e) => setFormUnitStatus(e.target.value)}>
-                  {UNIT_STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Bathrooms</label>
-                <select className="android-select" value={formUnitBathrooms} onChange={(e) => setFormUnitBathrooms(e.target.value)}>
-                  {BATHROOM_OPTIONS.map((b) => <option key={b}>{b}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Floor</label>
-                <select className="android-select" value={formUnitFloor} onChange={(e) => setFormUnitFloor(e.target.value)}>
-                  {FLOOR_OPTIONS.map((f) => <option key={f}>{f}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={formUnitArea} onChange={(e) => setFormUnitArea(e.target.value)} />
-              <label>Area (sqm)</label>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input ksh-prefix" placeholder=" " value={formUnitRent} onChange={(e) => setFormUnitRent(e.target.value)} />
-              <label style={{ left: "60px" }}>Monthly Rent</label>
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>KSh</span>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input ksh-prefix" placeholder=" " value={formUnitDeposit} onChange={(e) => setFormUnitDeposit(e.target.value)} />
-              <label style={{ left: "60px" }}>Deposit</label>
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>KSh</span>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input ksh-prefix" placeholder=" " value={formUnitServiceCharge} onChange={(e) => setFormUnitServiceCharge(e.target.value)} />
-              <label style={{ left: "60px" }}>Service Charge (Monthly)</label>
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>KSh</span>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Description</label>
-              <textarea className="android-input" style={{ minHeight: "80px", borderRadius: "14px" }} placeholder="Describe the unit - finishes, floor, views, nearby amenities..." value={formUnitDescription} onChange={(e) => setFormUnitDescription(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Photos</label>
-              <div className="flex gap-3">
-                <div
-                  className="w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
-                  onClick={async () => { if (user) { const url = await pickAndUploadPhoto('units', user.uid); if (url) showSnackbar('Photo added ✅', 'success'); } }}
-                >
-                  <Plus className="w-5 h-5" style={{ color: "#525252" }} />
-                  <span className="text-xs mt-1" style={{ color: "#525252" }}>Add</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Unit Amenities</label>
-              <div className="flex flex-wrap gap-2">
-                {UNIT_AMENITIES.map((a) => {
-                  const selected = formUnitAmenities.includes(a);
-                  return (
-                  <span
-                    key={a}
-                    className="chip cursor-pointer"
-                    style={{
-                      background: selected ? "rgba(4,120,87,0.15)" : "rgba(255,255,255,0.05)",
-                      color: selected ? "#047857" : "#a3a3a3",
-                      border: selected ? "1px solid rgba(4,120,87,0.3)" : "1px solid transparent",
-                    }}
-                    onClick={() => {
-                      setFormUnitAmenities(prev =>
-                        prev.includes(a)
-                          ? prev.filter((item) => item !== a)
-                          : [...prev, a]
-                      );
-                    }}
-                  >
-                    {a}
-                  </span>
-                )})}
-              </div>
-            </div>
-            <button onClick={() => handleForm("add-unit")} className="btn-primary ripple-container mt-2" disabled={formLoading === "add-unit"}>
-              {formLoading === "add-unit" ? <div className="spinner mx-auto" /> : <span>Add Unit</span>}
-            </button>
-          </div>
-        </div>
-      </div>
+      {user && selectedProperty && (
+        <AddUnitSheet
+          isOpen={activeSheet === "addUnit"}
+          onClose={closeSheet}
+          onSubmit={async (data) => {
+            setFormLoading("add-unit");
+            try {
+              await addUnit(user.uid, {
+                propertyId: selectedProperty.id,
+                propertyName: selectedProperty.name,
+                name: data.name,
+                type: data.type,
+                status: data.status,
+                rent: data.rent,
+                deposit: data.deposit,
+                serviceCharge: data.serviceCharge,
+                bathrooms: data.bathrooms,
+                floor: data.floor,
+                area: data.area,
+                description: data.description,
+                amenities: data.amenities,
+                images: data.images,
+              });
+              setFormLoading(null);
+              closeSheet();
+              setTimeout(() => showSnackbar("Unit added successfully! 🎉", "success"), 300);
+            } catch (err: any) {
+              setFormLoading(null);
+              showSnackbar(err.message || "Something went wrong", "error");
+            }
+          }}
+          loading={formLoading === "add-unit"}
+          showSnackbar={showSnackbar}
+          userId={user.uid}
+        />
+      )}
 
       {/* UNIT DETAIL SHEET */}
       <div className={`sheet-overlay ${activeSheet === "unitDetail" ? "active" : ""}`} onClick={closeSheet} />

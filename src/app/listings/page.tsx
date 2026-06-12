@@ -56,6 +56,9 @@ import {
   type ListingData,
 } from "../../lib/listings";
 import { listenToUnits, type UnitData } from "../../lib/units";
+import { listenToProperties, type PropertyData } from "../../lib/properties";
+import CreateListingSheet from "./CreateListingSheet";
+import ViewListingSheet from "./ViewListingSheet";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -83,9 +86,6 @@ function ListingsPage() {
   const [filterListRentMin, setFilterListRentMin] = useState("");
   const [filterListRentMax, setFilterListRentMax] = useState("");
 
-  // ---- Detail Tab State ----
-  const [activeDetailTab, setActiveDetailTab] = useState("overview");
-
   // ---- Boost ----
   const [boostDays, setBoostDays] = useState(7);
 
@@ -103,16 +103,8 @@ function ListingsPage() {
   const [listings, setListings] = useState<ListingData[]>([]);
   const [selectedListing, setSelectedListing] = useState<ListingData | null>(null);
   const [vacantUnits, setVacantUnits] = useState<UnitData[]>([]);
-
-  // ---- Create Listing Form State ----
-  const [createPropertyId, setCreatePropertyId] = useState("");
-  const [createPropertyName, setCreatePropertyName] = useState("");
-  const [createUnitId, setCreateUnitId] = useState("");
-  const [createUnitName, setCreateUnitName] = useState("");
-  const [createTitle, setCreateTitle] = useState("");
-  const [createDescription, setCreateDescription] = useState("");
-  const [createRent, setCreateRent] = useState("");
-  const [createAmenities, setCreateAmenities] = useState<string[]>([]);
+  const [properties, setProperties] = useState<PropertyData[]>([]);
+  const [createListingInitial, setCreateListingInitial] = useState<Record<string, string> | undefined>(undefined);
 
   // ---- Edit Listing Form State ----
   const [editTitle, setEditTitle] = useState("");
@@ -128,30 +120,51 @@ function ListingsPage() {
     }
   }, [selectedListing, activeSheet]);
 
-  // ---- Handle createFromUnit query param ----
+  // ---- Handle query params (createFromUnit / createFromProperty) ----
   const searchParams = useSearchParams();
   const createFromUnitId = searchParams.get("createFromUnit");
+  const createFromPropertyId = searchParams.get("createFromProperty");
+  const createFromPropertyName = searchParams.get("propertyName");
 
-  // Track if we've already processed the initial createFromUnit param
+  // Track if we've already processed the initial params
   const initialCreateRef = useRef(false);
 
   useEffect(() => {
-    if (!createFromUnitId || initialCreateRef.current || vacantUnits.length === 0) return;
-    const unit = vacantUnits.find(u => u.id === createFromUnitId);
-    if (!unit) return;
+    if (initialCreateRef.current) return;
+    if (vacantUnits.length === 0 && !createFromPropertyId) return;
+
     initialCreateRef.current = true;
-    // Pre-fill the create listing form from the unit data
-    setCreatePropertyId(unit.propertyId || "");
-    setCreatePropertyName(unit.propertyName || "");
-    setCreateUnitId(unit.id);
-    setCreateUnitName(unit.name);
-    setCreateTitle(`${unit.type} — ${unit.name}`);
-    setCreateRent(unit.rent.toString());
-    setCreateDescription(unit.description || "");
-    setCreateAmenities(unit.amenities || []);
-    // Open the create listing sheet
-    setTimeout(() => openSheet("createListing"), 300);
-  }, [createFromUnitId, vacantUnits]);
+
+    // Handle createFromProperty (coming from properties page)
+    if (createFromPropertyId) {
+      setCreateListingInitial({
+        propertyId: createFromPropertyId,
+        propertyName: createFromPropertyName || "",
+        unitId: "",
+        unitName: "",
+        title: "",
+        rent: "",
+      });
+      setTimeout(() => openSheet("createListing"), 300);
+      return;
+    }
+
+    // Handle createFromUnit (coming from units page)
+    if (createFromUnitId) {
+      const unit = vacantUnits.find(u => u.id === createFromUnitId);
+      if (!unit) return;
+      setCreateListingInitial({
+        propertyId: unit.propertyId || "",
+        propertyName: unit.propertyName || "",
+        unitId: unit.id,
+        unitName: unit.name,
+        title: `${unit.type} — ${unit.name}`,
+        rent: unit.rent.toString(),
+        description: unit.description || "",
+      });
+      setTimeout(() => openSheet("createListing"), 300);
+    }
+  }, [createFromUnitId, createFromPropertyId, createFromPropertyName, vacantUnits]);
 
   // ---- Firestore Listeners ----
   useEffect(() => {
@@ -182,6 +195,19 @@ function ListingsPage() {
         setVacantUnits(data.filter(u => u.status === "Vacant"));
       },
       (err) => console.error("Error loading units for listings:", err)
+    );
+    return () => unsub();
+  }, [user]);
+
+  // Listen for properties to populate the property selector
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenToProperties(
+      user.uid,
+      (data) => {
+        setProperties(data);
+      },
+      (err) => console.error("Error loading properties for listings:", err)
     );
     return () => unsub();
   }, [user]);
@@ -256,37 +282,7 @@ function ListingsPage() {
     const target = listing || selectedListing;
     setFormLoading(id);
     try {
-      if (id === "create-listing") {
-        await createListing(user!.uid, {
-          propertyId: createPropertyId,
-          propertyName: createPropertyName,
-          unitId: createUnitId,
-          unitName: createUnitName,
-          title: createTitle,
-          description: createDescription,
-          rent: parseInt(createRent.replace(/,/g, "")) || 0,
-          amenities: createAmenities,
-          images: [],
-          status: "active",
-        });
-        setFormLoading(null); closeSheet();
-        setTimeout(() => showSnackbar("Listing published! 🎉", "success"), 300);
-      } else if (id === "save-draft") {
-        await createListing(user!.uid, {
-          propertyId: createPropertyId,
-          propertyName: createPropertyName,
-          unitId: createUnitId,
-          unitName: createUnitName,
-          title: createTitle,
-          description: createDescription,
-          rent: parseInt(createRent.replace(/,/g, "")) || 0,
-          amenities: createAmenities,
-          images: [],
-          status: "draft",
-        });
-        setFormLoading(null); closeSheet();
-        setTimeout(() => showSnackbar("Draft saved! 💾", "info"), 300);
-      } else if (id === "edit-listing" && target) {
+      if (id === "edit-listing" && target) {
         await updateListing(target.id, {
           title: editTitle,
           description: editDescription,
@@ -814,169 +810,18 @@ function ListingsPage() {
         </div>
       </div>
 
-      {/* LISTING DETAIL */}
-      <div className={`sheet-overlay ${activeSheet === "detail" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "detail" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
-        <div className="sheet-handle" />
-        {selectedListing && (() => {
-          const sl = selectedListing;
-          const statusStyle = getStatusChip(sl.status);
-          const listedDate = sl.createdAt?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || '';
-          const expiryDate = sl.expiresAt?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || '';
-          const score = Math.min(Math.round(((sl.views + sl.inquiries * 10 + sl.saves * 2) / 100) * 100), 100);
-          const scoreLabel = score >= 80 ? 'High' : score >= 50 ? 'Medium' : 'Low';
-          const expiryDaysLeft = sl.expiresAt ? Math.ceil((sl.expiresAt.toDate().getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
-        return (
-        <>
-        {/* Cover Photo Header */}
-        <div className="relative" style={{ height: "180px" }}>
-          <img src={`https://picsum.photos/seed/${sl.id}/600/360.jpg`} className="w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top,#1A1D21 0%,transparent 60%)" }} />
-          <div className="absolute top-3 left-3 flex gap-2">
-            <span className="chip text-white" style={{ background: statusStyle.bg, backdropFilter: "blur(8px)" }}>{statusStyle.label}</span>
-            {sl.boosted && (
-              <span className="chip text-white" style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", fontSize: "10px", padding: "3px 8px" }}>
-                <Zap className="w-3 h-3" /> Boosted
-              </span>
-            )}
-          </div>
-          <div className="absolute top-3 right-3">
-            <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
-              <XIcon className="w-4 h-4 text-white" />
-            </button>
-          </div>
-          <div className="absolute bottom-3 left-3 right-3">
-            <p className="text-white font-bold text-lg">{sl.title}</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.8)" }}>{sl.propertyName} • KSh {sl.rent.toLocaleString()}/mo</p>
-          </div>
-        </div>
-
-        <div className="px-5 -mt-1 relative z-10">
-          {/* Tabs */}
-          <div className="flex -mx-5 px-5 overflow-x-auto pt-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
-            {["overview", "analytics", "activity"].map((tab) => (
-              <div
-                key={tab}
-                className={`detail-tab ${activeDetailTab === tab ? "active" : ""}`}
-                onClick={() => setActiveDetailTab(tab)}
-              >
-                {tab === "overview" ? "Overview" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </div>
-            ))}
-          </div>
-
-          {/* OVERVIEW TAB */}
-          {activeDetailTab === "overview" && (
-            <div className="pt-4 pb-6">
-              {/* Performance Stats */}
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {[
-                  { label: "Views", value: String(sl.views) },
-                  { label: "Inquiries", value: String(sl.inquiries) },
-                  { label: "Saves", value: String(sl.saves) },
-                  { label: "Score", value: `${score}%`, color: score >= 80 ? "#047857" : score >= 50 ? "#eab308" : "#ef4444" },
-                ].map((s, i) => (
-                  <div key={i} className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <p className="text-base font-bold text-white" style={s.color ? { color: s.color } : {}}>{s.value}</p>
-                    <p className="text-xs" style={{ color: "#a3a3a3" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Description */}
-              <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#525252" }}>Description</h4>
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "#a3a3a3" }}>
-                {sl.description || 'No description available.'}
-              </p>
-
-              {/* Amenities */}
-              {sl.amenities && sl.amenities.length > 0 && (
-                <>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#525252" }}>Amenities</h4>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {sl.amenities.map((a) => (
-                      <span key={a} className="chip" style={{ background: "rgba(4,120,87,0.08)", color: "#047857" }}>{a}</span>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Listing Info */}
-              <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Listing Details</h4>
-              <div className="space-y-3 mb-5">
-                {[
-                  { label: "Monthly Rent", value: `KSh ${sl.rent.toLocaleString()}/mo` },
-                  { label: "Listing Type", value: sl.unitName || '—' },
-                  { label: "Property", value: sl.propertyName },
-                  { label: "Listed On", value: listedDate || '—' },
-                  { label: "Expires", value: expiryDate ? `${expiryDate} (${expiryDaysLeft} days left)` : '—' },
-                ].map((row, i) => (
-                  <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <span className="text-xs" style={{ color: "#525252" }}>{row.label}</span>
-                    <span className="text-sm text-white">{row.value}</span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-xs" style={{ color: "#525252" }}>Status</span>
-                  <span className="chip" style={{ background: statusStyle.bg, color: statusStyle.color, fontSize: "11px" }}>{statusStyle.label}</span>
-                </div>
-              </div>
-
-              {/* Performance Bar */}
-              <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Performance</h4>
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs" style={{ color: "#a3a3a3" }}>Overall Score</span>
-                  <span className="text-xs font-semibold" style={{ color: score >= 80 ? "#047857" : score >= 50 ? "#eab308" : "#ef4444" }}>{scoreLabel} ({score}%)</span>
-                </div>
-                <div className="perf-bar" style={{ height: "8px" }}>
-                  <div className="perf-bar-fill" style={{ width: `${score}%`, background: `linear-gradient(to right,${score >= 80 ? '#047857' : score >= 50 ? '#eab308' : '#ef4444'},${score >= 80 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'})` }} />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                <button onClick={() => { closeSheet(); setTimeout(() => openSheet("editListing"), 300); }} className="btn-secondary flex items-center justify-center gap-2" style={{ padding: "12px" }}>
-                  <Pencil className="w-4 h-4" /><span className="text-sm">Edit</span>
-                </button>
-                <button onClick={() => { closeSheet(); setTimeout(() => openSheet("boost"), 300); }} className="btn-primary flex items-center justify-center gap-2" style={{ padding: "12px", background: "linear-gradient(to right,#d97706,#f59e0b)", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
-                  <Zap className="w-4 h-4" /><span className="text-sm">Boost</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ANALYTICS TAB */}
-          {activeDetailTab === "analytics" && (
-            <div className="pt-4 pb-6">
-              {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                {[
-                  { label: "Total Views", value: String(sl.views), color: "text-white" },
-                  { label: "Inquiries", value: String(sl.inquiries), color: "#3b82f6" },
-                  { label: "Conversion", value: sl.views > 0 ? `${((sl.inquiries / sl.views) * 100).toFixed(1)}%` : '0%', color: "#047857" },
-                ].map((s, i) => (
-                  <div key={i} className="p-3 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)" }}>
-                    <p className="text-base font-bold" style={{ color: s.color }}>{s.value}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ACTIVITY TAB */}
-          {activeDetailTab === "activity" && (
-            <div className="pt-4 pb-6">
-              <div className="text-center py-8">
-                <p className="text-sm" style={{ color: "#a3a3a3" }}>Activity log will show views, inquiries, and status changes for this listing. Check the <button onClick={() => { closeSheet(); setTimeout(() => router.push('/inquiries'), 300); }} className="font-semibold" style={{ color: "#047857" }}>Inquiries page</button> for detailed inquiry activity.</p>
-              </div>
-            </div>
-          )}
-        </div>
-        </> );
-        })()}
-      </div>
+      {/* LISTING DETAIL SHEET */}
+      <ViewListingSheet
+        isOpen={activeSheet === "detail"}
+        onClose={closeSheet}
+        listing={selectedListing}
+        onEdit={() => openSheet("editListing")}
+        onBoost={() => openSheet("boost")}
+        onPause={() => openSheet("pauseConfirm")}
+        onResume={() => selectedListing && handleForm("resume", selectedListing)}
+        onDelete={() => openSheet("deleteListing")}
+        onRenew={() => selectedListing && handleForm("renew", selectedListing)}
+      />
 
       {/* EDIT LISTING */}
       <div className={`sheet-overlay ${activeSheet === "editListing" ? "active" : ""}`} onClick={closeSheet} />
@@ -1111,66 +956,47 @@ function ListingsPage() {
         </div>
       </div>
 
-      {/* CREATE LISTING */}
-      <div className={`sheet-overlay ${activeSheet === "createListing" ? "active" : ""}`} onClick={closeSheet} />
-      <div className={`bottom-sheet ${activeSheet === "createListing" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
-        <div className="sheet-handle" />
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-white">Create Listing</h3>
-            <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Property</label>
-              <select className="android-select" value={createPropertyName} onChange={(e) => { setCreatePropertyName(e.target.value); setCreatePropertyId(e.target.value); }}>
-                <option value="">Select Property</option>
-                {[...new Set(listings.map(l => l.propertyName).filter(Boolean))].map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Unit</label>
-              <select className="android-select" value={createUnitId} onChange={(e) => {
-                const unit = vacantUnits.find(u => u.id === e.target.value);
-                if (unit) {
-                  setCreateUnitId(unit.id);
-                  setCreateUnitName(unit.name);
-                  setCreatePropertyName(unit.propertyName);
-                  setCreatePropertyId(unit.propertyId);
-                  setCreateTitle(`${unit.type} — ${unit.name}`);
-                  setCreateRent(unit.rent.toString());
+      {/* CREATE LISTING SHEET */}
+      {user && (
+        <CreateListingSheet
+          isOpen={activeSheet === "createListing"}
+          onClose={closeSheet}
+          onSubmit={async (data) => {
+            setFormLoading("create-listing");
+            try {
+              await createListing(user.uid, {
+                propertyId: data.propertyId,
+                propertyName: data.propertyName,
+                unitId: data.unitId,
+                unitName: data.unitName,
+                title: data.title,
+                description: data.description,
+                rent: data.rent,
+                amenities: data.amenities,
+                images: [],
+                status: data.status,
+              });
+              setFormLoading(null);
+              closeSheet();
+              setTimeout(() => {
+                if (data.status === "draft") {
+                  showSnackbar("Draft saved! 💾", "info");
+                } else {
+                  showSnackbar("Listing published! 🎉", "success");
                 }
-              }}>
-                <option value="">Select a vacant unit</option>
-                {vacantUnits.map((u) => <option key={u.id} value={u.id}>{u.name} — {u.type} (KSh {u.rent.toLocaleString()}/mo)</option>)}
-              </select>
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " value={createTitle} onChange={(e) => setCreateTitle(e.target.value)} />
-              <label>Listing Title</label>
-            </div>
-            <div>
-              <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Description</label>
-              <textarea className="android-input" style={{ minHeight: "80px", borderRadius: "14px" }} placeholder="Describe what makes this unit great..." value={createDescription} onChange={(e) => setCreateDescription(e.target.value)} />
-            </div>
-            <div className="input-group">
-              <input type="text" className="android-input" placeholder=" " style={{ paddingLeft: "60px" }} value={createRent} onChange={(e) => setCreateRent(e.target.value)} />
-              <label style={{ left: "60px" }}>Monthly Rent</label>
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>KSh</span>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => handleForm("save-draft")} className="btn-secondary flex-1" style={{ padding: "14px" }} disabled={formLoading === "save-draft"}>
-              {formLoading === "save-draft" ? <div className="spinner mx-auto" /> : <span>Save Draft</span>}
-            </button>
-              <button onClick={() => handleForm("create-listing")} className="btn-primary flex-1 ripple-container" style={{ padding: "14px" }} disabled={formLoading === "create-listing"}>
-                {formLoading === "create-listing" ? <div className="spinner mx-auto" /> : <span>Publish</span>}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              }, 300);
+            } catch (err: any) {
+              setFormLoading(null);
+              showSnackbar(err.message || "Something went wrong", "error");
+            }
+          }}
+          loading={formLoading === "create-listing"}
+          showSnackbar={showSnackbar}
+          vacantUnits={vacantUnits}
+          properties={properties.map(p => ({ id: p.id, name: p.name }))}
+          initialData={createListingInitial}
+        />
+      )}
 
       {/* MORE MENU SHEET */}
       <div className={`sheet-overlay ${activeSheet === "moreMenu" ? "active" : ""}`} onClick={closeSheet} />

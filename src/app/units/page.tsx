@@ -505,8 +505,15 @@ export default function UnitsPage() {
                   data-status={unit.status}
                   onClick={() => { setSelectedUnit(unit); openSheet("unitDetail"); }}
                 >
-                  <div className="unit-avatar" style={{ background: s.avatarBg, color: s.avatarColor }}>
-                    {unit.tenantInitials || "—"}
+                  <div className="unit-avatar overflow-hidden" style={{ background: s.avatarBg, color: s.avatarColor }}>
+                    {unit.images?.[0] ? (
+                      <img
+                        src={unit.images[0]}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <>{unit.tenantInitials || "—"}</>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">

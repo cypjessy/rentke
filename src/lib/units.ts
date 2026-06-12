@@ -57,6 +57,7 @@ export interface UnitFormData {
   area: number;
   description: string;
   amenities: string[];
+  images?: string[];
 }
 
 export interface LeaseFormData {
@@ -149,7 +150,7 @@ export async function addUnit(
   const docRef = await addDoc(unitsRef, {
     ...data,
     landlordId,
-    images: [],
+    images: data.images || [],
     tenantId: null,
     tenantName: null,
     tenantPhone: null,

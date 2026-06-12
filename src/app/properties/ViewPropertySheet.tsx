@@ -673,15 +673,24 @@ export default function ViewPropertySheet({
                       onClick={() => onUnitClick(unit)}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden"
                         style={{ background: "rgba(4,120,87,0.1)" }}
                       >
-                        <span
-                          className="text-xs font-bold"
-                          style={{ color: "#047857" }}
-                        >
-                          {unit.name.slice(0, 2).toUpperCase()}
-                        </span>
+                        {unit.images?.[0] ? (
+                          <img
+                            src={unit.images[0]}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span
+                              className="text-xs font-bold"
+                              style={{ color: "#047857" }}
+                            >
+                              {unit.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white truncate">
