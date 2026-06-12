@@ -102,10 +102,104 @@ async function takePhotoWeb(source: PhotoSource): Promise<File | null> {
   }
 }
 
+// ─── Client-Side Image Compression ───────────────────────────────────────────
+//
+// Vercel serverless functions have a hard 4.5 MB body limit for incoming
+// requests. Modern phone photos (8-12 MB) will fail with 413 without this.
+// We compress images client-side to stay safely under that limit.
+// ──────────────────────────────────────────────────────────────────────────────
+
+/** Maximum dimension (width or height) after compression. */
+const MAX_IMAGE_DIM = 1920;
+
+/** Target maximum file size in bytes (leave headroom below Vercel's 4.5 MB). */
+const TARGET_MAX_SIZE = 3.5 * 1024 * 1024;
+
+/**
+ * Compress an image file client-side using Canvas.
+ * Resizes to at most 1920px on the longest edge and reduces JPEG quality
+ * iteratively until the file fits under ~3.5 MB.
+ *
+ * Returns the original file unchanged if it's already small enough or not an
+ * image type.
+ */
+export async function compressImage(file: File): Promise<File> {
+  // Only compress image types
+  if (!file.type.startsWith("image/") || file.type === "image/gif") {
+    return file;
+  }
+
+  // Return as-is if already under the target size
+  if (file.size <= TARGET_MAX_SIZE) {
+    return file;
+  }
+
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.src = url;
+
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("Failed to load image for compression"));
+  });
+
+  // Calculate new dimensions preserving aspect ratio
+  let { width, height } = img;
+  if (width > MAX_IMAGE_DIM || height > MAX_IMAGE_DIM) {
+    const ratio = Math.min(MAX_IMAGE_DIM / width, MAX_IMAGE_DIM / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    URL.revokeObjectURL(url);
+    return file;
+  }
+
+  ctx.drawImage(img, 0, 0, width, height);
+  URL.revokeObjectURL(url);
+
+  // Try JPEG quality from 0.85 down to 0.1 until size fits
+  let quality = 0.85;
+  let compressedBlob: Blob | null = null;
+
+  while (quality >= 0.1) {
+    compressedBlob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", quality)
+    );
+
+    if (compressedBlob && compressedBlob.size <= TARGET_MAX_SIZE) break;
+    quality -= 0.1;
+  }
+
+  if (!compressedBlob) {
+    compressedBlob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.1)
+    );
+  }
+
+  // If compression still failed, return the original file unchanged
+  if (!compressedBlob) {
+    return file;
+  }
+
+  // Build a new filename with .jpg extension
+  const baseName = file.name.replace(/\.[^/.]+$/, "");
+  return new File([compressedBlob], `${baseName}.jpg`, { type: "image/jpeg" });
+}
+
 // ─── Bunny.net Upload (via API route) ────────────────────────────────────────
 
 /**
  * Upload a File to Bunny.net via our internal API route.
+ *
+ * Images larger than ~3.5 MB are automatically compressed client-side to stay
+ * under Vercel's 4.5 MB serverless function body limit.
  *
  * @param file      - The File to upload
  * @param folder    - Storage folder path (e.g., "properties", "units", "profiles")
@@ -119,12 +213,15 @@ export async function uploadPhoto(
   fileName?: string
 ): Promise<UploadResult> {
   // Convert Blob to File if needed
-  const photoFile =
+  const rawFile =
     file instanceof File
       ? file
       : new File([file], fileName || `photo_${Date.now()}.jpg`, {
           type: file.type || "image/jpeg",
         });
+
+  // Compress large images client-side to avoid Vercel's 4.5 MB body limit
+  const photoFile = await compressImage(rawFile);
 
   const formData = new FormData();
   formData.append("file", photoFile);
