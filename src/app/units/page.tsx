@@ -37,6 +37,7 @@ import {
   FLOOR_OPTIONS,
   LEASE_TERM_OPTIONS,
   UNIT_AMENITIES,
+  PLACEHOLDER_IMAGE,
 } from "../constants";
 
 import AuthGuard from "../components/AuthGuard";
@@ -457,7 +458,10 @@ export default function UnitsPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <>{unit.tenantInitials || "—"}</>
+                      <img
+                        src={PLACEHOLDER_IMAGE}
+                        className="w-full h-full object-cover opacity-20"
+                      />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

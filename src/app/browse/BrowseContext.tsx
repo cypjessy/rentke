@@ -191,7 +191,7 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
             title: metadata?.title || "",
             location: metadata?.location || "",
             price: metadata?.price || 0,
-            image: metadata?.image || "",
+            image: metadata?.image || PLACEHOLDER_IMAGE,
             landlordId: metadata?.landlordId || "",
           },
           isCurrentlyFav

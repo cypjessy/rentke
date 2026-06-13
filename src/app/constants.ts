@@ -4,6 +4,8 @@
 // and Client Portal (browse, explore, detail sheets)
 // ==============================
 
+export const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1073&auto=format&fit=crop";
+
 // ---- Amenities ----
 
 /** Amenities available for Property-level forms (Add/Edit Property) */

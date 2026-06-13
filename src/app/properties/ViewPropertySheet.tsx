@@ -29,7 +29,9 @@ import type { InquiryData } from "@/lib/inquiries";
 import type { ConversationData } from "@/lib/conversations";
 import type { FavoriteData } from "@/lib/browse";
 
-export interface ViewPropertySheetProps {
+import { PLACEHOLDER_IMAGE } from "../constants";
+
+interface ViewPropertySheetProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit: () => void;
@@ -205,7 +207,7 @@ export default function ViewPropertySheet({
 
   const coverImage =
     pd.images?.[0] ||
-    '';
+    PLACEHOLDER_IMAGE;
 
   // Build activity feed from all data sources
   const activityFeed = [

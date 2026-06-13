@@ -24,7 +24,7 @@ import {
   recordLease,
   type UnitData,
 } from "../../lib/units";
-import { LEASE_TERM_OPTIONS } from "../constants";
+import { LEASE_TERM_OPTIONS, PLACEHOLDER_IMAGE } from "../constants";
 
 type DetailTab = "overview" | "payments" | "activity";
 type SnackbarType = "success" | "error" | "info";
@@ -197,7 +197,7 @@ export default function ViewUnitSheet({
   const leaseEndStr = pd.leaseEnd?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || '';
 
   // Cover image: use first Bunny.net image or placeholder
-  const coverImage = pd.images?.[0] || '';
+  const coverImage = pd.images?.[0] || PLACEHOLDER_IMAGE;
   const additionalImages = pd.images?.slice(1) || [];
 
   // Snackbar Icon

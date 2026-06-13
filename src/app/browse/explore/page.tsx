@@ -20,7 +20,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useBrowse } from "../BrowseContext";
 import type { PropertyData } from "../PropertyDetailSheet";
-import { UNIT_TYPE_OPTIONS, UNIT_AMENITIES, BROWSE_TYPE_META } from "../../constants";
+import { UNIT_TYPE_OPTIONS, UNIT_AMENITIES, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../../constants";
 import { listenToBrowseListings } from "@/lib/browse";
 import type { ListingData } from "@/lib/listings";
 
@@ -197,7 +197,7 @@ function listingToResultItem(listing: ListingData, idx: number) {
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || '',
+    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "NEW" : "",
@@ -559,7 +559,7 @@ function ExplorePageInner() {
                     image: item.img,
                     gallery: fullL?.images?.length
                       ? fullL.images
-                      : [item.img || ''],
+                      : [item.img || PLACEHOLDER_IMAGE],
                     badge: item.badge || undefined,
                     verified: item.verified,
                     featured: !!item.badge,
@@ -600,7 +600,15 @@ function ExplorePageInner() {
               >
                 <div className="flex">
                   <div className="relative">
-                    <img src={item.img} alt={item.title} className="w-32 h-32 object-cover" style={{ borderRadius: "20px 0 0 20px" }} />
+                    <img 
+                      src={item.img || PLACEHOLDER_IMAGE} 
+                      alt={item.title} 
+                      className="w-32 h-32 object-cover" 
+                      style={{ borderRadius: "20px 0 0 20px" }} 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                      }}
+                    />
                     {item.badge && (
                       <span className="absolute top-2 left-2 text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: item.badgeColor, color: "white" }}>
                         {item.badge}
@@ -707,10 +715,10 @@ function ExplorePageInner() {
                   title: listing.title || listing.propertyName || "Untitled",
                   location: listing.propertyName || "Nairobi, Kenya",
                   price: listing.rent.toLocaleString(),
-                  image: listing.images?.[0] || '',
+                  image: listing.images?.[0] || PLACEHOLDER_IMAGE,
                   gallery: listing.images?.length
                   ? listing.images
-                  : [listing.images?.[0] || ''],
+                  : [listing.images?.[0] || PLACEHOLDER_IMAGE],
                   badge: listing.boosted ? "FEATURED" : "",
                   verified: true,
                   featured: !!listing.boosted,
@@ -747,7 +755,7 @@ function ExplorePageInner() {
                 };
                 openPropertyDetail(propData);
               }}>
-                <img src={listing.images?.[0] || ''} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
+                <img src={listing.images?.[0] || PLACEHOLDER_IMAGE} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
                 <div className="p-3">
                   <h3 className="font-bold text-white text-xs">{listing.title || listing.propertyName || "Untitled"}</h3>
                   <p className="text-sm font-bold mt-1" style={{ color: "#047857" }}>KSh {listing.rent.toLocaleString()}/mo</p>

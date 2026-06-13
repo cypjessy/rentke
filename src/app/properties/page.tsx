@@ -51,6 +51,7 @@ import {
   PROPERTY_TYPE_OPTIONS,
   PROPERTY_AMENITIES,
   COUNTY_OPTIONS,
+  PLACEHOLDER_IMAGE,
 } from "../constants";
 import AuthGuard from "../components/AuthGuard";
 import { PROPERTY_DETAIL_AMENITIES } from "../constants";
@@ -522,7 +523,7 @@ export default function PropertiesPage() {
                   <div className="flex" style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative flex-shrink-0" style={{ width: "120px" }}>
                       <img
-                        src={prop.images?.[0] || ''}
+                        src={prop.images?.[0] || PLACEHOLDER_IMAGE}
                         alt=""
                         className="w-full h-full object-cover"
                         style={{ minHeight: "140px", filter: d.isPaused ? "grayscale(40%)" : "none" }}
@@ -606,7 +607,7 @@ export default function PropertiesPage() {
                   <div style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative">
                       <img
-                        src={prop.images?.[0] || ''}
+                        src={prop.images?.[0] || PLACEHOLDER_IMAGE}
                         alt=""
                         className="w-full property-img object-cover"
                         style={{ height: "110px", filter: d.isPaused ? "grayscale(40%)" : "none" }}

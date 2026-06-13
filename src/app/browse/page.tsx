@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useBrowse } from "./BrowseContext";
 import type { PropertyData } from "./PropertyDetailSheet";
-import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META } from "../constants";
+import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../constants";
 import { listenToBrowseListings } from "@/lib/browse";
 import type { ListingData } from "@/lib/listings";
 
@@ -65,7 +65,7 @@ function listingToFeaturedCard(listing: ListingData, idx: number) {
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
     badge: listing.boosted ? "Featured" : idx === 0 ? "New" : "",
-    img: listing.images?.[0] || '',
+    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
     photos: listing.images?.length || 0,
@@ -79,7 +79,7 @@ function listingToRecentCard(listing: ListingData, idx: number) {
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || '',
+    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
     time: listing.createdAt
       ? `${Math.floor((Date.now() - listing.createdAt.toDate().getTime()) / 3600000)}h ago`
       : "Recently",
@@ -94,7 +94,7 @@ function listingToPropertyData(listing: ListingData, idx: number): PropertyData 
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    image: listing.images?.[0] || '',
+    image: listing.images?.[0] || PLACEHOLDER_IMAGE,
     gallery: listing.images?.length > 0
       ? listing.images
       : [],
@@ -180,10 +180,10 @@ export default function BrowseHome() {
   const defaultRecentlyViewed = recentListings.slice(0, 4).length > 0
     ? recentListings.slice(0, 4)
     : [
-    { id: 7, title: "Modern Bedsitter - Kilimani", location: "Kilimani, Nairobi", price: "15,000", time: "30m ago", timeColor: "#047857" as const, listingId: "" },
-  { id: 8, title: "2BR Apartment - Westlands", location: "Westlands, Nairobi", price: "45,000", time: "1h ago", timeColor: "#047857" as const, listingId: "" },
-  { id: 9, title: "1BR - Nyali", location: "Nyali, Mombasa", price: "35,000", time: "2h ago", timeColor: "#047857" as const, listingId: "" },
-  { id: 10, title: "Single Room - Roysambu", location: "Roysambu, Nairobi", price: "6,500", time: "3h ago", timeColor: "#525252" as const, listingId: "" },
+    { id: 7, title: "Modern Bedsitter - Kilimani", location: "Kilimani, Nairobi", price: "15,000", time: "30m ago", timeColor: "#047857" as const, listingId: "", img: PLACEHOLDER_IMAGE },
+  { id: 8, title: "2BR Apartment - Westlands", location: "Westlands, Nairobi", price: "45,000", time: "1h ago", timeColor: "#047857" as const, listingId: "", img: PLACEHOLDER_IMAGE },
+  { id: 9, title: "1BR - Nyali", location: "Nyali, Mombasa", price: "35,000", time: "2h ago", timeColor: "#047857" as const, listingId: "", img: PLACEHOLDER_IMAGE },
+  { id: 10, title: "Single Room - Roysambu", location: "Roysambu, Nairobi", price: "6,500", time: "3h ago", timeColor: "#525252" as const, listingId: "", img: PLACEHOLDER_IMAGE },
       ];
 
   const displayRecentViews = recentlyViewed.length > 0 ? recentlyViewed : defaultRecentlyViewed;
@@ -259,7 +259,7 @@ export default function BrowseHome() {
       title: item.title,
       location: item.location,
       price: item.price,
-      img: item.img || '',
+      img: item.img || PLACEHOLDER_IMAGE,
       time: "Just now",
       timeColor: "#047857",
     });
@@ -281,10 +281,10 @@ export default function BrowseHome() {
           title: listing.title,
           location: listing.location,
           price: listing.price,
-          image: listing.img || '',
+          image: listing.img || PLACEHOLDER_IMAGE,
           gallery: listing.img
             ? [listing.img]
-            : [],
+            : [PLACEHOLDER_IMAGE],
           badge: "FEATURED",
           featured: true,
           verified: true,
@@ -499,9 +499,12 @@ export default function BrowseHome() {
               >
                 <div className="relative">
                   <img
-                    src={listing.img}
+                    src={listing.img || PLACEHOLDER_IMAGE}
                     alt={listing.title}
                     className="w-full h-40 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                    }}
                   />
                   {listing.badge && (
                     <div className="absolute top-3 left-3">
@@ -676,10 +679,13 @@ export default function BrowseHome() {
             >
               <div className="flex">
                 <img
-                  src={listing.img}
+                  src={listing.img || PLACEHOLDER_IMAGE}
                   alt={listing.title}
                   className="w-28 h-28 object-cover"
                   style={{ borderRadius: "20px 0 0 20px" }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                  }}
                 />
                 <div className="flex-1 p-3 flex flex-col justify-between">
                   <div>

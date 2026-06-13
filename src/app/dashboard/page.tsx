@@ -10,6 +10,7 @@ import {
   BATHROOM_OPTIONS,
   FLOOR_OPTIONS,
   COUNTY_OPTIONS,
+  PLACEHOLDER_IMAGE,
 } from "../constants";
 import {
   Search,
@@ -1334,7 +1335,7 @@ export default function LandlordDashboard() {
                 onScroll={handlePropertyScroll}
               >
                 {properties.map((prop, i) => {
-                  const imgUrl = prop.images?.[0] || '';
+                  const imgUrl = prop.images?.[0] || PLACEHOLDER_IMAGE;
                   const statusChipColor = prop.status === "active" ? "rgba(4,120,87,0.9)" : prop.status === "partial" ? "rgba(234,179,8,0.9)" : "rgba(59,130,246,0.9)";
                   const barColor = prop.status === "active" ? "#047857" : prop.status === "partial" ? "#eab308" : "#3b82f6";
                   const pct = prop.totalUnits > 0 ? Math.round((prop.occupiedUnits / prop.totalUnits) * 100) : 0;

@@ -19,6 +19,7 @@ import {
 import type { ListingData } from "../../lib/listings";
 import type { PropertyData } from "../../lib/properties";
 import { getListingImage } from "../../lib/resolveImages";
+import { PLACEHOLDER_IMAGE } from "../constants";
 
 type DetailTab = "overview" | "analytics" | "activity";
 
@@ -122,7 +123,7 @@ export default function ViewListingSheet({
         {/* Cover Photo Header */}
         <div className="relative" style={{ height: "180px" }}>
           <img
-            src={getListingImage(sl, properties)}
+            src={getListingImage(sl, properties) || PLACEHOLDER_IMAGE}
             className="w-full h-full object-cover"
           />
           <div

@@ -23,6 +23,7 @@ import {
 import { useBrowse } from "../BrowseContext";
 import { useAuth } from "../../AuthContext";
 import type { PropertyData } from "../PropertyDetailSheet";
+import { PLACEHOLDER_IMAGE } from "../constants";
 import {
   listenToFavorites,
   listenToSavedSearches,
@@ -422,10 +423,10 @@ export default function SavedPage() {
                       title: prop.title || prop.propertyName || "Untitled",
                       location: prop.location || "Nairobi, Kenya",
                       price: (prop.price || 0).toLocaleString(),
-                      image: prop.image || '',
+                      image: prop.image || PLACEHOLDER_IMAGE,
                       gallery: prop.image
                         ? [prop.image]
-                        : [],
+                        : [PLACEHOLDER_IMAGE],
                       verified: true,
                       featured: true,
                       type: "Bedsitter",
@@ -467,10 +468,13 @@ export default function SavedPage() {
                 <div className="flex">
                   <div className="relative w-28 h-28 flex-shrink-0">
                     <img
-                      src={prop.image || ''}
+                      src={prop.image || PLACEHOLDER_IMAGE}
                       alt={prop.title}
                       className="w-full h-full object-cover"
                       style={{ borderRadius: "20px 0 0 20px" }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                      }}
                     />
                     {selectMode && (
                       <div className="absolute top-2 right-2" onClick={(e) => { e.stopPropagation(); toggleCardSelect(prop.listingId); }}>

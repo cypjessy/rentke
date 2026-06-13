@@ -59,6 +59,7 @@ import {
 import { listenToUnits, type UnitData } from "../../lib/units";
 import { listenToProperties, type PropertyData } from "../../lib/properties";
 import { getListingImage } from "../../lib/resolveImages";
+import { PLACEHOLDER_IMAGE } from "../constants";
 import CreateListingSheet from "./CreateListingSheet";
 import ViewListingSheet from "./ViewListingSheet";
 
@@ -512,7 +513,7 @@ function ListingsPage() {
                         </div>
                       ) : (
                         <img
-                          src={getListingImage(listing, properties)}
+                          src={getListingImage(listing, properties) || PLACEHOLDER_IMAGE}
                           alt=""
                           className="w-full h-full object-cover"
                           style={{ minHeight: "150px", filter: imgFilter }}

@@ -33,6 +33,8 @@ import { useAuth } from "../AuthContext";
 import { createInquiry } from "@/lib/inquiries";
 import { scheduleViewing } from "@/lib/viewings";
 
+import { PLACEHOLDER_IMAGE } from "../constants";
+
 export interface PropertyData {
   id: number;
   title: string;
@@ -106,11 +108,13 @@ const defaultProperty: PropertyData = {
     reviews: 42,
   },
   landlordId: "",
+  image: PLACEHOLDER_IMAGE,
+  gallery: [PLACEHOLDER_IMAGE],
   photos: 5,
   isFavorited: false,
 };
 
-const galleryImages: string[] = [];
+const galleryImages: string[] = [PLACEHOLDER_IMAGE];
 
 const shareOptions = [
   { label: "WhatsApp", icon: MessageCircle, color: "#25D366", bg: "rgba(37,211,102,0.15)" },
@@ -388,9 +392,15 @@ export default function PropertyDetailSheet({
             ref={galleryRef}
             onScroll={handleGalleryScroll}
           >
-            {(p.gallery || galleryImages).map((img, i) => (
+            {(p.gallery && p.gallery.length > 0 ? p.gallery : galleryImages).map((img, i) => (
               <div key={i} className="gallery-item">
-                <img src={img} alt={`${p.title} photo ${i + 1}`} />
+                <img 
+                  src={img} 
+                  alt={`${p.title} photo ${i + 1}`} 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                  }}
+                />
               </div>
             ))}
             <div
@@ -401,13 +411,13 @@ export default function PropertyDetailSheet({
                 WebkitBackdropFilter: "blur(4px)",
               }}
             >
-              <span>{activeGalleryIndex + 1}</span>/{p.gallery?.length || galleryImages.length} 📷
+              <span>{activeGalleryIndex + 1}</span>/{(p.gallery && p.gallery.length > 0 ? p.gallery : galleryImages).length} 📷
             </div>
           </div>
 
           {/* Gallery Dots */}
           <div className="gallery-dots">
-            {(p.gallery || galleryImages).map((_, i) => (
+            {(p.gallery && p.gallery.length > 0 ? p.gallery : galleryImages).map((_, i) => (
               <div
                 key={i}
                 className={`gallery-dot ${i === activeGalleryIndex ? "active" : ""}`}

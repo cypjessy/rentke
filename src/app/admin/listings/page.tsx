@@ -30,6 +30,7 @@ import {
   Settings,
 } from "lucide-react";
 import { listenToAllListings, approveListing, rejectListing, flagListing as flagListingFS, boostListingAdmin, clearListingFlags, deleteListingAdmin } from "@/lib/admin";
+import { PLACEHOLDER_IMAGE } from "../../constants";
 import type { ListingData as FirestoreListing } from "@/lib/listings";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -463,7 +464,8 @@ export default function AdminListings() {
               <div key={l.title} className="listing-card" onClick={() => openListingDetail(origIdx)}>
                 {/* Image */}
                 <div className="relative">
-                  <img src={l.images[0]} className="w-full h-40 object-cover" alt="" style={l.status === "flagged" ? { filter: "brightness(0.7)" } : l.status === "expired" || l.status === "rejected" ? { filter: "grayscale(0.5) brightness(0.6)" } : undefined} />
+                  <img src={l.images[0] || PLACEHOLDER_IMAGE} className="w-full h-40 object-cover"
+ alt="" style={l.status === "flagged" ? { filter: "brightness(0.7)" } : l.status === "expired" || l.status === "rejected" ? { filter: "grayscale(0.5) brightness(0.6)" } : undefined} />
                   <div className="absolute top-3 left-3 flex gap-1.5">
                     <span className={`status-badge status-${l.status}`}>
                       {l.status === "flagged" && <Flag className="w-3 h-3" />}
@@ -623,7 +625,8 @@ export default function AdminListings() {
           {currentListing && (
             <>
               <div className="relative">
-                <img src={currentListing.images[0]} className="w-full h-52 object-cover" alt="" />
+                <img src={currentListing.images[0] || PLACEHOLDER_IMAGE} className="w-full h-52 object-cover"
+ alt="" />
                 <div className="absolute bottom-3 left-0 right-0">
                   <div className="img-dots">
                     {currentListing.images.map((_, i) => <div key={i} className={`img-dot ${i === 0 ? "active" : ""}`} />)}
@@ -857,7 +860,8 @@ export default function AdminListings() {
             </button>
           </div>
           <div className="flex items-center justify-center px-4" style={{ minHeight: "60dvh" }}>
-            <img src={currentListing?.images[galleryIndex] || ''} className="w-full rounded-2xl object-cover" style={{ maxHeight: "50dvh" }} alt="" />
+            <img src={currentListing?.images[galleryIndex] || PLACEHOLDER_IMAGE} className="w-full rounded-2xl object-cover"
+ style={{ maxHeight: "50dvh" }} alt="" />
           </div>
           <div className="flex items-center justify-center gap-4 mt-6 pb-8">
             <button onClick={prevImage} className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)" }}>
@@ -978,7 +982,8 @@ export default function AdminListings() {
                   .filter((l) => l.landlord === currentListing.landlord)
                   .map((l, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <img src={l.images[0]} className="w-11 h-11 rounded-lg object-cover" alt="" />
+                      <img src={l.images[0] || PLACEHOLDER_IMAGE} className="w-11 h-11 rounded-lg object-cover"
+ alt="" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{l.title}</p>
                         <p className="text-xs" style={{ color: "#525252" }}>{l.price} · {l.location}</p>
