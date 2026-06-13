@@ -27,10 +27,15 @@ import { PLACEHOLDER_IMAGE } from "../../constants";
 import {
   listenToFavorites,
   listenToSavedSearches,
+  listenToBrowseListings,
+  listenToBrowseProperties,
   toggleFavorite as toggleFavoriteFS,
   type FavoriteData,
   type SavedSearchData,
 } from "@/lib/browse";
+import { getListingImage, getListingImages } from "@/lib/resolveImages";
+import type { ListingData } from "@/lib/listings";
+import type { PropertyData as PropData } from "@/lib/properties";
 
 const sortOptions = [
   { label: "Recently Saved", icon: null },
@@ -57,6 +62,30 @@ export default function SavedPage() {
   const [favoriteSearches, setFavoriteSearches] = useState<SavedSearchData[]>([]);
   const [favLoading, setFavLoading] = useState(true);
 
+  // ---- Browse listings & properties for image fallback ----
+  const [allListings, setAllListings] = useState<ListingData[]>([]);
+  const [allProperties, setAllProperties] = useState<PropData[]>([]);
+
+  /** Resolve the best image for a saved favorite, falling back to its listing's parent property. */
+  function resolveSavedImage(fav: FavoriteData): string {
+    if (fav.image && fav.image !== PLACEHOLDER_IMAGE) return fav.image;
+    const listing = allListings.find((l) => l.id === fav.listingId);
+    if (listing) {
+      const resolved = getListingImage(listing, allProperties);
+      if (resolved) return resolved;
+    }
+    return PLACEHOLDER_IMAGE;
+  }
+
+  function resolveSavedGallery(fav: FavoriteData): string[] {
+    const listing = allListings.find((l) => l.id === fav.listingId);
+    if (listing) {
+      const imgs = getListingImages(listing, allProperties);
+      if (imgs.length > 0) return imgs;
+    }
+    return [resolveSavedImage(fav)];
+  }
+
   useEffect(() => {
     if (!user) {
       setFavLoading(false);
@@ -78,9 +107,21 @@ export default function SavedPage() {
       () => {}
     );
 
+    // Listen to all active listings + properties for image fallback
+    const unsub3 = listenToBrowseListings(
+      (listings) => setAllListings(listings),
+      () => {}
+    );
+    const unsub4 = listenToBrowseProperties(
+      (props) => setAllProperties(props),
+      () => {}
+    );
+
     return () => {
       unsub1();
       unsub2();
+      unsub3();
+      unsub4();
     };
   }, [user]);
 
@@ -418,15 +459,15 @@ export default function SavedPage() {
                   if (selectMode) {
                     toggleCardSelect(prop.listingId);
                   } else {
+                    const resolvedImage = resolveSavedImage(prop);
+                    const resolvedGallery = resolveSavedGallery(prop);
                     const propData: PropertyData = {
                       id: parseInt(prop.listingId, 10) || 0,
                       title: prop.title || prop.propertyName || "Untitled",
                       location: prop.location || "Nairobi, Kenya",
                       price: (prop.price || 0).toLocaleString(),
-                      image: prop.image || PLACEHOLDER_IMAGE,
-                      gallery: prop.image
-                        ? [prop.image]
-                        : [PLACEHOLDER_IMAGE],
+                      image: resolvedImage,
+                      gallery: resolvedGallery,
                       verified: true,
                       featured: true,
                       type: "Bedsitter",
@@ -468,7 +509,7 @@ export default function SavedPage() {
                 <div className="flex">
                   <div className="relative w-28 h-28 flex-shrink-0">
                     <img
-                      src={prop.image || PLACEHOLDER_IMAGE}
+                      src={resolveSavedImage(prop)}
                       alt={prop.title}
                       className="w-full h-full object-cover"
                       style={{ borderRadius: "20px 0 0 20px" }}

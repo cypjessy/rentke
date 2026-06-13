@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -13,7 +13,6 @@ import {
   X,
   MessageCircle,
   Calendar,
-  Home,
   Tag,
   Check,
 } from "lucide-react";
@@ -33,13 +32,6 @@ const categories = [
   "🏢 Office",
   "📐 Plot",
   "🏪 Shop",
-];
-
-const popularAreas = [
-    { name: "Kilimani", listings: 240 },
-  { name: "Westlands", listings: 185 },
-  { name: "Rongai", listings: 320 },
-  { name: "Kileleshwa", listings: 150 },
 ];
 
 const cities = [
@@ -206,6 +198,38 @@ export default function BrowseHome() {
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [searchSheetOpen, setSearchSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // ---- Derive popular areas dynamically from active listings ----
+  const popularAreas = useMemo(() => {
+    const areaMap = new Map<string, { count: number; sampleListing: ListingData }>();
+    for (const listing of allListings) {
+      if (listing.status !== "active") continue;
+      const areaName = listing.propertyName?.trim();
+      if (!areaName) continue;
+      const existing = areaMap.get(areaName);
+      if (existing) {
+        existing.count++;
+      } else {
+        areaMap.set(areaName, { count: 1, sampleListing: listing });
+      }
+    }
+    const entries = Array.from(areaMap.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 4)
+      .map(([name, { count, sampleListing }]) => ({
+        name,
+        listings: count,
+        image: getListingImage(sampleListing, allProperties) || PLACEHOLDER_IMAGE,
+      }));
+    return entries.length > 0
+      ? entries
+      : [
+          { name: "Kilimani", listings: 240, image: PLACEHOLDER_IMAGE },
+          { name: "Westlands", listings: 185, image: PLACEHOLDER_IMAGE },
+          { name: "Rongai", listings: 320, image: PLACEHOLDER_IMAGE },
+          { name: "Kileleshwa", listings: 150, image: PLACEHOLDER_IMAGE },
+        ];
+  }, [allListings, allProperties]);
 
   // ---- Bottom Sheet Helpers ----
   const openSheet = (setter: (v: boolean) => void, focusSearch?: boolean) => {
@@ -602,9 +626,17 @@ export default function BrowseHome() {
             <div
               key={area.name}
               className="browse-area-card ripple-container"
-              onClick={() => router.push(`/browse/explore?q=${encodeURIComponent(area.name)}`)}
+              onClick={() => router.push(`/browse/area/${encodeURIComponent(area.name)}`)}
             >
-              <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }} />
+              <img
+                src={area.image}
+                alt={area.name}
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)' }} />
               <div className="absolute bottom-0 left-0 right-0 p-3" style={{ zIndex: 10 }}>
                 <p className="text-sm font-bold text-white">{area.name}</p>
                 <p className="text-xs" style={{ color: "#a3a3a3" }}>{area.listings} listings</p>
@@ -634,8 +666,15 @@ export default function BrowseHome() {
               style={{ width: "220px" }}
               onClick={() => openPropertyFromListing(item)}
             >
-              <div className="relative">
-                <div className="w-full h-28 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}><Home className="w-8 h-8" style={{ color: '#525252' }} /></div>
+              <div className="relative w-full h-28" style={{ borderRadius: "20px 20px 0 0", overflow: "hidden", background: "linear-gradient(135deg, #0f172a, #1e293b)" }}>
+                <img
+                  src={item.img || PLACEHOLDER_IMAGE}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
               </div>
               <div className="p-3">
                 <h3 className="font-bold text-white text-xs">{item.title}</h3>
