@@ -7,7 +7,15 @@ import {
   Search,
   Heart,
   MessageCircle,
+  Wallet,
+  FileText,
+  Menu,
   User,
+  Bell,
+  CalendarDays,
+  Send,
+  MessageSquare,
+  X as XIcon,
   Check,
   X,
   Info,
@@ -17,11 +25,31 @@ import PropertyDetailSheet from "./PropertyDetailSheet";
 import { useAuth } from "../AuthContext";
 
 const navItems = [
-  { label: "Home", icon: Home, path: "/browse" },
-  { label: "Explore", icon: Search, path: "/browse/explore" },
-  { label: "Saved", icon: Heart, path: "/browse/saved" },
-  { label: "Messages", icon: MessageCircle, path: "/browse/messages" },
-  { label: "Profile", icon: User, path: "/browse/profile" },
+  { key: "home", label: "Home", icon: Home, path: "/browse" },
+  { key: "explore", label: "Explore", icon: Search, path: "/browse/explore" },
+  { key: "saved", label: "Saved", icon: Heart, path: "/browse/saved" },
+  { key: "payments", label: "Payments", icon: Wallet, path: "/browse/payments" },
+  { key: "messages", label: "Messages", icon: MessageCircle, path: "/browse/messages" },
+  { key: "more", label: "More", icon: Menu, path: null },
+];
+
+const EXTRA_SECTIONS = [    {
+      title: "Account",
+      items: [
+        { icon: User, label: "Profile", desc: "Your profile & settings", color: "#047857", bg: "rgba(4,120,87,0.12)", path: "/browse/profile" },
+        { icon: Wallet, label: "My Payments", desc: "Pay rent & view history", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/payments" },
+      ],
+    },
+  {
+    title: "Activity",
+    items: [
+      { icon: Send, label: "Inquiries", desc: "Messages to landlords", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/browse/inquiries" },
+      { icon: CalendarDays, label: "Viewings", desc: "Scheduled visits", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/viewings" },
+      { icon: Bell, label: "Notifications", desc: "Alerts & updates", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/notifications" },
+      { icon: MessageSquare, label: "Issues", desc: "Complaints & vacating", color: "#ef4444", bg: "rgba(239,68,68,0.12)", path: "/browse/issues" },
+      { icon: FileText, label: "Documents", desc: "Leases, notices & forms", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/browse/documents" },
+    ],
+  },
 ];
 
 function BrowseShell({ children }: { children: React.ReactNode }) {
@@ -29,6 +57,7 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { role } = useAuth();
   const { showSnackbar: ctxShowSnackbar, closePropertyDetail, propertyDetail, unreadMessageCount } = useBrowse();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Role check: redirect landlords to dashboard
   useEffect(() => {
@@ -156,7 +185,13 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
             return (
               <button
                 key={item.label}
-                onClick={() => router.push(item.path)}
+                onClick={() => {
+                  if (item.key === "more") {
+                    setMoreOpen(true);
+                  } else if (item.path) {
+                    router.push(item.path);
+                  }
+                }}
                 className="flex flex-col items-center gap-1 px-3 relative"
                 style={{ color: isActive ? "#047857" : "#525252", fontSize: "10px", fontWeight: 500 }}
               >
@@ -189,6 +224,88 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
+
+      {/* ====== MORE SHEET OVERLAY ====== */}
+      <div
+        className={`sheet-overlay ${moreOpen ? "active" : ""}`}
+        onClick={() => setMoreOpen(false)}
+      />
+
+      {/* ====== MORE SHEET ====== */}
+      <div className={`bottom-sheet ${moreOpen ? "active" : ""}`}>
+        <div className="sheet-handle" />
+
+        <div className="px-5 pt-5 pb-2">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-bold text-white">More</h3>
+            <button
+              onClick={() => setMoreOpen(false)}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
+              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
+            </button>
+          </div>
+          <p className="text-xs" style={{ color: "#a3a3a3" }}>
+            All client portal tools &amp; pages
+          </p>
+        </div>
+
+        <div className="px-3 pb-8 space-y-6">
+          {EXTRA_SECTIONS.map((section) => (
+            <div key={section.title}>
+              {/* Section Header */}
+              <div className="flex items-center gap-2 px-2 mb-3">
+                <div
+                  className="w-1 h-4 rounded-full"
+                  style={{ background: section.items[0]?.color || "#525252" }}
+                />
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: "#525252" }}
+                >
+                  {section.title}
+                </span>
+              </div>
+
+              {/* Grid Items */}
+              <div className="grid grid-cols-3 gap-2">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        setMoreOpen(false);
+                        if (item.path) {
+                          setTimeout(() => router.push(item.path), 200);
+                        }
+                      }}
+                      className="flex flex-col items-center gap-2 p-3.5 rounded-2xl transition-all duration-150 active:scale-95"
+                      style={{ background: "rgba(255,255,255,0.02)" }}
+                    >
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{ background: item.bg }}
+                      >
+                        <Icon className="w-5 h-5" style={{ color: item.color }} />
+                      </div>
+                      <span className="text-xs font-medium text-center leading-tight text-white">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+                {/* Pad empty slots to keep alignment */}
+                {section.items.length < 3 &&
+                  Array.from({ length: 3 - section.items.length }).map((_, i) => (
+                    <div key={`spacer-${i}`} className="invisible" />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ====== SNACKBAR ====== */}
       {snackbarVisible && (

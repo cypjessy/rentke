@@ -33,6 +33,7 @@ export interface ConversationData {
   unreadCount: Record<string, number>;
   propertyId?: string;
   propertyName?: string;
+  propertyImage?: string;
   unitId?: string;
   unitName?: string;
   status: "active" | "archived";
@@ -92,6 +93,7 @@ export function listenToConversations(
           unreadCount: data.unreadCount || {},
           propertyId: data.propertyId || undefined,
           propertyName: data.propertyName || undefined,
+          propertyImage: data.propertyImage || undefined,
           unitId: data.unitId || undefined,
           unitName: data.unitName || undefined,
           status: data.status || "active",
@@ -220,9 +222,11 @@ export async function createConversation(
     participantNames: Record<string, string>;
     propertyId?: string;
     propertyName?: string;
+    propertyImage?: string;
     unitId?: string;
     unitName?: string;
     firstMessage: string;
+    firstMessageAttachments?: MessageAttachment[];
     senderId: string;
   }
 ): Promise<string> {
@@ -240,6 +244,7 @@ export async function createConversation(
     unreadCount,
     propertyId: data.propertyId || null,
     propertyName: data.propertyName || null,
+    propertyImage: data.propertyImage || null,
     unitId: data.unitId || null,
     unitName: data.unitName || null,
     status: "active",
@@ -247,13 +252,13 @@ export async function createConversation(
     createdAt: serverTimestamp(),
   });
 
-  // Also add the first message
+  // Also add the first message with attachments
   await addDoc(messagesRef, {
     conversationId: docRef.id,
     senderId: data.senderId,
     text: data.firstMessage,
     read: false,
-    attachments: [],
+    attachments: data.firstMessageAttachments || [],
     createdAt: serverTimestamp(),
   });
 

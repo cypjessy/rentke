@@ -284,6 +284,19 @@ export default function MessagesPage() {
     const text = chatInput.trim();
     if (!text || !activeChat || !user?.uid) return;
 
+    // Optimistically add the message locally so it appears instantly
+    const optimisticMsg: MessageData = {
+      id: `opt-${Date.now()}`,
+      conversationId: activeChat,
+      senderId: user.uid,
+      text,
+      read: false,
+      attachments: [],
+      createdAt: Timestamp.fromDate(new Date()),
+    };
+    setCurrentMessages((prev) => [...prev, optimisticMsg]);
+
+    // Write to Firestore — the listener will replace currentMessages when it fires
     sendMessageFS(activeChat, user.uid, text);
     setChatInput("");
     setReplyContext(null);
@@ -768,15 +781,31 @@ export default function MessagesPage() {
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <div
-              className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold"
-              style={{
-                background: "linear-gradient(135deg, #047857, #059669)",
-                color: "white",
-              }}
-            >
-              {displayChat?.name?.charAt(0) || "P"}
-            </div>
+            {activeChatData?.propertyImage ? (
+              <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden">
+                <img
+                  src={activeChatData.propertyImage}
+                  alt={activeChatData.propertyName || "Property"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "";
+                    (e.target as HTMLImageElement).style.display = "none";
+                    (e.target as HTMLImageElement).parentElement!.className = "w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold";
+                    (e.target as HTMLImageElement).parentElement!.style.background = "linear-gradient(135deg, #047857, #059669)";
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #047857, #059669)",
+                  color: "white",
+                }}
+              >
+                {displayChat?.name?.charAt(0) || "P"}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p
                 className="text-xs font-semibold uppercase tracking-wider"

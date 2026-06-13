@@ -327,6 +327,18 @@ export default function PropertyDetailSheet({
     }
     setMessageLoading(true);
     try {
+      // Build property attachment: use first gallery image or main image
+      const propertyImageUrl = (p.gallery && p.gallery.length > 0) ? p.gallery[0] : p.image;
+      const firstMessageAttachments = propertyImageUrl && propertyImageUrl.startsWith("http") ? [{
+        type: "image" as const,
+        name: p.title || "Property Image",
+        url: propertyImageUrl,
+        mimeType: "image/jpeg",
+      }] : [];
+
+      // Build rich first message with property details
+      const richMessage = `Hi, I'm interested in "${p.title}" — KSh ${p.price}/mo in ${p.location}. Is it still available?`;
+
       await createConversation({
         participants: [user.uid, p.landlordId],
         participantNames: {
@@ -335,7 +347,9 @@ export default function PropertyDetailSheet({
         },
         propertyId: String(p.id),
         propertyName: p.title,
-        firstMessage: `Hi, I'm interested in "${p.title}" listed at KSh ${p.price}/mo. Is it still available?`,
+        propertyImage: propertyImageUrl || undefined,
+        firstMessage: richMessage,
+        firstMessageAttachments: firstMessageAttachments.length > 0 ? firstMessageAttachments : undefined,
         senderId: user.uid,
       });
       setMessageLoading(false);

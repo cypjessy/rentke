@@ -1427,6 +1427,44 @@
   font-weight: 700;
 }
 
+/* ===== BOTTOM SHEETS (Profile & Settings Pages) ===== */
+.bs-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.bs-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.bs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a1d21;
+  border-radius: 28px 28px 0 0;
+  z-index: 101;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.bs.active {
+  transform: translateY(0);
+}
+.bs-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
 /* ===== PROFILE & SETTINGS PAGES ===== */
 
 /* Settings Group Container */

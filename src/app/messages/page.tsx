@@ -79,6 +79,7 @@ interface EnrichedChat {
   preview: string;
   unread: number;
   phone: string;
+  propertyImage?: string;
 }
 
 interface LocalMessage {
@@ -192,6 +193,8 @@ export default function MessagesPage() {
       preview: conv.lastMessage || "",
       unread,
       phone: "",
+      // Include propertyImage for display in the chat header
+      propertyImage: conv.propertyImage || "",
     };
   });
 
@@ -248,9 +251,23 @@ export default function MessagesPage() {
     const text = inputText.trim();
     if (!text || !activeChatId || !uid) return;
 
+    // Optimistically add the message locally so it appears instantly
+    setCurrentMessages((prev) => [
+      ...prev,
+      {
+        id: `opt-${Date.now()}`,
+        conversationId: activeChatId,
+        senderId: uid,
+        text,
+        read: false,
+        attachments: [],
+        createdAt: Timestamp.fromDate(new Date()),
+      },
+    ]);
+
+    // Write to Firestore — the listener will replace currentMessages when it fires
     sendMessageFS(activeChatId, uid, text);
     setInputText("");
-
   };
 
   // ---- Handle Enter key ----
@@ -870,16 +887,35 @@ export default function MessagesPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column", background: "#050505" }}>
           {/* Chat Header */}
           <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: "#1A1D21", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <button onClick={closeChat} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
-              <ArrowLeft className="w-5 h-5" style={{ color: "#e5e5e5" }} />
-            </button>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(4,120,87,0.15)" }}>
-              <span className="text-sm font-bold" style={{ color: "#047857" }}>{(enrichedChats.find((c) => c.id === activeChatId)?.initials) || "?"}</span>
+      <button onClick={closeChat} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
+        <ArrowLeft className="w-5 h-5" style={{ color: "#e5e5e5" }} />
+      </button>
+      {(() => {
+        const chatData = enrichedChats.find((c) => c.id === activeChatId);
+        if (chatData?.propertyImage) {
+          return (
+            <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden">
+              <img
+                src={chatData.propertyImage}
+                alt={chatData.unit || "Property"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">{enrichedChats.find((c) => c.id === activeChatId)?.name || "Chat"}</p>
-              <p className="text-xs" style={{ color: "#a3a3a3" }}>{enrichedChats.find((c) => c.id === activeChatId)?.unit || ""}</p>
-            </div>
+          );
+        }
+        return (
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(4,120,87,0.15)" }}>
+            <span className="text-sm font-bold" style={{ color: "#047857" }}>{chatData?.initials || "?"}</span>
+          </div>
+        );
+      })()}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white">{enrichedChats.find((c) => c.id === activeChatId)?.name || "Chat"}</p>
+        <p className="text-xs" style={{ color: "#a3a3a3" }}>{enrichedChats.find((c) => c.id === activeChatId)?.unit || ""}</p>
+      </div>
             <button onClick={() => openSheet("callOptions")} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.04)" }}>
               <Phone className="w-4 h-4" style={{ color: "#a3a3a3" }} />
             </button>
