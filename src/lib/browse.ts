@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { ListingData } from "./listings";
+import type { PropertyData } from "./properties";
 
 // ---- Favorites ----
 
@@ -213,6 +214,45 @@ export async function toggleSavedSearch(
 /** Delete a saved search. */
 export async function deleteSavedSearch(searchId: string): Promise<void> {
   await deleteDoc(doc(savedSearchesRef, searchId));
+}
+
+// ---- Browse Properties (tenant-visible) ----
+
+/** Listen to all properties (for image fallback in browse/explore pages). */
+export function listenToBrowseProperties(
+  onData: (props: PropertyData[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    collection(db, "properties"),
+    (snapshot) => {
+      const list: PropertyData[] = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          name: data.name || "",
+          location: data.location || "",
+          county: data.county || "",
+          type: data.type || "",
+          description: data.description || "",
+          totalUnits: data.totalUnits || 0,
+          occupiedUnits: data.occupiedUnits || 0,
+          revenue: data.revenue || 0,
+          status: data.status || "vacant",
+          rentMin: data.rentMin || 0,
+          rentMax: data.rentMax || 0,
+          amenities: data.amenities || [],
+          images: data.images || [],
+          landlordId: data.landlordId || "",
+          paused: data.paused || false,
+          createdAt: data.createdAt || null,
+          updatedAt: data.updatedAt || null,
+        };
+      });
+      onData(list);
+    },
+    (err) => onError(err)
+  );
 }
 
 // ---- Browse Listings (tenant-visible) ----

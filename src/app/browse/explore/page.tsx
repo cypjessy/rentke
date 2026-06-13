@@ -21,8 +21,10 @@ import { useSearchParams } from "next/navigation";
 import { useBrowse } from "../BrowseContext";
 import type { PropertyData } from "../PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, UNIT_AMENITIES, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../../constants";
-import { listenToBrowseListings } from "@/lib/browse";
+import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
+import { getListingImage, getListingImages } from "@/lib/resolveImages";
 import type { ListingData } from "@/lib/listings";
+import type { PropertyData as PropData } from "@/lib/properties";
 
 // ---- Search Suggestions (static) ----
 const searchSuggestions = [
@@ -191,13 +193,13 @@ function applySort(listings: ListingData[], sortKey: string): ListingData[] {
   }
 }
 
-function listingToResultItem(listing: ListingData, idx: number) {
+function listingToResultItem(listing: ListingData, properties: PropData[], idx: number) {
   return {
     id: idx + 1,
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
+    img: getListingImage(listing, properties) || PLACEHOLDER_IMAGE,
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "NEW" : "",
@@ -221,8 +223,9 @@ export default function ExplorePage() {
 function ExplorePageInner() {
   const { showSnackbar, openPropertyDetail, favorites, toggleFavorite, addToRecentlyViewed } = useBrowse();
 
-  // ---- Firestore listings ----
+  // ---- Firestore listings & properties ----
   const [allListings, setAllListings] = useState<ListingData[]>([]);
+  const [allProperties, setAllProperties] = useState<PropData[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
 
   useEffect(() => {
@@ -232,6 +235,14 @@ function ExplorePageInner() {
         setListingsLoading(false);
       },
       () => setListingsLoading(false)
+    );
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const unsub = listenToBrowseProperties(
+      (props) => setAllProperties(props),
+      () => {}
     );
     return () => unsub();
   }, []);
@@ -278,7 +289,7 @@ function ExplorePageInner() {
     .filter((l) => l.status === "active")
     .filter((l) => matchesFilters(l, { searchQuery, selectedPreset, selectedTypes, selectedBedrooms, selectedAmenities }));
   const sortedResults = applySort(filteredResults, selectedSort);
-  const searchResults = sortedResults.map((l, i) => listingToResultItem(l, i));
+  const searchResults = sortedResults.map((l, i) => listingToResultItem(l, allProperties, i));
 
   // ---- Map cards from first 3 results (with full listing data) ----
   const mapListings = sortedResults.slice(0, 3);
@@ -715,10 +726,10 @@ function ExplorePageInner() {
                   title: listing.title || listing.propertyName || "Untitled",
                   location: listing.propertyName || "Nairobi, Kenya",
                   price: listing.rent.toLocaleString(),
-                  image: listing.images?.[0] || PLACEHOLDER_IMAGE,
-                  gallery: listing.images?.length
-                  ? listing.images
-                  : [listing.images?.[0] || PLACEHOLDER_IMAGE],
+                  image: getListingImage(listing, allProperties) || PLACEHOLDER_IMAGE,
+                  gallery: getListingImages(listing, allProperties).length > 0
+                    ? getListingImages(listing, allProperties)
+                    : [getListingImage(listing, allProperties) || PLACEHOLDER_IMAGE],
                   badge: listing.boosted ? "FEATURED" : "",
                   verified: true,
                   featured: !!listing.boosted,
@@ -750,12 +761,12 @@ function ExplorePageInner() {
                     reviews: 42,
                   },
                   landlordId: listing.landlordId || "",
-                  photos: 5,
+                  photos: getListingImages(listing, allProperties).length || 5,
                   isFavorited: favorites.includes(i + 1),
                 };
                 openPropertyDetail(propData);
               }}>
-                <img src={listing.images?.[0] || PLACEHOLDER_IMAGE} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
+                <img src={getListingImage(listing, allProperties) || PLACEHOLDER_IMAGE} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
                 <div className="p-3">
                   <h3 className="font-bold text-white text-xs">{listing.title || listing.propertyName || "Untitled"}</h3>
                   <p className="text-sm font-bold mt-1" style={{ color: "#047857" }}>KSh {listing.rent.toLocaleString()}/mo</p>

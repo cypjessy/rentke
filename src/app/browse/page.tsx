@@ -20,8 +20,10 @@ import {
 import { useBrowse } from "./BrowseContext";
 import type { PropertyData } from "./PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../constants";
-import { listenToBrowseListings } from "@/lib/browse";
+import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
+import { getListingImage, getListingImages } from "@/lib/resolveImages";
 import type { ListingData } from "@/lib/listings";
+import type { PropertyData as PropData } from "@/lib/properties";
 
 // ---- UI Constants (static) ----
 const categories = [
@@ -58,28 +60,29 @@ const trendingSearches = [
 
 
 // ---- Helpers to map ListingData to UI display objects ----
-function listingToFeaturedCard(listing: ListingData, idx: number) {
+function listingToFeaturedCard(listing: ListingData, properties: PropData[], idx: number) {
+  const img = getListingImage(listing, properties) || PLACEHOLDER_IMAGE;
   return {
     id: idx + 1,
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
     badge: listing.boosted ? "Featured" : idx === 0 ? "New" : "",
-    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
+    img,
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
-    photos: listing.images?.length || 0,
+    photos: getListingImages(listing, properties).length || 0,
     listingId: listing.id,
   };
 }
 
-function listingToRecentCard(listing: ListingData, idx: number) {
+function listingToRecentCard(listing: ListingData, properties: PropData[], idx: number) {
   return {
     id: idx + 100,
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || PLACEHOLDER_IMAGE,
+    img: getListingImage(listing, properties) || PLACEHOLDER_IMAGE,
     time: listing.createdAt
       ? `${Math.floor((Date.now() - listing.createdAt.toDate().getTime()) / 3600000)}h ago`
       : "Recently",
@@ -88,16 +91,16 @@ function listingToRecentCard(listing: ListingData, idx: number) {
   };
 }
 
-function listingToPropertyData(listing: ListingData, idx: number): PropertyData {
+function listingToPropertyData(listing: ListingData, properties: PropData[], idx: number): PropertyData {
+  const image = getListingImage(listing, properties) || PLACEHOLDER_IMAGE;
+  const gallery = getListingImages(listing, properties);
   return {
     id: idx + 1,
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    image: listing.images?.[0] || PLACEHOLDER_IMAGE,
-    gallery: listing.images?.length > 0
-      ? listing.images
-      : [],
+    image,
+    gallery: gallery.length > 0 ? gallery : [image],
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "New" : undefined,
     featured: listing.boosted || idx === 0,
     verified: true,
@@ -122,7 +125,7 @@ function listingToPropertyData(listing: ListingData, idx: number): PropertyData 
       reviews: 42,
     },
     landlordId: listing.landlordId || "",
-    photos: listing.images?.length || 5,
+    photos: gallery.length || listing.images?.length || 5,
     isFavorited: false,
   };
 }
@@ -141,8 +144,9 @@ export default function BrowseHome() {
     unreadNotificationCount,
   } = useBrowse();
 
-  // ---- Firestore listings state ----
+  // ---- Firestore listings & properties state ----
   const [allListings, setAllListings] = useState<ListingData[]>([]);
+  const [allProperties, setAllProperties] = useState<PropData[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
 
   useEffect(() => {
@@ -156,16 +160,24 @@ export default function BrowseHome() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    const unsub = listenToBrowseProperties(
+      (props) => setAllProperties(props),
+      () => {}
+    );
+    return () => unsub();
+  }, []);
+
   // Derive featured (boosted) and recent listings from Firestore data
   const featuredListings = allListings
     .filter((l) => l.status === "active" && l.boosted)
     .slice(0, 6)
-    .map((l, i) => listingToFeaturedCard(l, i));
+    .map((l, i) => listingToFeaturedCard(l, allProperties, i));
 
   // If no boosted listings, use first 3 active as featured
   const displayFeatured = featuredListings.length > 0
     ? featuredListings
-    : allListings.filter((l) => l.status === "active").slice(0, 3).map((l, i) => listingToFeaturedCard(l, i));
+    : allListings.filter((l) => l.status === "active").slice(0, 3).map((l, i) => listingToFeaturedCard(l, allProperties, i));
 
   const recentListings = allListings
     .filter((l) => l.status === "active")
@@ -174,7 +186,7 @@ export default function BrowseHome() {
       return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
     })
     .slice(0, 6)
-    .map((l, i) => listingToRecentCard(l, i));
+    .map((l, i) => listingToRecentCard(l, allProperties, i));
 
   // Default recently viewed fallback
   const defaultRecentlyViewed = recentListings.slice(0, 4).length > 0
@@ -275,7 +287,7 @@ export default function BrowseHome() {
       : undefined;
 
     const propData: PropertyData = fullListing
-      ? listingToPropertyData(fullListing, listing.id - 1)
+      ? listingToPropertyData(fullListing, allProperties, listing.id - 1)
       : {
           id: listing.id,
           title: listing.title,
