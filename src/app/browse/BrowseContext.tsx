@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { PropertyData } from "./PropertyDetailSheet";
+import { PLACEHOLDER_IMAGE } from "../constants";
 import { useAuth } from "../AuthContext";
 import { listenToTenantViewings, listenToTenantInquiries, listenToFavorites, toggleFavorite as toggleFavoriteFS } from "@/lib/browse";
 import { listenToConversations } from "@/lib/conversations";

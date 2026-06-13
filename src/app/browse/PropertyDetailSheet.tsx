@@ -72,8 +72,7 @@ const defaultProperty: PropertyData = {
   title: "Modern Bedsitter - Kilimani",
   location: "Kilimani, Nairobi, Kenya",
   price: "15,000",
-  image: "",
-  gallery: [],
+
   badge: "FEATURED",
   featured: true,
   verified: true,

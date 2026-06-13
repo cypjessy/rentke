@@ -23,7 +23,7 @@ import {
 import { useBrowse } from "../BrowseContext";
 import { useAuth } from "../../AuthContext";
 import type { PropertyData } from "../PropertyDetailSheet";
-import { PLACEHOLDER_IMAGE } from "../constants";
+import { PLACEHOLDER_IMAGE } from "../../constants";
 import {
   listenToFavorites,
   listenToSavedSearches,
