@@ -64,6 +64,7 @@ import {
 } from "../../lib/conversations";
 import { Timestamp } from "firebase/firestore";
 import { scheduleViewing } from "../../lib/viewings";
+import { uploadPhoto, takePhoto, openFilePicker } from "@/lib/upload";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -137,6 +138,7 @@ export default function MessagesPage() {
 
   // ---- Form Loading ----
   const [formLoading, setFormLoading] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // ---- Firestore State ----
   const [conversations, setConversations] = useState<ConversationData[]>([]);
@@ -220,8 +222,6 @@ export default function MessagesPage() {
 
   // ---- Enriched Chat state ----
   const [currentChat, setCurrentChat] = useState<ConversationData | null>(null);
-  const [messages, setMessages] = useState<LocalMessage[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
 
   // ---- Open Chat ----
   const openChat = (chat: EnrichedChat) => {
@@ -241,7 +241,6 @@ export default function MessagesPage() {
     setActiveChatId(null);
     setCurrentChat(null);
     setCurrentMessages([]);
-    setIsTyping(false);
   };
 
   // ---- Send Message ----
@@ -259,6 +258,42 @@ export default function MessagesPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    }
+  };
+
+  // ---- Send Image ----
+  const handleSendImage = async (source: "camera" | "gallery") => {
+    if (uploadingImage) return;
+    if (!activeChatId || !uid) {
+      showSnackbar("No active chat", "error");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      let file: File | null = null;
+      if (source === "camera") {
+        file = await takePhoto("camera");
+      } else {
+        const files = await openFilePicker("image/*", false);
+        file = files[0] || null;
+      }
+      if (!file) {
+        setUploadingImage(false);
+        return;
+      }
+      const result = await uploadPhoto(file, "chat-images", uid);
+      await sendMessageFS(activeChatId, uid, "📷 Photo", [{
+        type: "image",
+        name: file.name,
+        url: result.url,
+        size: file.size,
+        mimeType: file.type,
+      }]);
+      setUploadingImage(false);
+      setTimeout(() => showSnackbar("Image sent 📷", "success"), 300);
+    } catch (err: any) {
+      setUploadingImage(false);
+      showSnackbar(err?.message || "Failed to send image", "error");
     }
   };
 
@@ -647,7 +682,14 @@ export default function MessagesPage() {
               { icon: FileText, color: "#f97316", bg: "rgba(249,115,22,0.12)", label: "Document" },
               { icon: MapPin, color: "#a855f7", bg: "rgba(168,85,247,0.12)", label: "Location" },
             ].map((item, i) => (
-              <div key={i} className="attach-item" onClick={() => { closeSheet(); router.push('/properties'); }}>
+              <div key={i} className="attach-item" onClick={async () => {
+                closeSheet();
+                if (item.label === "Camera" || item.label === "Gallery") {
+                  await handleSendImage(item.label === "Camera" ? "camera" : "gallery");
+                } else {
+                  showSnackbar(`${item.label} coming soon`, "info");
+                }
+              }}>
                 <div className="attach-icon" style={{ background: item.bg }}>
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
                 </div>
@@ -665,11 +707,10 @@ export default function MessagesPage() {
               <div key={i} className="attach-item" onClick={() => { 
                 closeSheet(); 
                 if (item.label === "Schedule") {
-                  setTimeout(() => openSheet("scheduleViewing"), 300);                } else if (item.label === "Lease" || item.label === "Receipt") {
-                      router.push('/units');
-                    } else if (item.label === "Contact") {
-                      router.push('/units');
-                    }
+                  setTimeout(() => openSheet("scheduleViewing"), 300);
+                } else {
+                  showSnackbar(`${item.label} coming soon`, "info");
+                }
               }}>
                 <div className="attach-icon" style={{ background: item.bg }}>
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
@@ -678,6 +719,12 @@ export default function MessagesPage() {
               </div>
             ))}
           </div>
+          {uploadingImage && (
+            <div className="flex items-center justify-center py-4 mt-2">
+              <div className="spinner" />
+              <span className="text-sm ml-3" style={{ color: "#a3a3a3" }}>Uploading image...</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -852,30 +899,33 @@ export default function MessagesPage() {
             {currentMessages.map((msg, i) => {
               const isSent = msg.senderId === uid;
               const time = msg.createdAt?.toDate ? formatTime(msg.createdAt.toDate()) : "";
+              const hasImages = msg.attachments?.some((a) => a.type === "image");
               return (
               <div key={msg.id || i} className={`flex ${isSent ? "justify-end" : "justify-start"}`} style={{ animation: "slideInUp 0.2s ease" }}>
-                <div className={`chat-bubble ${isSent ? "sent" : "received"}`}>
-                  {msg.text}
-                  <div className="time">
-                    {time}
-                    {isSent && (
-                      <CheckCheck className="w-3.5 h-3.5 inline" style={{ opacity: msg.read ? 1 : 0.5 }} />
-                    )}
-                  </div>
+                <div className={`chat-bubble ${isSent ? "sent" : "received"}`} style={{ maxWidth: hasImages ? "280px" : "80%" }}>
+                  {msg.text && msg.text !== "📷 Photo" && <p className="text-sm mb-1">{msg.text}</p>}
+                  {msg.attachments?.filter((a) => a.type === "image").map((att, j) => (
+                    <img
+                      key={j}
+                      src={att.url}
+                      alt={att.name}
+                      className="w-full rounded-lg cursor-pointer"
+                      style={{ maxHeight: "300px", objectFit: "cover" }}
+                      onClick={() => window.open(att.url, "_blank")}
+                    />
+                  ))}
+                  {!hasImages && (
+                    <div className="time">
+                      {time}
+                      {isSent && (
+                        <CheckCheck className="w-3.5 h-3.5 inline" style={{ opacity: msg.read ? 1 : 0.5 }} />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );})}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="chat-bubble received" style={{ padding: "14px 20px" }}>
-                  <div className="flex gap-1">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                  </div>
-                </div>
-              </div>
-            )}
+
             <div ref={messagesEndRef} />
           </div>
 

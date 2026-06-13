@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import {
   Search,
   MapPin,
@@ -16,12 +16,12 @@ import {
   Bell,
   Navigation,
   ChevronRight,
-} from "lucide-react";
-import { useSearchParams } from "next/navigation";
+} from "lucide-react";import { useSearchParams } from "next/navigation";
 import { useBrowse } from "../BrowseContext";
+import { useAuth } from "../../AuthContext";
 import type { PropertyData } from "../PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, UNIT_AMENITIES, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../../constants";
-import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
+import { listenToBrowseListings, listenToBrowseProperties, createSavedSearch } from "@/lib/browse";
 import { getListingImage, getListingImages } from "@/lib/resolveImages";
 import type { ListingData } from "@/lib/listings";
 import type { PropertyData as PropData } from "@/lib/properties";
@@ -93,6 +93,35 @@ const pricePresets = [
   { label: "60k+", desc: "Luxury & Executive", value: "60k+", wide: true },
 ];
 
+// ---- Amenity emoji mapping (for converting string amenities to detail sheet format) ----
+const amenityEmojiMap: Record<string, string> = {
+  "Hot Shower": "🚿",
+  "Hot Water": "🌊",
+  "Parking": "🅿️",
+  "WiFi": "📶",
+  "Token Meter": "💡",
+  "CCTV": "🔒",
+  "Balcony": "🏙️",
+  "A/C": "❄️",
+  "Borehole": "💧",
+  "Estate Gate": "🚧",
+};
+
+function listingToAmenities(listing: ListingData): { emoji: string; label: string }[] {
+  return (listing.amenities || []).map((a) => ({
+    emoji: amenityEmojiMap[a] || "✅",
+    label: a,
+  }));
+}
+
+function isNewListing(listing: ListingData): boolean {
+  if (!listing.createdAt) return false;
+  const created = listing.createdAt.toDate();
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return created > sevenDaysAgo;
+}
+
 // ---- Map pins (static) ----
 const mapPins = [
   { top: "30%", left: "25%", label: "KSh 15k" },
@@ -118,14 +147,16 @@ function matchesFilters(listing: ListingData, filters: {
   selectedTypes: string[];
   selectedBedrooms: string;
   selectedAmenities: string[];
-}): boolean {
+}, properties: PropData[]): boolean {
   const q = filters.searchQuery.toLowerCase();
 
-  // Search query
+  // Search query — match title, property name, or the property's location/county
   if (q) {
     const matchName = (listing.title || listing.propertyName || "").toLowerCase().includes(q);
     const matchProperty = (listing.propertyName || "").toLowerCase().includes(q);
-    if (!matchName && !matchProperty) return false;
+    const property = properties.find((p) => p.id === listing.propertyId);
+    const matchLocation = property ? (property.location || property.county || "").toLowerCase().includes(q) : false;
+    if (!matchName && !matchProperty && !matchLocation) return false;
   }
 
   // Price preset
@@ -194,6 +225,7 @@ function applySort(listings: ListingData[], sortKey: string): ListingData[] {
 }
 
 function listingToResultItem(listing: ListingData, properties: PropData[], idx: number) {
+  const isNew = isNewListing(listing);
   return {
     id: idx + 1,
     title: listing.title || listing.propertyName || "Untitled",
@@ -201,11 +233,16 @@ function listingToResultItem(listing: ListingData, properties: PropData[], idx: 
     price: listing.rent.toLocaleString(),
     img: getListingImage(listing, properties) || PLACEHOLDER_IMAGE,
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
-    verified: true,
-    badge: listing.boosted ? "FEATURED" : idx === 0 ? "NEW" : "",
-    badgeColor: listing.boosted ? "#047857" : "#ea580c",
+    verified: false,   // Will be resolved from landlord data in detail sheet
+    badge: listing.boosted ? "FEATURED" : isNew ? "NEW" : "",
+    badgeColor: listing.boosted ? "#047857" : isNew ? "#ea580c" : "",
     listingId: listing.id,
+    rawListing: listing,
   };
+}
+
+function findPropertyForListing(listing: ListingData, properties: PropData[]): PropData | undefined {
+  return properties.find((p) => p.id === listing.propertyId);
 }
 
 export default function ExplorePage() {
@@ -222,6 +259,7 @@ export default function ExplorePage() {
 
 function ExplorePageInner() {
   const { showSnackbar, openPropertyDetail, favorites, toggleFavorite, addToRecentlyViewed } = useBrowse();
+  const { user } = useAuth();
 
   // ---- Firestore listings & properties ----
   const [allListings, setAllListings] = useState<ListingData[]>([]);
@@ -247,32 +285,97 @@ function ExplorePageInner() {
     return () => unsub();
   }, []);
 
+  // ---- Trending search suggestions derived from actual listings ----
+  const trendingSuggestions = useMemo(() => {
+    const areaCounts: Record<string, number> = {};
+    allListings.filter((l) => l.status === "active").forEach((l) => {
+      const area = l.propertyName?.split(",")[0]?.trim() || "";
+      if (area) areaCounts[area] = (areaCounts[area] || 0) + 1;
+      // Also check property locations
+      const prop = findPropertyForListing(l, allProperties);
+      if (prop?.location) areaCounts[prop.location] = (areaCounts[prop.location] || 0) + 1;
+    });
+    // Get top 5 areas
+    const sorted = Object.entries(areaCounts).sort((a, b) => b[1] - a[1]);
+    return sorted.slice(0, 5).map(([label]) => ({ label: `${label} (popular)`, type: "trending" as const, icon: "🔥" }));
+  }, [allListings, allProperties]);
+
   // ---- View State ----
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const urlSearchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(urlSearchParams?.get("q") || "Kilimani, Nairobi");
+  const [searchQuery, setSearchQuery] = useState(urlSearchParams?.get("q") || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([
-    "Bedsitter Kilimani",
-    "2BR Westlands under 50k",
-    "Single Room Roysambu",
-  ]);
+  const [saveSearchName, setSaveSearchName] = useState("");
+  const [saveSearchFrequency, setSaveSearchFrequency] = useState("instant");
+  const [savingSearch, setSavingSearch] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("rentke_recent_searches") || "[]");
+      return (stored as { query: string; time: number }[]).slice(0, 5).map((s) => s.query);
+    } catch {
+      return [];
+    }
+  });
 
   // ---- Pagination ----
   const PAGE_SIZE = 10;
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
   // ---- Filter State ----
-  const [selectedPreset, setSelectedPreset] = useState<string | null>("10k - 30k");
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(["1 Bedroom"]);
-  const [selectedBedrooms, setSelectedBedrooms] = useState<string>("Bedsitter");
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedBedrooms, setSelectedBedrooms] = useState<string>("Any");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedSort, setSelectedSort] = useState("Relevance");
-  const [activeTags, setActiveTags] = useState<ActiveTag[]>([
-    { id: "loc", label: "📍 Kilimani" },
-    { id: "price", label: "💰 KSh 10k-30k" },
-    { id: "type", label: "🛏️ Bedsitter" },
-  ]);
+  const [activeTags, setActiveTags] = useState<ActiveTag[]>([]);
+
+  // ---- Dynamic filter counts computed from listings ----
+  const dynamicTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const listings = allListings.filter((l) => l.status === "active");
+    listings.forEach((l) => {
+      const title = (l.title || l.propertyName || "").toLowerCase();
+      UNIT_TYPE_OPTIONS.forEach((t) => {
+        const key = t.toLowerCase().replace(" bedroom", "");
+        if (title.includes(key)) {
+          counts[t] = (counts[t] || 0) + 1;
+        }
+      });
+      // Also match Mansion/Plot/Commercial
+      if (title.includes("mansion")) counts["Mansion"] = (counts["Mansion"] || 0) + 1;
+      if (title.includes("plot")) counts["Plot"] = (counts["Plot"] || 0) + 1;
+      if (title.includes("commercial") || title.includes("office") || title.includes("shop")) counts["Commercial"] = (counts["Commercial"] || 0) + 1;
+    });
+    return counts;
+  }, [allListings]);
+
+  const dynamicBedroomCounts = useMemo(() => {
+    const counts: Record<string, number> = { "Any": allListings.filter((l) => l.status === "active").length };
+    const listings = allListings.filter((l) => l.status === "active");
+    counts["Bedsitter"] = listings.filter((l) => {
+      const t = (l.title || "").toLowerCase();
+      return t.includes("bedsitter") || t.includes("studio");
+    }).length;
+    ["1", "2", "3"].forEach((br) => {
+      counts[br === "3" ? "3+" : br] = listings.filter((l) => {
+        const t = (l.title || "").toLowerCase();
+        if (br === "3") return t.includes("3br") || t.includes("3 bed");
+        return t.includes(`${br}br`) || t.includes(`${br} bed`);
+      }).length;
+    });
+    return counts;
+  }, [allListings]);
+
+  const dynamicAmenityCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const listings = allListings.filter((l) => l.status === "active");
+    Object.entries(amenityMeta).forEach(([_, meta]) => {
+      counts[meta.val] = listings.filter((l) =>
+        (l.amenities || []).includes(meta.val)
+      ).length;
+    });
+    return counts;
+  }, [allListings]);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -287,7 +390,7 @@ function ExplorePageInner() {
   // ---- Filtered & sorted results ----
   const filteredResults = allListings
     .filter((l) => l.status === "active")
-    .filter((l) => matchesFilters(l, { searchQuery, selectedPreset, selectedTypes, selectedBedrooms, selectedAmenities }));
+    .filter((l) => matchesFilters(l, { searchQuery, selectedPreset, selectedTypes, selectedBedrooms, selectedAmenities }, allProperties));
   const sortedResults = applySort(filteredResults, selectedSort);
   const searchResults = sortedResults.map((l, i) => listingToResultItem(l, allProperties, i));
 
@@ -314,7 +417,7 @@ function ExplorePageInner() {
     );
   };
 
-  const trackRecentView = (item: { id: number; title: string; location: string; price: string; img: string }) => {
+  const trackRecentView = (item: { id: number; title: string; location: string; price: string; img: string; rawListing?: ListingData }) => {
     addToRecentlyViewed({
       id: item.id,
       title: item.title,
@@ -324,6 +427,12 @@ function ExplorePageInner() {
       time: "Just now",
       timeColor: "#047857",
     });
+    // Save to localStorage for persistence across sessions
+    try {
+      const stored = JSON.parse(localStorage.getItem("rentke_recent_searches") || "[]");
+      const updated = [{ query: item.title, time: Date.now() }, ...stored.filter((s: any) => s.query !== item.title)].slice(0, 5);
+      localStorage.setItem("rentke_recent_searches", JSON.stringify(updated));
+    } catch {}
   };
 
   const removeTag = (id: string) => {
@@ -346,6 +455,34 @@ function ExplorePageInner() {
     setSelectedAmenities((prev) =>
       prev.includes(val) ? prev.filter((a) => a !== val) : [...prev, val]
     );
+  };
+
+  // ---- Save Search to Firestore ----
+  const handleSaveSearch = async () => {
+    if (!user) {
+      showSnackbar("Please sign in to save searches", "error");
+      return;
+    }
+    setSavingSearch(true);
+    try {
+      await createSavedSearch(user.uid, {
+        title: saveSearchName || searchQuery || "Search",
+        emoji: "🔍",
+        filters: {
+          query: searchQuery,
+          preset: selectedPreset,
+          types: selectedTypes,
+          bedrooms: selectedBedrooms,
+          amenities: selectedAmenities,
+        },
+      });
+      setSavingSearch(false);
+      closeSheet();
+      setTimeout(() => showSnackbar("Search alert saved! 🔔", "success"), 300);
+    } catch (err: any) {
+      setSavingSearch(false);
+      showSnackbar(err.message || "Failed to save search", "error");
+    }
   };
 
   return (
@@ -441,7 +578,7 @@ function ExplorePageInner() {
             <div className="px-4 pt-3 pb-1">
               <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#525252" }}>Trending</p>
             </div>
-            {searchSuggestions.filter((s) => s.type === "trending").map((sugg, i) => (
+            {(trendingSuggestions.length > 0 ? trendingSuggestions : searchSuggestions.filter((s) => s.type === "trending")).map((sugg, i) => (
               <button key={`sugg-${i}`} className="w-full flex items-center gap-3 px-4 py-2.5 ripple-container" onClick={() => { setSearchQuery(sugg.label); setShowSuggestions(false); showSnackbar(`Searching: "${sugg.label}"`, "info"); }}>
                 <span className="text-sm">{sugg.icon}</span>
                 <span className="text-sm text-white">{sugg.label}</span>
@@ -561,7 +698,13 @@ function ExplorePageInner() {
                 key={item.id}
                 className="browse-property-card ripple-container"
                 onClick={() => {
-                  const fullL = allListings.find((l) => l.id === item.listingId);
+                  const fullL = item.rawListing || allListings.find((l) => l.id === item.listingId);
+                  const property = fullL ? findPropertyForListing(fullL, allProperties) : undefined;
+                  const listingAmenities = fullL ? listingToAmenities(fullL) : [];
+                  const displayType = property?.type || fullL?.title?.match(/^(Bedsitter|Single Room|Studio|1 Bedroom|2 Bedroom|3 Bedroom)/)?.[1] || "Bedsitter";
+                  const rentNum = parseInt(item.price.replace(/,/g, ""));
+                  const deposit = rentNum;
+                  const serviceCharge = 2000;
                   const propData: PropertyData = {
                     id: item.id,
                     title: item.title,
@@ -572,14 +715,14 @@ function ExplorePageInner() {
                       ? fullL.images
                       : [item.img || PLACEHOLDER_IMAGE],
                     badge: item.badge || undefined,
-                    verified: item.verified,
+                    verified: false,
                     featured: !!item.badge,
-                    type: "Bedsitter",
+                    type: displayType,
                     bathrooms: 1,
                     size: "20 sqm",
                     floor: "3rd",
-                    description: `Modern ${item.title.toLowerCase()} located in ${item.location}. Features include a well-finished interior with ample natural light, secure compound with CCTV, and 24-hour guard. Walking distance to shopping centers and public transport.`,
-                    amenities: [
+                    description: fullL?.description || `Modern ${item.title.toLowerCase()} located in ${item.location}. Features include a well-finished interior with ample natural light, secure compound with CCTV, and 24-hour guard.`,
+                    amenities: listingAmenities.length > 0 ? listingAmenities : [
                       { emoji: "💧", label: "Borehole / 24hr Water" },
                       { emoji: "⚡", label: "Token Meter" },
                       { emoji: "🚿", label: "Hot Shower" },
@@ -589,20 +732,20 @@ function ExplorePageInner() {
                     ],
                     costBreakdown: [
                       { label: "Monthly Rent", amount: `KSh ${item.price}` },
-                      { label: "Deposit (1 month)", amount: `KSh ${item.price}` },
-                      { label: "Service Charge", amount: "KSh 2,000" },
+                      { label: "Deposit (1 month)", amount: `KSh ${deposit.toLocaleString()}` },
+                      { label: "Service Charge", amount: `KSh ${serviceCharge.toLocaleString()}` },
                     ],
-                    totalMoveIn: `KSh ${(parseInt(item.price.replace(/,/g, "")) * 2 + 2000).toLocaleString()}`,
+                    totalMoveIn: `KSh ${(rentNum + deposit + serviceCharge).toLocaleString()}`,
                     landlord: {
-                      name: "John Mwangi",
-                      initial: "J",
-                      verified: item.verified,
+                      name: "Landlord",
+                      initial: "L",
+                      verified: false,
                       response: "~1 hour",
                       rating: 5,
                       reviews: 42,
                     },
-                    landlordId: allListings.find((l) => l.id === item.listingId)?.landlordId || "",
-                    photos: 5,
+                    landlordId: fullL?.landlordId || "",
+                    photos: fullL?.images?.length || 5,
                     isFavorited: favorites.includes(item.id),
                   };
                   openPropertyDetail(propData);
@@ -847,7 +990,7 @@ function ExplorePageInner() {
                   <p className="text-sm font-medium text-white">{pt.label}</p>
                   <p className="text-xs" style={{ color: "#525252" }}>{pt.desc}</p>
                 </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.05)", color: "#525252" }}>{pt.count}</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={{ background: "rgba(255,255,255,0.05)", color: "#525252" }}>{dynamicTypeCounts[pt.label] ?? pt.count}</span>
               </div>
             );
           })}
@@ -872,7 +1015,7 @@ function ExplorePageInner() {
             <div key={opt.value} className="flex items-center gap-3 p-3 rounded-xl ripple-container" onClick={() => setSelectedBedrooms(opt.value)} style={{ cursor: "pointer" }}>
               <div className={`custom-radio ${selectedBedrooms === opt.value ? "checked" : ""}`} />
               <p className="text-sm font-medium text-white flex-1">{opt.label}</p>
-              <span className="text-xs font-semibold" style={{ color: opt.value === "Any" ? "#047857" : "#525252" }}>{opt.count}</span>
+              <span className="text-xs font-semibold" style={{ color: opt.value === "Any" ? "#047857" : "#525252" }}>{dynamicBedroomCounts[opt.value] ?? opt.count}</span>
             </div>
           ))}
         </div>
@@ -945,7 +1088,7 @@ function ExplorePageInner() {
         <div className="px-5 pb-8 space-y-5">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "#525252" }}>Search Name</label>
-            <input type="text" className="android-input" defaultValue="Bedsitter Kilimani" placeholder="e.g., My ideal apartment" />
+            <input type="text" className="android-input" value={saveSearchName} onChange={(e) => setSaveSearchName(e.target.value)} placeholder="e.g., My ideal apartment" />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider block mb-3" style={{ color: "#525252" }}>Notification Frequency</label>
@@ -955,8 +1098,8 @@ function ExplorePageInner() {
                 { value: "daily", label: "Daily Digest", desc: "Once a day summary" },
                 { value: "weekly", label: "Weekly Digest", desc: "Weekly roundup" },
               ].map((opt) => (
-                <div key={opt.value} className="flex items-center gap-3 p-3 rounded-xl ripple-container" onClick={() => showSnackbar(`Set to ${opt.label}`, "success")} style={{ cursor: "pointer" }}>
-                  <div className={`custom-radio ${opt.value === "instant" ? "checked" : ""}`} />
+                <div key={opt.value} className="flex items-center gap-3 p-3 rounded-xl ripple-container" onClick={() => setSaveSearchFrequency(opt.value)} style={{ cursor: "pointer" }}>
+                  <div className={`custom-radio ${saveSearchFrequency === opt.value ? "checked" : ""}`} />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-white">{opt.label}</p>
                     <p className="text-xs" style={{ color: "#525252" }}>{opt.desc}</p>
@@ -972,7 +1115,7 @@ function ExplorePageInner() {
             </div>
             <div className="toggle-track active"><div className="toggle-thumb" /></div>
           </div>
-          <button onClick={() => { closeSheet(); showSnackbar("Search alert saved! 🔔", "success"); }} className="w-full py-3.5 rounded-xl font-semibold text-sm text-white ripple-container" style={{ background: "#047857", boxShadow: "0 4px 16px rgba(4,120,87,0.3)" }}>Save Alert</button>
+          <button onClick={handleSaveSearch} disabled={savingSearch} className="w-full py-3.5 rounded-xl font-semibold text-sm text-white ripple-container" style={{ background: "#047857", boxShadow: "0 4px 16px rgba(4,120,87,0.3)" }}>{savingSearch ? <div className="spinner" style={{width:18,height:18}} /> : "Save Alert"}</button>
         </div>
       </div>
 

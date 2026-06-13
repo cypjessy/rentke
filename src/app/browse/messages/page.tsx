@@ -42,6 +42,7 @@ import {
 import type { ConversationData, MessageData } from "../../../lib/conversations";
 import { Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { uploadPhoto, takePhoto, openFilePicker } from "@/lib/upload";
 
 const attachOptions = [
   { label: "Camera", icon: Camera, color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
@@ -109,6 +110,7 @@ export default function MessagesPage() {
   const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [currentMessages, setCurrentMessages] = useState<MessageData[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -329,10 +331,48 @@ export default function MessagesPage() {
     }
   };
 
+  // ---- Send Image ----
+  const handleSendImage = async (source: "camera" | "gallery") => {
+    if (uploadingImage) return;
+    if (!activeChat || !user?.uid) {
+      showSnackbar("No active chat", "error");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      let file: File | null = null;
+      if (source === "camera") {
+        file = await takePhoto("camera");
+      } else {
+        const files = await openFilePicker("image/*", false);
+        file = files[0] || null;
+      }
+      if (!file) {
+        setUploadingImage(false);
+        return;
+      }
+      const result = await uploadPhoto(file, "chat-images", user.uid);
+      await sendMessageFS(activeChat, user.uid, "📷 Photo", [{
+        type: "image",
+        name: file.name,
+        url: result.url,
+        size: file.size,
+        mimeType: file.type,
+      }]);
+      setUploadingImage(false);
+      setTimeout(() => showSnackbar("Image sent 📷", "success"), 300);
+    } catch (err: any) {
+      setUploadingImage(false);
+      showSnackbar(err?.message || "Failed to send image", "error");
+    }
+  };
+
   // ---- Attach Action ----
   const handleAttach = (type: string) => {
     closeSheet();
-    if (type === "M-Pesa" || type === "Receipt") {
+    if (type === "Camera" || type === "Gallery") {
+      handleSendImage(type === "Camera" ? "camera" : "gallery");
+    } else if (type === "M-Pesa" || type === "Receipt") {
       showSnackbar(`Attaching ${type} receipt...`, "info");
     } else {
       showSnackbar(`Opening ${type}...`, "info");
@@ -847,12 +887,15 @@ export default function MessagesPage() {
                   .toLowerCase()
                   .includes(chatSearchQuery.toLowerCase());
               const reaction = reactedMessages[i];
+              // Check if the actual Firestore message has images
+              const actualMsg = currentMessages[i];
+              const hasImages = actualMsg?.attachments?.some((a) => a.type === "image");
               return (
                 <div key={i} className="new-msg-anim relative">
                   {msg.type === "received" ? (
                     <>
                       <div
-                        className="flex gap-2 max-w-[85%]"
+                        className="flex gap-2"
                         onClick={() => {
                           if (!showChatSearch) {
                             setSelectedMsgIndex(
@@ -863,6 +906,7 @@ export default function MessagesPage() {
                         style={{
                           cursor: "pointer",
                           userSelect: "none",
+                          maxWidth: hasImages ? "280px" : "85%",
                         }}
                       >
                         <div
@@ -874,20 +918,32 @@ export default function MessagesPage() {
                         >
                           {displayChat?.initial || "?"}
                         </div>
-                        <div className="relative">
+                        <div className="relative" style={{ width: hasImages ? "100%" : "auto" }}>
                           <div
                             className={`bubble-received px-4 py-2.5 ${
                               isHighlighted ? "ring-2 ring-[#047857]/30" : ""
                             }`}
                           >
-                            <p className="text-sm">{msg.text}</p>
+                            {msg.text && msg.text !== "📷 Photo" && <p className="text-sm mb-1">{msg.text}</p>}
+                            {hasImages && actualMsg.attachments?.filter((a) => a.type === "image").map((att, j) => (
+                              <img
+                                key={j}
+                                src={att.url}
+                                alt={att.name}
+                                className="w-full rounded-lg cursor-pointer"
+                                style={{ maxHeight: "250px", objectFit: "cover" }}
+                                onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }}
+                              />
+                            ))}
                           </div>
-                          <p
-                            className="text-xs mt-1 ml-2"
-                            style={{ color: "#525252" }}
-                          >
-                            {msg.time}
-                          </p>
+                          {!hasImages && (
+                            <p
+                              className="text-xs mt-1 ml-2"
+                              style={{ color: "#525252" }}
+                            >
+                              {msg.time}
+                            </p>
+                          )}
                           {/* Reaction on received messages */}
                           {reaction && (
                             <div
@@ -944,7 +1000,7 @@ export default function MessagesPage() {
                   ) : (
                     <>
                       <div
-                        className="flex gap-2 max-w-[85%] ml-auto flex-row-reverse"
+                        className="flex gap-2 ml-auto flex-row-reverse"
                         onClick={() => {
                           if (!showChatSearch) {
                             setSelectedMsgIndex(
@@ -955,26 +1011,39 @@ export default function MessagesPage() {
                         style={{
                           cursor: "pointer",
                           userSelect: "none",
+                          maxWidth: hasImages ? "280px" : "85%",
                         }}
                       >
-                        <div>
+                        <div style={{ width: hasImages ? "100%" : "auto" }}>
                           <div
                             className={`bubble-sent px-4 py-2.5 ${
                               isHighlighted ? "ring-2 ring-[#047857]/30" : ""
                             }`}
                           >
-                            <p className="text-sm">{msg.text}</p>
+                            {msg.text && msg.text !== "📷 Photo" && <p className="text-sm mb-1">{msg.text}</p>}
+                            {hasImages && actualMsg.attachments?.filter((a) => a.type === "image").map((att, j) => (
+                              <img
+                                key={j}
+                                src={att.url}
+                                alt={att.name}
+                                className="w-full rounded-lg cursor-pointer"
+                                style={{ maxHeight: "250px", objectFit: "cover" }}
+                                onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }}
+                              />
+                            ))}
                           </div>
-                          <p
-                            className="text-xs mt-1 mr-2 text-right flex items-center justify-end gap-1"
-                            style={{ color: "#525252" }}
-                          >
-                            {msg.time}
-                            <CheckCheck
-                              className="w-3.5 h-3.5 inline"
-                              style={{ color: "#047857" }}
-                            />
-                          </p>
+                          {!hasImages && (
+                            <p
+                              className="text-xs mt-1 mr-2 text-right flex items-center justify-end gap-1"
+                              style={{ color: "#525252" }}
+                            >
+                              {msg.time}
+                              <CheckCheck
+                                className="w-3.5 h-3.5 inline"
+                                style={{ color: "#047857" }}
+                              />
+                            </p>
+                          )}
                           {/* Reaction on sent messages */}
                           {reaction && (
                             <div
@@ -1299,6 +1368,12 @@ export default function MessagesPage() {
             );
           })}
         </div>
+        {uploadingImage && (
+          <div className="flex items-center justify-center pb-6">
+            <div className="spinner" />
+            <span className="text-sm ml-3" style={{ color: "#a3a3a3" }}>Uploading image...</span>
+          </div>
+        )}
       </div>
 
       {/* ============================================ */}

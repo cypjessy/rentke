@@ -30,8 +30,12 @@ import {
 } from "lucide-react";
 import { useBrowse } from "./BrowseContext";
 import { useAuth } from "../AuthContext";
-import { createInquiry } from "@/lib/inquiries";
 import { scheduleViewing } from "@/lib/viewings";
+import { createConversation } from "@/lib/conversations";
+import { openPhoneUrl } from "@/lib/phone";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
 import { PLACEHOLDER_IMAGE } from "../constants";
 
@@ -122,12 +126,6 @@ const shareOptions = [
   { label: "Telegram", icon: Send, color: "#0088cc", bg: "rgba(0,136,204,0.15)" },
 ];
 
-const quickMessages = [
-  "Is this property still available?",
-  "Can I schedule a viewing?",
-  "Is the deposit negotiable?",
-];
-
 const timeSlots = ["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "6:00 PM"];
 
 interface PropertyDetailSheetProps {
@@ -145,11 +143,30 @@ export default function PropertyDetailSheet({
   onToggleFavorite,
   isFavorited: externalFav,
 }: PropertyDetailSheetProps) {
+  const router = useRouter();
   const { showSnackbar } = useBrowse();
   const { user } = useAuth();
-  const [inquiryLoading, setInquiryLoading] = useState(false);
   const [viewingLoading, setViewingLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
+  const [landlordPhone, setLandlordPhone] = useState<string | null>(null);
+  const [landlordName, setLandlordName] = useState<string>("");
   const p = prop || defaultProperty;
+
+  // ---- Fetch landlord contact info ----
+  useEffect(() => {
+    if (!p.landlordId) {
+      setLandlordPhone(null);
+      setLandlordName("");
+      return;
+    }
+    getDoc(doc(db, "users", p.landlordId)).then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setLandlordPhone(data.phoneNumber || data.phone || "");
+        setLandlordName(data.displayName || data.name || p.landlord.name || "");
+      }
+    }).catch(() => {});
+  }, [p.landlordId]);
 
   // ---- Gallery ----
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
@@ -247,48 +264,6 @@ export default function PropertyDetailSheet({
     }
   };
 
-  // ---- Inquiry ----
-  const [inquiryMsg, setInquiryMsg] = useState("");
-  const inquiryInputRef = useRef<HTMLTextAreaElement>(null);
-
-  const insertQuickMsg = (msg: string) => {
-    setInquiryMsg(msg);
-    inquiryInputRef.current?.focus();
-  };
-
-  const submitInquiry = async () => {
-    if (!inquiryMsg.trim()) {
-      showSnackbar("Please type a message", "error");
-      return;
-    }
-    if (!user) {
-      showSnackbar("Please sign in to send a message", "error");
-      return;
-    }
-    setInquiryLoading(true);
-    try {
-      await createInquiry(p.landlordId, {
-        propertyId: String(p.id),
-        propertyName: p.title,
-        unitId: "",
-        unitName: "",
-        tenantId: user.uid,
-        tenantName: user.displayName || "Tenant",
-        tenantPhone: user.phoneNumber || "",
-        message: inquiryMsg.trim(),
-      });
-      setInquiryLoading(false);
-      setInquiryMsg("");
-      closeSheet();
-      setTimeout(() => {
-        showSnackbar(`Message sent to ${p.landlord.name}!`, "success");
-      }, 300);
-    } catch (err: any) {
-      setInquiryLoading(false);
-      showSnackbar(err.message || "Failed to send message", "error");
-    }
-  };
-
   // ---- Share ----
   const shareAction = (platform: string) => {
     closeSheet();
@@ -320,9 +295,55 @@ export default function PropertyDetailSheet({
     showSnackbar("Link copied to clipboard!", "success");
   };
 
-  const openInquiry = () => {
-    setInquiryMsg("");
-    openSheet("bs-inquire");
+  // ---- Phone Actions ----
+  const handleCall = () => {
+    if (landlordPhone) {
+      openPhoneUrl(landlordPhone, "tel");
+    } else {
+      showSnackbar("Phone number not available", "info");
+    }
+    closeSheet();
+  };
+
+  const handleWhatsApp = () => {
+    if (landlordPhone) {
+      openPhoneUrl(landlordPhone, "wa");
+    } else {
+      showSnackbar("Phone number not available", "info");
+    }
+    closeSheet();
+  };
+
+  // ---- In-App Message ----
+  const handleSendMessage = async () => {
+    if (messageLoading) return;
+    if (!user) {
+      showSnackbar("Please sign in to send a message", "error");
+      return;
+    }
+    if (!p.landlordId) {
+      showSnackbar("Landlord contact not available", "error");
+      return;
+    }
+    setMessageLoading(true);
+    try {
+      await createConversation({
+        participants: [user.uid, p.landlordId],
+        participantNames: {
+          [user.uid]: user.displayName || user.email || "Tenant",
+          [p.landlordId]: landlordName || p.landlord.name,
+        },
+        propertyId: String(p.id),
+        propertyName: p.title,
+        firstMessage: `Hi, I'm interested in "${p.title}" listed at KSh ${p.price}/mo. Is it still available?`,
+        senderId: user.uid,
+      });
+      setMessageLoading(false);
+      router.push(`/browse/messages`);
+    } catch (err: any) {
+      setMessageLoading(false);
+      showSnackbar(err.message || "Failed to start conversation", "error");
+    }
   };
 
   if (!isOpen) return null;
@@ -713,10 +734,7 @@ export default function PropertyDetailSheet({
         <div className="detail-bottom-bar">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                showSnackbar("Send an inquiry to get the landlord's contact", "info");
-                openSheet("bs-inquire");
-              }}
+              onClick={() => openSheet("bs-phone")}
               className="w-12 h-12 rounded-xl flex items-center justify-center ripple-container flex-shrink-0"
               style={{
                 background: "rgba(255,255,255,0.05)",
@@ -726,19 +744,16 @@ export default function PropertyDetailSheet({
               <Phone className="w-5 h-5 text-white" />
             </button>
             <button
-              onClick={() => {
-                showSnackbar("Send an inquiry to get the landlord's contact", "info");
-                openSheet("bs-inquire");
-              }}
+              onClick={handleSendMessage}
               className="w-12 h-12 rounded-xl flex items-center justify-center ripple-container flex-shrink-0"
               style={{
-                background: "rgba(37,211,102,0.15)",
-                border: "1px solid rgba(37,211,102,0.3)",
+                background: "rgba(4,120,87,0.15)",
+                border: "1px solid rgba(4,120,87,0.3)",
               }}
             >
               <MessageCircle
                 className="w-5 h-5"
-                style={{ color: "#25D366" }}
+                style={{ color: "#34d399" }}
               />
             </button>
             <button
@@ -834,49 +849,73 @@ export default function PropertyDetailSheet({
       </div>
 
       {/* ================================================ */}
-      {/* BOTTOM SHEET: INQUIRE / MESSAGE */}
+      {/* BOTTOM SHEET: PHONE ACTIONS */}
       {/* ================================================ */}
       <div
-        className={`bottom-sheet-overlay ${isSheetOpen("bs-inquire") ? "active" : ""}`}
+        className={`bottom-sheet-overlay ${isSheetOpen("bs-phone") ? "active" : ""}`}
         onClick={closeSheet}
       />
       <div
-        className={`bottom-sheet ${isSheetOpen("bs-inquire") ? "active" : ""}`}
+        className={`bottom-sheet ${isSheetOpen("bs-phone") ? "active" : ""}`}
       >
         <div className="bottom-sheet-handle" />
         <div className="p-5 pb-3">
-          <h3 className="text-lg font-bold text-white">Send Message</h3>
+          <h3 className="text-lg font-bold text-white">Contact {p.landlord.name}</h3>
           <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
-            To {p.landlord.name} about &ldquo;{p.title}&rdquo;
+            {landlordPhone ? `📞 ${landlordPhone}` : "Phone number not available"}
           </p>
         </div>
-        <div className="px-5 pb-8">
-          <div className="flex gap-2 overflow-x-auto browse-scroll-hidden mb-4">
-            {quickMessages.map((msg) => (
-              <button
-                key={msg}
-                className="quick-chip ripple-container"
-                onClick={() => insertQuickMsg(msg)}
-              >
-                {msg}
-              </button>
-            ))}
-          </div>
-          <textarea
-            ref={inquiryInputRef}
-            className="android-input"
-            style={{ resize: "none", minHeight: "100px" }}
-            placeholder="Type your message here..."
-            value={inquiryMsg}
-            onChange={(e) => setInquiryMsg(e.target.value)}
-          />
+        <div className="px-5 pb-8 space-y-3">
           <button
-            onClick={submitInquiry}
-            className="w-full py-3.5 rounded-xl font-semibold text-sm text-white ripple-container mt-4 flex items-center justify-center gap-2"
-            style={{ background: "#047857" }}
+            onClick={handleCall}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl ripple-container"
+            style={{
+              background: "rgba(4,120,87,0.1)",
+              border: "1px solid rgba(4,120,87,0.2)",
+            }}
           >
-            <Send className="w-4 h-4" />
-            Send Message
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(4,120,87,0.2)" }}
+            >
+              <Phone className="w-6 h-6" style={{ color: "#34d399" }} />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-sm font-bold text-white">Call</p>
+              <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                {landlordPhone || "No number available"}
+              </p>
+            </div>
+          </button>
+          <button
+            onClick={handleWhatsApp}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl ripple-container"
+            style={{
+              background: "rgba(37,211,102,0.1)",
+              border: "1px solid rgba(37,211,102,0.2)",
+            }}
+          >
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(37,211,102,0.2)" }}
+            >
+              <MessageCircle className="w-6 h-6" style={{ color: "#25D366" }} />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-sm font-bold text-white">WhatsApp</p>
+              <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                Send a message on WhatsApp
+              </p>
+            </div>
+          </button>
+        </div>
+        <div className="px-5 pb-8">
+          <button
+            onClick={closeSheet}
+            className="w-full py-3.5 rounded-xl font-semibold text-sm ripple-container"
+            style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }}
+          >
+            Cancel
           </button>
         </div>
       </div>
