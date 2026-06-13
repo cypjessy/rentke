@@ -70,14 +70,8 @@ const defaultProperty: PropertyData = {
   title: "Modern Bedsitter - Kilimani",
   location: "Kilimani, Nairobi, Kenya",
   price: "15,000",
-  image: "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-  gallery: [
-    "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-    "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-    "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-    "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-    "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-  ],
+  image: "",
+  gallery: [],
   badge: "FEATURED",
   featured: true,
   verified: true,
@@ -116,13 +110,7 @@ const defaultProperty: PropertyData = {
   isFavorited: false,
 };
 
-const galleryImages = [
-  "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-  "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-  "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-  "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-  "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-];
+const galleryImages: string[] = [];
 
 const shareOptions = [
   { label: "WhatsApp", icon: MessageCircle, color: "#25D366", bg: "rgba(37,211,102,0.15)" },
@@ -676,7 +664,7 @@ export default function PropertyDetailSheet({
               <h2 className="text-base font-bold text-white mb-3">Location</h2>
               <div className="relative rounded-2xl overflow-hidden" style={{ height: "180px" }}>
                 <img
-                  src="https://picsum.photos/seed/nairobi-map-detail/800/360.jpg"
+                  src=""
                   alt="Map"
                   className="w-full h-full object-cover opacity-50"
                 />

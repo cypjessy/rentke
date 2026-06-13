@@ -461,7 +461,7 @@ export default function SettingsPage() {
   const handleChoosePhoto = () => {
     closeSheet();
     const seed = Math.random().toString(36).substr(2, 8);
-    setProfileAvatar(`https://picsum.photos/seed/${seed}/200/200.jpg`);
+    setProfileAvatar('');
     showSnackbar("Photo updated", "success");
   };
 

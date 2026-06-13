@@ -32,6 +32,7 @@ import {
   Wallet,
   LayoutDashboard,
   Settings,
+  FileText,
 } from "lucide-react";
 import { listenToLandlords, verifyLandlord, suspendLandlord, reinstateLandlord, banLandlord, type AdminLandlordData } from "@/lib/admin";
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
@@ -110,30 +111,30 @@ const MESSAGE_TEMPLATES = [
   { label: "🙏 Thank You", text: "Thank you for being a valued RentKe landlord! 🙏" },
 ];
 
-const PROPERTIES_DATA: Record<string, { name: string; type: string; units: number; price: string; status: "active" | "pending" | "inactive"; image: string }[]> = {
+const PROPERTIES_DATA: Record<string, { name: string; type: string; units: number; price: string; status: "active" | "pending" | "inactive"; image?: string }[]> = {
   "James Mwangi": [
-    { name: "2BR Apartment - Kilimani", type: "Apartment", units: 3, price: "KSh 35,000/mo", status: "active", image: "https://picsum.photos/seed/kilimani-apt/80/80.jpg" },
-    { name: "Studio - Westlands", type: "Studio", units: 5, price: "KSh 15,000/mo", status: "active", image: "https://picsum.photos/seed/westlands-studio/80/80.jpg" },
-    { name: "1BR - South B", type: "Apartment", units: 4, price: "KSh 22,000/mo", status: "active", image: "https://picsum.photos/seed/southb-apt/80/80.jpg" },
-    { name: "Bedsitter - Roysambu", type: "Bedsitter", units: 8, price: "KSh 8,500/mo", status: "active", image: "https://picsum.photos/seed/roysambu-bedsitter/80/80.jpg" },
+    { name: "2BR Apartment - Kilimani", type: "Apartment", units: 3, price: "KSh 35,000/mo", status: "active" },
+    { name: "Studio - Westlands", type: "Studio", units: 5, price: "KSh 15,000/mo", status: "active" },
+    { name: "1BR - South B", type: "Apartment", units: 4, price: "KSh 22,000/mo", status: "active" },
+    { name: "Bedsitter - Roysambu", type: "Bedsitter", units: 8, price: "KSh 8,500/mo", status: "active" },
   ],
   "Grace Wanjiku": [
-    { name: "2BR - Nakuru Town", type: "Apartment", units: 3, price: "KSh 18,000/mo", status: "active", image: "https://picsum.photos/seed/nakuru-apt/80/80.jpg" },
-    { name: "Bedsitter - Nakuru", type: "Bedsitter", units: 3, price: "KSh 7,000/mo", status: "pending", image: "https://picsum.photos/seed/nakuru-bedsitter/80/80.jpg" },
+    { name: "2BR - Nakuru Town", type: "Apartment", units: 3, price: "KSh 18,000/mo", status: "active" },
+    { name: "Bedsitter - Nakuru", type: "Bedsitter", units: 3, price: "KSh 7,000/mo", status: "pending" },
   ],
   "Ali Hassan": [
-    { name: "3BR Villa - Nyali", type: "Villa", units: 2, price: "KSh 80,000/mo", status: "active", image: "https://picsum.photos/seed/nyali-villa/80/80.jpg" },
-    { name: "2BR - Bamburi", type: "Apartment", units: 6, price: "KSh 25,000/mo", status: "active", image: "https://picsum.photos/seed/bamburi-apt/80/80.jpg" },
-    { name: "Studio - Mombasa CBD", type: "Studio", units: 4, price: "KSh 12,000/mo", status: "active", image: "https://picsum.photos/seed/mombasa-studio/80/80.jpg" },
-    { name: "1BR - Likoni", type: "Apartment", units: 3, price: "KSh 10,000/mo", status: "inactive", image: "https://picsum.photos/seed/likoni-apt/80/80.jpg" },
+    { name: "3BR Villa - Nyali", type: "Villa", units: 2, price: "KSh 80,000/mo", status: "active" },
+    { name: "2BR - Bamburi", type: "Apartment", units: 6, price: "KSh 25,000/mo", status: "active" },
+    { name: "Studio - Mombasa CBD", type: "Studio", units: 4, price: "KSh 12,000/mo", status: "active" },
+    { name: "1BR - Likoni", type: "Apartment", units: 3, price: "KSh 10,000/mo", status: "inactive" },
   ],
   "Peter Ochieng": [
-    { name: "Bedsitter - Kisumu", type: "Bedsitter", units: 3, price: "KSh 6,000/mo", status: "inactive", image: "https://picsum.photos/seed/kisumu-bedsitter/80/80.jpg" },
+    { name: "Bedsitter - Kisumu", type: "Bedsitter", units: 3, price: "KSh 6,000/mo", status: "inactive" },
   ],
   "Mary Akinyi": [
-    { name: "2BR - Eldoret", type: "Apartment", units: 4, price: "KSh 20,000/mo", status: "active", image: "https://picsum.photos/seed/eldoret-apt/80/80.jpg" },
-    { name: "1BR - Eldoret Town", type: "Apartment", units: 3, price: "KSh 12,000/mo", status: "pending", image: "https://picsum.photos/seed/eldoret-1br/80/80.jpg" },
-    { name: "Bedsitter - Langas", type: "Bedsitter", units: 2, price: "KSh 5,500/mo", status: "active", image: "https://picsum.photos/seed/langas-bedsitter/80/80.jpg" },
+    { name: "2BR - Eldoret", type: "Apartment", units: 4, price: "KSh 20,000/mo", status: "active" },
+    { name: "1BR - Eldoret Town", type: "Apartment", units: 3, price: "KSh 12,000/mo", status: "pending" },
+    { name: "Bedsitter - Langas", type: "Bedsitter", units: 2, price: "KSh 5,500/mo", status: "active" },
   ],
   "Fatuma Bakari": [],
 };
@@ -969,11 +970,7 @@ export default function AdminLandlords() {
                 </div>
                 <div className="space-y-2">
                   <div className="property-mini-card">
-                    <img
-                      src="https://picsum.photos/seed/kilimani-apt/60/60.jpg"
-                      className="w-12 h-12 rounded-lg object-cover"
-                      alt=""
-                    />
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #047857, #059669)' }}><Building2 className="w-5 h-5 text-white" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">2BR Apartment - Kilimani</p>
                       <p className="text-xs" style={{ color: "#525252" }}>
@@ -988,11 +985,7 @@ export default function AdminLandlords() {
                     </span>
                   </div>
                   <div className="property-mini-card">
-                    <img
-                      src="https://picsum.photos/seed/karen-house/60/60.jpg"
-                      className="w-12 h-12 rounded-lg object-cover"
-                      alt=""
-                    />
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}><Building2 className="w-5 h-5 text-white" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">4BR House - Karen</p>
                       <p className="text-xs" style={{ color: "#525252" }}>
@@ -1106,11 +1099,7 @@ export default function AdminLandlords() {
                   className="rounded-xl overflow-hidden"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
                 >
-                  <img
-                    src="https://picsum.photos/seed/kenya-id-card/400/250.jpg"
-                    className="w-full h-40 object-cover"
-                    alt="ID Document"
-                  />
+                  <div className="w-full h-40 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)' }}><FileText className="w-12 h-12" style={{ color: '#525252' }} /></div>
                   <div className="p-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs" style={{ color: "#525252" }}>
@@ -1759,7 +1748,7 @@ export default function AdminLandlords() {
                 )}
                 {(PROPERTIES_DATA[currentLandlord.name] || []).map((p, i) => (
                   <div key={i} className="property-mini-card">
-                    <img src={p.image} className="w-14 h-14 rounded-xl object-cover" alt="" />
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #047857, #059669)' }}><Building2 className="w-6 h-6 text-white" /></div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{p.name}</p>
                       <p className="text-xs" style={{ color: "#525252" }}>{p.type} · {p.units} {p.units === 1 ? "unit" : "units"} · {p.price}</p>
@@ -1840,12 +1829,12 @@ export default function AdminLandlords() {
             <button onClick={() => showSnackbar("Image saved to downloads", "success")} className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: "rgba(4,120,87,0.2)", color: "#059669" }}>Save</button>
           </div>
           <div className="flex-1 flex items-center justify-center p-4">
-            <img
-              src="https://picsum.photos/seed/kenya-id-card/800/500.jpg"
-              className="w-full max-w-md rounded-2xl object-contain"
-              alt="ID Document Full"
-              style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}
-            />
+            <div
+              className="w-full max-w-md rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(255,255,255,0.03)', minHeight: '200px' }}
+            >
+              <FileText className="w-16 h-16" style={{ color: '#525252' }} />
+            </div>
           </div>
           <div className="p-4 flex-shrink-0">
             <div className="flex items-center justify-center gap-4">

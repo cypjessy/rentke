@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       landlord: `By ${l.landlordId || "Unknown"}`,
       price: `KSh ${(l.rent || 0).toLocaleString()}/mo`,
       submitted: l.createdAt ? `${Math.floor((Date.now() - l.createdAt.toDate().getTime()) / 3600000)}h ago` : "Recently",
-      image: l.images?.[0] || "https://picsum.photos/seed/admin-pending/80/80.jpg",
+      image: l.images?.[0] || '',
     }));
     const latest = allListings.slice(0, 5);
     ACTIVITIES = latest.length > 0 ? latest.map((l): ActivityItem => {

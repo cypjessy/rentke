@@ -17,6 +17,8 @@ import {
   Activity,
 } from "lucide-react";
 import type { ListingData } from "../../lib/listings";
+import type { PropertyData } from "../../lib/properties";
+import { getListingImage } from "../../lib/resolveImages";
 
 type DetailTab = "overview" | "analytics" | "activity";
 
@@ -30,6 +32,7 @@ interface ViewListingSheetProps {
   onResume: () => void;
   onDelete: () => void;
   onRenew: () => void;
+  properties: PropertyData[];
 }
 
 export default function ViewListingSheet({
@@ -42,6 +45,7 @@ export default function ViewListingSheet({
   onResume,
   onDelete,
   onRenew,
+  properties,
 }: ViewListingSheetProps) {
   const router = useRouter();
   const [activeDetailTab, setActiveDetailTab] = useState<DetailTab>("overview");
@@ -118,7 +122,7 @@ export default function ViewListingSheet({
         {/* Cover Photo Header */}
         <div className="relative" style={{ height: "180px" }}>
           <img
-            src={sl.images?.[0] || `https://picsum.photos/seed/${sl.id}/600/360.jpg`}
+            src={getListingImage(sl, properties)}
             className="w-full h-full object-cover"
           />
           <div

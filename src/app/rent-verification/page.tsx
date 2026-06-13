@@ -478,12 +478,13 @@ export default function RentVerificationPage() {
                 <div className="mb-4">
                   <p className="text-xs font-semibold mb-2" style={{ color: "#a3a3a3" }}>PAYMENT PROOF</p>
                   <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <img
-                      src={`https://picsum.photos/seed/${p.screenshot}/400/200.jpg`}
-                      className="w-full h-44 object-cover cursor-pointer"
+                    <div
+                      className="w-full h-44 rounded-xl flex items-center justify-center cursor-pointer"
                       onClick={openScreenshot}
-                      alt=""
-                    />
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    >
+                      <Smartphone className="w-10 h-10" style={{ color: '#525252' }} />
+                    </div>
                     <div className="flex items-center justify-between p-3" style={{ background: "rgba(255,255,255,0.02)" }}>
                       <span className="text-xs" style={{ color: "#525252" }}>M-Pesa confirmation screenshot</span>
                       <button onClick={openScreenshot} className="text-xs font-medium flex items-center gap-1" style={{ color: "#3b82f6" }}>
@@ -799,12 +800,12 @@ export default function RentVerificationPage() {
             </button>
           </div>
           <div className="flex items-center justify-center px-4" style={{ minHeight: "60dvh" }}>
-            <img
-              src={`https://picsum.photos/seed/${p?.screenshot || "mpesa-screenshot"}/600/800.jpg`}
-              className="w-full max-w-sm rounded-2xl object-contain"
-              style={{ maxHeight: "65dvh" }}
-              alt=""
-            />
+            <div
+              className="w-full max-w-sm rounded-2xl flex items-center justify-center"
+              style={{ maxHeight: "65dvh", background: 'rgba(255,255,255,0.03)' }}
+            >
+              <Smartphone className="w-12 h-12" style={{ color: '#525252' }} />
+            </div>
           </div>
         </div>
 

@@ -197,7 +197,7 @@ function listingToResultItem(listing: ListingData, idx: number) {
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || "https://picsum.photos/seed/search-res1/300/300.jpg",
+    img: listing.images?.[0] || '',
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "NEW" : "",
@@ -559,7 +559,7 @@ function ExplorePageInner() {
                     image: item.img,
                     gallery: fullL?.images?.length
                       ? fullL.images
-                      : [item.img || "https://picsum.photos/seed/prop-detail1/800/640.jpg"],
+                      : [item.img || ''],
                     badge: item.badge || undefined,
                     verified: item.verified,
                     featured: !!item.badge,
@@ -675,7 +675,7 @@ function ExplorePageInner() {
           </div>
         </div>
         <div className="map-placeholder">
-          <img src="https://picsum.photos/seed/nairobi-map-dark/800/1400.jpg" className="w-full h-full object-cover opacity-30" alt="Map" />
+          <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', opacity: 0.3 }} />
           {mapPins.map((pin, i) => (
             <div key={i} className="absolute" style={{ top: pin.top, left: pin.left }}>
               <div className="px-2 py-1 rounded-lg text-xs font-bold text-white" style={{ background: "#047857", boxShadow: "0 2px 8px rgba(4,120,87,0.5)" }}>{pin.label}</div>
@@ -707,10 +707,10 @@ function ExplorePageInner() {
                   title: listing.title || listing.propertyName || "Untitled",
                   location: listing.propertyName || "Nairobi, Kenya",
                   price: listing.rent.toLocaleString(),
-                  image: listing.images?.[0] || "https://picsum.photos/seed/search-res1/300/300.jpg",
+                  image: listing.images?.[0] || '',
                   gallery: listing.images?.length
                   ? listing.images
-                  : [listing.images?.[0] || "https://picsum.photos/seed/prop-detail1/800/640.jpg"],
+                  : [listing.images?.[0] || ''],
                   badge: listing.boosted ? "FEATURED" : "",
                   verified: true,
                   featured: !!listing.boosted,
@@ -747,7 +747,7 @@ function ExplorePageInner() {
                 };
                 openPropertyDetail(propData);
               }}>
-                <img src={listing.images?.[0] || "https://picsum.photos/seed/search-res1/300/300.jpg"} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
+                <img src={listing.images?.[0] || ''} alt={listing.title || "Property"} className="w-full h-24 object-cover" />
                 <div className="p-3">
                   <h3 className="font-bold text-white text-xs">{listing.title || listing.propertyName || "Untitled"}</h3>
                   <p className="text-sm font-bold mt-1" style={{ color: "#047857" }}>KSh {listing.rent.toLocaleString()}/mo</p>

@@ -171,7 +171,7 @@ export default function MessagesPage() {
       online: false,
       property: conv.propertyName || "",
       propertyPrice: "",
-      propertyImg: "https://picsum.photos/seed/msg/100/100.jpg",
+      propertyImg: "",
       messages: currentMessages.map((m) => ({
         type: (m.senderId === uid ? "sent" : "received") as "sent" | "received",
         text: m.text,

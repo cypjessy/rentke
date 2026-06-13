@@ -670,7 +670,7 @@ export default function LandlordDashboard() {
                 style={{ borderColor: "rgba(4,120,87,0.4)" }}
               >
                 <img
-                  src="https://picsum.photos/seed/landlord-ke/88/88.jpg"
+                  src=""
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -1334,7 +1334,7 @@ export default function LandlordDashboard() {
                 onScroll={handlePropertyScroll}
               >
                 {properties.map((prop, i) => {
-                  const imgUrl = prop.images?.[0] || `https://picsum.photos/seed/prop-${prop.id}/520/320.jpg`;
+                  const imgUrl = prop.images?.[0] || '';
                   const statusChipColor = prop.status === "active" ? "rgba(4,120,87,0.9)" : prop.status === "partial" ? "rgba(234,179,8,0.9)" : "rgba(59,130,246,0.9)";
                   const barColor = prop.status === "active" ? "#047857" : prop.status === "partial" ? "#eab308" : "#3b82f6";
                   const pct = prop.totalUnits > 0 ? Math.round((prop.occupiedUnits / prop.totalUnits) * 100) : 0;
@@ -2184,7 +2184,7 @@ export default function LandlordDashboard() {
           </div>
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full overflow-hidden" style={{ border: "2px solid rgba(4,120,87,0.4)" }}>
-              <img src="https://picsum.photos/seed/landlord-ke/88/88.jpg" className="w-full h-full object-cover" />
+              <img src="" className="w-full h-full object-cover" />
             </div>
             <div>
               <h4 className="text-base font-bold text-white">{user?.displayName || "Landlord"}</h4>

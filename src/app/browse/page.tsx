@@ -34,10 +34,10 @@ const categories = [
 ];
 
 const popularAreas = [
-  { name: "Kilimani", listings: 240, img: "https://picsum.photos/seed/kilimani-area/400/200.jpg" },
-  { name: "Westlands", listings: 185, img: "https://picsum.photos/seed/westlands-area/400/200.jpg" },
-  { name: "Rongai", listings: 320, img: "https://picsum.photos/seed/rongai-area/400/200.jpg" },
-  { name: "Kileleshwa", listings: 150, img: "https://picsum.photos/seed/kileleshwa-area/400/200.jpg" },
+    { name: "Kilimani", listings: 240 },
+  { name: "Westlands", listings: 185 },
+  { name: "Rongai", listings: 320 },
+  { name: "Kileleshwa", listings: 150 },
 ];
 
 const cities = [
@@ -65,7 +65,7 @@ function listingToFeaturedCard(listing: ListingData, idx: number) {
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
     badge: listing.boosted ? "Featured" : idx === 0 ? "New" : "",
-    img: listing.images?.[0] || "https://picsum.photos/seed/listing-placeholder/560/360.jpg",
+    img: listing.images?.[0] || '',
     tags: (listing.amenities || []).slice(0, 3).map((a) => `✅ ${a}`),
     verified: true,
     photos: listing.images?.length || 0,
@@ -79,7 +79,7 @@ function listingToRecentCard(listing: ListingData, idx: number) {
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    img: listing.images?.[0] || "https://picsum.photos/seed/recent-placeholder/300/300.jpg",
+    img: listing.images?.[0] || '',
     time: listing.createdAt
       ? `${Math.floor((Date.now() - listing.createdAt.toDate().getTime()) / 3600000)}h ago`
       : "Recently",
@@ -94,10 +94,10 @@ function listingToPropertyData(listing: ListingData, idx: number): PropertyData 
     title: listing.title || listing.propertyName || "Untitled",
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
-    image: listing.images?.[0] || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
+    image: listing.images?.[0] || '',
     gallery: listing.images?.length > 0
       ? listing.images
-      : ["https://picsum.photos/seed/prop-detail1/800/640.jpg"],
+      : [],
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "New" : undefined,
     featured: listing.boosted || idx === 0,
     verified: true,
@@ -180,10 +180,10 @@ export default function BrowseHome() {
   const defaultRecentlyViewed = recentListings.slice(0, 4).length > 0
     ? recentListings.slice(0, 4)
     : [
-        { id: 7, title: "Modern Bedsitter - Kilimani", location: "Kilimani, Nairobi", price: "15,000", img: "https://picsum.photos/seed/recent-view1/300/300.jpg", time: "30m ago", timeColor: "#047857" as const, listingId: "" },
-        { id: 8, title: "2BR Apartment - Westlands", location: "Westlands, Nairobi", price: "45,000", img: "https://picsum.photos/seed/recent-view2/300/300.jpg", time: "1h ago", timeColor: "#047857" as const, listingId: "" },
-        { id: 9, title: "1BR - Nyali", location: "Nyali, Mombasa", price: "35,000", img: "https://picsum.photos/seed/recent-view3/300/300.jpg", time: "2h ago", timeColor: "#047857" as const, listingId: "" },
-        { id: 10, title: "Single Room - Roysambu", location: "Roysambu, Nairobi", price: "6,500", img: "https://picsum.photos/seed/recent-view4/300/300.jpg", time: "3h ago", timeColor: "#525252" as const, listingId: "" },
+    { id: 7, title: "Modern Bedsitter - Kilimani", location: "Kilimani, Nairobi", price: "15,000", time: "30m ago", timeColor: "#047857" as const, listingId: "" },
+  { id: 8, title: "2BR Apartment - Westlands", location: "Westlands, Nairobi", price: "45,000", time: "1h ago", timeColor: "#047857" as const, listingId: "" },
+  { id: 9, title: "1BR - Nyali", location: "Nyali, Mombasa", price: "35,000", time: "2h ago", timeColor: "#047857" as const, listingId: "" },
+  { id: 10, title: "Single Room - Roysambu", location: "Roysambu, Nairobi", price: "6,500", time: "3h ago", timeColor: "#525252" as const, listingId: "" },
       ];
 
   const displayRecentViews = recentlyViewed.length > 0 ? recentlyViewed : defaultRecentlyViewed;
@@ -253,13 +253,13 @@ export default function BrowseHome() {
   };
 
   // ---- Track recently viewed ----
-  const trackRecentView = (item: { id: number; title: string; location: string; price: string; img: string }) => {
+  const trackRecentView = (item: { id: number; title: string; location: string; price: string; img?: string }) => {
     addToRecentlyViewed({
       id: item.id,
       title: item.title,
       location: item.location,
       price: item.price,
-      img: item.img,
+      img: item.img || '',
       time: "Just now",
       timeColor: "#047857",
     });
@@ -267,7 +267,7 @@ export default function BrowseHome() {
 
   // ---- Map listing to PropertyData ----
   const openPropertyFromListing = (
-    listing: { id: number; title: string; location: string; price: string; img: string; listingId?: string }
+    listing: { id: number; title: string; location: string; price: string; img?: string; listingId?: string }
   ) => {
     // Try to find the full Firestore listing for better data
     const fullListing = listing.listingId
@@ -281,10 +281,10 @@ export default function BrowseHome() {
           title: listing.title,
           location: listing.location,
           price: listing.price,
-          image: listing.img,
+          image: listing.img || '',
           gallery: listing.img
             ? [listing.img]
-            : ["https://picsum.photos/seed/prop-detail1/800/640.jpg"],
+            : [],
           badge: "FEATURED",
           featured: true,
           verified: true,
@@ -589,7 +589,7 @@ export default function BrowseHome() {
               className="browse-area-card ripple-container"
               onClick={() => router.push(`/browse/explore?q=${encodeURIComponent(area.name)}`)}
             >
-              <img src={area.img} alt={area.name} />
+              <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }} />
               <div className="absolute bottom-0 left-0 right-0 p-3" style={{ zIndex: 10 }}>
                 <p className="text-sm font-bold text-white">{area.name}</p>
                 <p className="text-xs" style={{ color: "#a3a3a3" }}>{area.listings} listings</p>
@@ -620,7 +620,7 @@ export default function BrowseHome() {
               onClick={() => openPropertyFromListing(item)}
             >
               <div className="relative">
-                <img src={item.img} alt={item.title} className="w-full h-28 object-cover" />
+                <div className="w-full h-28 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}><Home className="w-8 h-8" style={{ color: '#525252' }} /></div>
               </div>
               <div className="p-3">
                 <h3 className="font-bold text-white text-xs">{item.title}</h3>

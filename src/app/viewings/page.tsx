@@ -39,6 +39,7 @@ import {
   Settings,
   Wrench,
   CalendarDays,
+  Home,
 } from "lucide-react";
 
 import AuthGuard from "../components/AuthGuard";
@@ -823,7 +824,7 @@ export default function ViewingRequests() {
           {/* Property Info */}
           <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Property</h4>
           <div className="flex items-center gap-3 p-3 rounded-xl mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <img src={`https://picsum.photos/seed/${v.propertyName?.replace(/\s+/g, '-')}/80/80.jpg`} className="w-12 h-12 rounded-xl object-cover" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #047857, #059669)' }}><Home className="w-5 h-5 text-white" /></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">{v.unitName || 'Unit'} — {v.propertyName}</p>
               <p className="text-xs" style={{ color: "#a3a3a3" }}>{v.propertyName}</p>
@@ -981,7 +982,7 @@ export default function ViewingRequests() {
           {(() => {
             const v = selectedViewing;
             const propName = v?.propertyName || 'Property';
-            const mapUrl = `https://picsum.photos/seed/${propName.replace(/\s+/g, '-')}/600/280.jpg`;
+            const mapUrl = '';
             const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(propName + ' Nairobi')}`;
             return <>
           <h3 className="text-base font-bold text-white mb-4">Directions to {propName}</h3>

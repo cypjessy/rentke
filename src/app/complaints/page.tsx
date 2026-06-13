@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Layers,
   DoorOpen,
+  Camera,
   BadgeCheck,
   Megaphone,
   CalendarDays,
@@ -488,7 +489,7 @@ function DetailSheet({
             <p className="text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>{complaint.desc}</p>
             {complaint.hasPhoto && (
               <div className="mt-3">
-                <img src={`https://picsum.photos/seed/${complaint.photoSeed}/300/180.jpg`} className="w-full h-32 object-cover rounded-lg cursor-pointer" onClick={() => showSnackbar("Full screen viewer coming soon", "info")} alt="" />
+                <div className="w-full h-32 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)' }} onClick={() => showSnackbar("Full screen viewer coming soon", "info")}><Camera className="w-8 h-8" style={{ color: '#525252' }} /></div>
               </div>
             )}
             <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>

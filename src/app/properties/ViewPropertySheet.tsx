@@ -205,7 +205,7 @@ export default function ViewPropertySheet({
 
   const coverImage =
     pd.images?.[0] ||
-    `https://picsum.photos/seed/${pd.id}/600/360.jpg`;
+    '';
 
   // Build activity feed from all data sources
   const activityFeed = [
@@ -491,9 +491,7 @@ export default function ViewPropertySheet({
               >
                 {(pd.images && pd.images.length > 0
                   ? pd.images
-                  : [1, 2, 3, 4, 5].map((n) =>
-                      `https://picsum.photos/seed/${pd.id}-${n}/224/224.jpg`
-                    )
+                  : []
                 ).map((imgUrl, idx) => (
                   <div
                     key={idx}

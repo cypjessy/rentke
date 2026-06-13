@@ -522,7 +522,7 @@ export default function PropertiesPage() {
                   <div className="flex" style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative flex-shrink-0" style={{ width: "120px" }}>
                       <img
-                        src={prop.images?.[0] || `https://picsum.photos/seed/prop-${prop.id}/240/240.jpg`}
+                        src={prop.images?.[0] || ''}
                         alt=""
                         className="w-full h-full object-cover"
                         style={{ minHeight: "140px", filter: d.isPaused ? "grayscale(40%)" : "none" }}
@@ -606,7 +606,7 @@ export default function PropertiesPage() {
                   <div style={{ opacity: d.isPaused ? 0.75 : 1 }}>
                     <div className="relative">
                       <img
-                        src={prop.images?.[0] || `https://picsum.photos/seed/prop-${prop.id}/240/240.jpg`}
+                        src={prop.images?.[0] || ''}
                         alt=""
                         className="w-full property-img object-cover"
                         style={{ height: "110px", filter: d.isPaused ? "grayscale(40%)" : "none" }}

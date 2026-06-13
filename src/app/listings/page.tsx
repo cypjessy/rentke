@@ -58,6 +58,7 @@ import {
 } from "../../lib/listings";
 import { listenToUnits, type UnitData } from "../../lib/units";
 import { listenToProperties, type PropertyData } from "../../lib/properties";
+import { getListingImage } from "../../lib/resolveImages";
 import CreateListingSheet from "./CreateListingSheet";
 import ViewListingSheet from "./ViewListingSheet";
 
@@ -511,7 +512,7 @@ function ListingsPage() {
                         </div>
                       ) : (
                         <img
-                          src={listing.images?.[0] || `https://picsum.photos/seed/${listing.id}/220/220.jpg`}
+                          src={getListingImage(listing, properties)}
                           alt=""
                           className="w-full h-full object-cover"
                           style={{ minHeight: "150px", filter: imgFilter }}
@@ -790,6 +791,7 @@ function ListingsPage() {
         isOpen={activeSheet === "detail"}
         onClose={closeSheet}
         listing={selectedListing}
+        properties={properties}
         onEdit={() => openSheet("editListing")}
         onBoost={() => openSheet("boost")}
         onPause={() => openSheet("pauseConfirm")}

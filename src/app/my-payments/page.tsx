@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   Landmark,
   Home,
+  Receipt,
 } from "lucide-react";
 
 // ---- Types ----
@@ -468,7 +469,7 @@ export default function MyPaymentsPage() {
                 <div className="mb-5">
                   <p className="text-xs font-semibold mb-2" style={{ color: "#a3a3a3" }}>PAYMENT PROOF</p>
                   <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <img src={`https://picsum.photos/seed/mpesa-${current.ref}/400/180.jpg`} className="w-full h-36 object-cover" alt="" />
+                    <div className="w-full h-36 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)' }}><Receipt className="w-10 h-10" style={{ color: '#525252' }} /></div>
                   </div>
                 </div>
               )}

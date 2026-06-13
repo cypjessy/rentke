@@ -197,7 +197,7 @@ export default function ViewUnitSheet({
   const leaseEndStr = pd.leaseEnd?.toDate?.()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || '';
 
   // Cover image: use first Bunny.net image or placeholder
-  const coverImage = pd.images?.[0] || `https://picsum.photos/seed/${pd.name.replace(/\s+/g, '-')}/600/320.jpg`;
+  const coverImage = pd.images?.[0] || '';
   const additionalImages = pd.images?.slice(1) || [];
 
   // Snackbar Icon

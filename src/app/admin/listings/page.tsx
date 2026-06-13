@@ -162,7 +162,7 @@ export default function AdminListings() {
     llInit: (l.landlordId?.[0]?.toUpperCase() || "U") + (l.landlordId?.[1]?.toUpperCase() || ""),
     llColor: "#047857",
     llPhone: "",
-    images: l.images?.length > 0 ? l.images : ["https://picsum.photos/seed/admin-placeholder/400/200.jpg"],
+    images: l.images?.length > 0 ? l.images : [],
     amenities: l.amenities || [],
     desc: l.description || "No description",
     views: l.views || 0,
@@ -857,7 +857,7 @@ export default function AdminListings() {
             </button>
           </div>
           <div className="flex items-center justify-center px-4" style={{ minHeight: "60dvh" }}>
-            <img src={currentListing?.images[galleryIndex] || "https://picsum.photos/seed/placeholder/600/400.jpg"} className="w-full rounded-2xl object-cover" style={{ maxHeight: "50dvh" }} alt="" />
+            <img src={currentListing?.images[galleryIndex] || ''} className="w-full rounded-2xl object-cover" style={{ maxHeight: "50dvh" }} alt="" />
           </div>
           <div className="flex items-center justify-center gap-4 mt-6 pb-8">
             <button onClick={prevImage} className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)" }}>

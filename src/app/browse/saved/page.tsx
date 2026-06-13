@@ -422,10 +422,10 @@ export default function SavedPage() {
                       title: prop.title || prop.propertyName || "Untitled",
                       location: prop.location || "Nairobi, Kenya",
                       price: (prop.price || 0).toLocaleString(),
-                      image: prop.image || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
+                      image: prop.image || '',
                       gallery: prop.image
                         ? [prop.image]
-                        : ["https://picsum.photos/seed/prop-placeholder/800/640.jpg"],
+                        : [],
                       verified: true,
                       featured: true,
                       type: "Bedsitter",
@@ -467,7 +467,7 @@ export default function SavedPage() {
                 <div className="flex">
                   <div className="relative w-28 h-28 flex-shrink-0">
                     <img
-                      src={prop.image || "https://picsum.photos/seed/saved-placeholder/300/300.jpg"}
+                      src={prop.image || ''}
                       alt={prop.title}
                       className="w-full h-full object-cover"
                       style={{ borderRadius: "20px 0 0 20px" }}
