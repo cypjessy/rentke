@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import type { PropertyData } from "./PropertyDetailSheet";
 import { PLACEHOLDER_IMAGE } from "../constants";
 import { useAuth } from "../AuthContext";
-import { listenToTenantViewings, listenToTenantInquiries, listenToFavorites, toggleFavorite as toggleFavoriteFS } from "@/lib/browse";
+import { listenToTenantViewings, listenToFavorites, toggleFavorite as toggleFavoriteFS } from "@/lib/browse";
 import { listenToConversations } from "@/lib/conversations";
 import { listenToNotifications } from "@/lib/notifications";
 
@@ -46,7 +46,6 @@ export type BrowseContextType = {
 
   // Home page quick stats
   viewingsCount: number;
-  inquiriesCount: number;
 };
 
 export const BrowseContext = createContext<BrowseContextType>({
@@ -64,13 +63,11 @@ export const BrowseContext = createContext<BrowseContextType>({
   setUnreadMessageCount: () => {},
   unreadNotificationCount: 0,
   viewingsCount: 0,
-  inquiriesCount: 0,
 });
 
 export function BrowseProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [viewingsCount, setViewingsCount] = useState(0);
-  const [inquiriesCount, setInquiriesCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
@@ -78,31 +75,16 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
   // Listen to tenant viewings for count
   useEffect(() => {
     if (!user) return;
-    const phone = user.phoneNumber || "";
-    if (!phone) return;
+    const uid = user.uid || "";
+    if (!uid) return;
     const unsub = listenToTenantViewings(
-      phone,
+      uid,
+      user.phoneNumber || "",
       (viewings) => {
         const upcoming = viewings.filter(
           (v) => v.status === "pending" || v.status === "confirmed"
         ).length;
         setViewingsCount(upcoming);
-      },
-      () => {}
-    );
-    return () => unsub();
-  }, [user]);
-
-  // Listen to tenant inquiries for count
-  useEffect(() => {
-    if (!user) return;
-    const unsub = listenToTenantInquiries(
-      user.uid,
-      (inquiries) => {
-        const pending = inquiries.filter(
-          (i) => i.status === "new" || i.status === "progress"
-        ).length;
-        setInquiriesCount(pending);
       },
       () => {}
     );
@@ -231,7 +213,6 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
         setUnreadMessageCount,
         unreadNotificationCount,
         viewingsCount,
-        inquiriesCount,
       }}
     >
       {children}

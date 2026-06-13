@@ -15,12 +15,17 @@ import {
   Calendar,
   Tag,
   Check,
+  Clock,
+  Info,
 } from "lucide-react";
 import { useBrowse } from "./BrowseContext";
+import { useAuth } from "../AuthContext";
 import type { PropertyData } from "./PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../constants";
 import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
 import { getListingImage, getListingImages } from "@/lib/resolveImages";
+import { listenToNotifications, getNotificationMeta, getNotificationLink, markNotificationRead } from "@/lib/notifications";
+import type { NotificationData } from "@/lib/notifications";
 import type { ListingData } from "@/lib/listings";
 import type { PropertyData as PropData } from "@/lib/properties";
 
@@ -132,9 +137,10 @@ export default function BrowseHome() {
     addToRecentlyViewed,
     recentlyViewed,
     viewingsCount,
-    inquiriesCount,
     unreadNotificationCount,
   } = useBrowse();
+
+  const { user } = useAuth();
 
   // ---- Firestore listings & properties state ----
   const [allListings, setAllListings] = useState<ListingData[]>([]);
@@ -159,6 +165,30 @@ export default function BrowseHome() {
     );
     return () => unsub();
   }, []);
+
+  // Listen to notifications
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = listenToNotifications(
+      user.uid,
+      (list) => setNotifications(list),
+      () => {}
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Mark notification as read
+  const handleNotifClick = async (notif: NotificationData) => {
+    if (!notif.read) {
+      try {
+        await markNotificationRead(notif.id);
+      } catch {}
+    }
+    closeSheet(() => setNotifSheetOpen(false));
+    setNotifSheetOpen(false);
+    document.body.style.overflow = "";
+    router.push(notif.link || getNotificationLink(notif.type));
+  };
 
   // Derive featured (boosted) and recent listings from Firestore data
   const featuredListings = allListings
@@ -198,6 +228,8 @@ export default function BrowseHome() {
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [searchSheetOpen, setSearchSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifSheetOpen, setNotifSheetOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // ---- Derive popular areas dynamically from active listings ----
   const popularAreas = useMemo(() => {
@@ -396,7 +428,7 @@ export default function BrowseHome() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push("/browse/notifications")}
+            onClick={() => setNotifSheetOpen(true)}
             className="w-10 h-10 rounded-full flex items-center justify-center relative ripple-container"
             style={{ background: "rgba(255,255,255,0.05)" }}
           >
@@ -463,7 +495,7 @@ export default function BrowseHome() {
             </div>
           </button>
           <button
-            onClick={() => router.push("/browse/inquiries")}
+            onClick={() => router.push("/browse/messages")}
             className="flex-1 flex items-center gap-3 p-3.5 rounded-2xl ripple-container"
             style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)" }}
           >
@@ -474,8 +506,8 @@ export default function BrowseHome() {
               <MessageCircle className="w-5 h-5" style={{ color: "#60a5fa" }} />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-white">My Inquiries</p>
-              <p className="text-xs" style={{ color: "#a3a3a3" }}>{inquiriesCount} awaiting reply</p>
+              <p className="text-sm font-bold text-white">My Messages</p>
+              <p className="text-xs" style={{ color: "#a3a3a3" }}>Conversations with landlords</p>
             </div>
           </button>
         </div>
@@ -879,6 +911,109 @@ export default function BrowseHome() {
       </div>
 
       {/* ============================================ */}
+      {/* NOTIFICATIONS SHEET */}
+      {/* ============================================ */}
+      <div
+        className={`bottom-sheet-overlay ${notifSheetOpen ? "active" : ""}`}
+        onClick={() => { closeSheet(() => setNotifSheetOpen(false)); setNotifSheetOpen(false); document.body.style.overflow = ""; }}
+      />
+      <div className={`bottom-sheet ${notifSheetOpen ? "active" : ""}`}>
+        <div className="bottom-sheet-handle" />
+        <div className="p-5 pb-2">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-bold text-white">Notifications</h3>
+            <div className="flex items-center gap-2">
+              {unreadNotificationCount > 0 && (
+                <span
+                  className="text-xs px-2 py-1 rounded-full font-medium"
+                  style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "10px" }}
+                >
+                  {unreadNotificationCount} new
+                </span>
+              )}
+              <button
+                onClick={() => { setNotifSheetOpen(false); document.body.style.overflow = ""; }}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.05)" }}
+              >
+                <X className="w-4 h-4" style={{ color: "#a3a3a3" }} />
+              </button>
+            </div>
+          </div>
+          <p className="text-xs" style={{ color: "#a3a3a3" }}>Updates, replies &amp; reminders</p>
+        </div>
+
+        <div className="px-3 pb-8">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-5">
+              <Bell className="w-12 h-12 mb-3" style={{ color: "#262626" }} />
+              <p className="text-sm font-medium text-white mb-1">No notifications yet</p>
+              <p className="text-xs text-center" style={{ color: "#525252" }}>
+                When landlords reply or new listings appear, you'll see them here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {notifications.map((notif) => {
+                const meta = getNotificationMeta(notif.type);
+                return (
+                  <button
+                    key={notif.id}
+                    onClick={() => handleNotifClick(notif)}
+                    className="w-full flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.98]"
+                    style={{
+                      background: notif.read ? "transparent" : "rgba(4,120,87,0.06)",
+                      border: notif.read ? "1px solid transparent" : "1px solid rgba(4,120,87,0.1)",
+                    }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: meta.iconBg }}
+                    >
+                      <span className="text-lg">{meta.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-white truncate">
+                          {notif.title}
+                        </p>
+                        {!notif.read && (
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+                            style={{ background: "#047857" }}
+                          />
+                        )}
+                      </div>
+                      <p
+                        className="text-xs mt-0.5 line-clamp-2"
+                        style={{ color: "#a3a3a3" }}
+                      >
+                        {notif.description}
+                      </p>
+                      {notif.createdAt && (
+                        <p className="text-xs mt-1.5" style={{ color: "#525252" }}>
+                          {(() => {
+                            const diff = Date.now() - notif.createdAt.toDate().getTime();
+                            const mins = Math.floor(diff / 60000);
+                            if (mins < 1) return "Just now";
+                            if (mins < 60) return `${mins}m ago`;
+                            const hrs = Math.floor(mins / 60);
+                            if (hrs < 24) return `${hrs}h ago`;
+                            const days = Math.floor(hrs / 24);
+                            if (days < 7) return `${days}d ago`;
+                            return notif.createdAt.toDate().toLocaleDateString();
+                          })()}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
       </>
   );
 }

@@ -44,22 +44,27 @@ export default function ViewingsPage() {
 
   // ---- Firestore Listener ----
   useEffect(() => {
-    const phone = user?.phoneNumber || "";
-    if (!phone) {
+    const uid = user?.uid || "";
+    if (!uid) {
       setLoading(false);
       return;
     }
 
-    const unsub = listenToTenantViewings(phone, (viewings) => {
-      setAllViewings(viewings);
-      setLoading(false);
-    }, (err) => {
-      console.error("Viewings listener error:", err);
-      setLoading(false);
-    });
+    const unsub = listenToTenantViewings(
+      uid,
+      user?.phoneNumber || "",
+      (viewings) => {
+        setAllViewings(viewings);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Viewings listener error:", err);
+        setLoading(false);
+      }
+    );
 
     return () => unsub();
-  }, [user?.phoneNumber]);
+  }, [user?.uid, user?.phoneNumber]);
 
   // ---- Derived Data ----
   const now = new Date();

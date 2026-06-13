@@ -686,7 +686,7 @@ export default function MessagesPage() {
       {/* ============================================ */}
       {/* VIEW 2: CHAT DETAIL */}
       {/* ============================================ */}
-      {activeChatData && (
+      {activeChat && (
         <div
           className="flex flex-col"
           style={{

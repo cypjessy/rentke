@@ -362,48 +362,70 @@ function getStatusColor(status: string): { color: string; bg: string } {
   }
 }
 
-/** Listen to viewings by tenant phone (for browse portal). */
+/** Map a Firestore snapshot to ViewingData[]. */
+function mapViewingSnapshot(snapshot: import("firebase/firestore").QuerySnapshot): ViewingData[] {
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    const status = (data.status as string) || "pending";
+    const style = getStatusColor(status);
+    return {
+      id: d.id,
+      propertyId: (data.propertyId as string) || "",
+      propertyName: (data.propertyName as string) || "",
+      unitId: (data.unitId as string) || "",
+      unitName: (data.unitName as string) || "",
+      landlordId: (data.landlordId as string) || "",
+      tenantId: (data.tenantId as string) || null,
+      tenantName: (data.tenantName as string) || "",
+      tenantPhone: (data.tenantPhone as string) || "",
+      tenantInitials: (data.tenantInitials as string) || "",
+      status: status as ViewingData["status"],
+      date: (data.date as string) || "",
+      startTime: (data.startTime as string) || "",
+      endTime: (data.endTime as string) || "",
+      duration: (data.duration as string) || "30 min",
+      notes: (data.notes as string) || "",
+      outcome: (data.outcome as string) || "",
+      statusColor: style.color,
+      statusBg: style.bg,
+      createdAt: (data.createdAt as Timestamp) || null,
+      updatedAt: (data.updatedAt as Timestamp) || null,
+    };
+  });
+}
+
+/** Listen to viewings by tenant ID and phone (for browse portal).
+ *  Queries by tenantId (new) and falls back to tenantPhone (legacy) for backward compat. */
 export function listenToTenantViewings(
+  tenantId: string,
   tenantPhone: string,
   onData: (viewings: ViewingData[]) => void,
   onError: (err: Error) => void
 ): Unsubscribe {
   const viewingsRef = collection(db, "viewings");
-  const q = query(viewingsRef, where("tenantPhone", "==", tenantPhone));
+  const q1 = query(viewingsRef, where("tenantId", "==", tenantId));
 
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const list: ViewingData[] = snapshot.docs.map((d) => {
-        const data = d.data();
-        const status = (data.status as string) || "pending";
-        const style = getStatusColor(status);
-        return {
-          id: d.id,
-          propertyId: (data.propertyId as string) || "",
-          propertyName: (data.propertyName as string) || "",
-          unitId: (data.unitId as string) || "",
-          unitName: (data.unitName as string) || "",
-          landlordId: (data.landlordId as string) || "",
-          tenantId: (data.tenantId as string) || null,
-          tenantName: (data.tenantName as string) || "",
-          tenantPhone: (data.tenantPhone as string) || "",
-          tenantInitials: (data.tenantInitials as string) || "",
-          status: status as ViewingData["status"],
-          date: (data.date as string) || "",
-          startTime: (data.startTime as string) || "",
-          endTime: (data.endTime as string) || "",
-          duration: (data.duration as string) || "30 min",
-          notes: (data.notes as string) || "",
-          outcome: (data.outcome as string) || "",
-          statusColor: style.color,
-          statusBg: style.bg,
-          createdAt: (data.createdAt as Timestamp) || null,
-          updatedAt: (data.updatedAt as Timestamp) || null,
-        };
-      });
-      onData(list);
-    },
-    (err) => onError(err)
-  );
+  const unsubs: Unsubscribe[] = [];
+  let data1: ViewingData[] = [];
+  let data2: ViewingData[] = [];
+
+  const merge = () => {
+    const seen = new Set<string>();
+    const merged = [...data1, ...data2].filter((v) => {
+      if (seen.has(v.id)) return false;
+      seen.add(v.id);
+      return true;
+    });
+    onData(merged);
+  };
+
+  unsubs.push(onSnapshot(q1, (snap) => { data1 = mapViewingSnapshot(snap); merge(); }, onError));
+
+  // Fallback: also listen by phone for legacy viewings (tenantId was null before this change)
+  if (tenantPhone) {
+    const q2 = query(viewingsRef, where("tenantPhone", "==", tenantPhone));
+    unsubs.push(onSnapshot(q2, (snap) => { data2 = mapViewingSnapshot(snap); merge(); }, onError));
+  }
+
+  return () => { unsubs.forEach((u) => u()); };
 }

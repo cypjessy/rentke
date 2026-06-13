@@ -883,7 +883,7 @@ export default function MessagesPage() {
       </div>
 
       {/* ====== CHAT FULL-SCREEN OVERLAY ====== */}
-      {chatOpen && currentChat && (
+      {chatOpen && activeChatId && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column", background: "#050505" }}>
           {/* Chat Header */}
           <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: "#1A1D21", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>

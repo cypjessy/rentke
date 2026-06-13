@@ -244,6 +244,7 @@ export default function PropertyDetailSheet({
         unitName: "",
         tenantName: user?.displayName || "Tenant",
         tenantPhone: user?.phoneNumber || "",
+        tenantId: user?.uid || "",
         date: viewingDate,
         startTime,
         endTime,

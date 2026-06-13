@@ -45,6 +45,7 @@ export interface ViewingFormData {
   unitName: string;
   tenantName: string;
   tenantPhone: string;
+  tenantId?: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -128,7 +129,7 @@ export async function scheduleViewing(
   const docRef = await addDoc(viewingsRef, {
     ...data,
     landlordId,
-    tenantId: null,
+    tenantId: data.tenantId || null,
     tenantInitials: initials,
     status: "pending",
     outcome: "",

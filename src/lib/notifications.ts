@@ -62,10 +62,10 @@ function getNotificationMeta(type: NotificationType): {
 function getNotificationLink(type: NotificationType): string {
   switch (type) {
     case "new_listing": return "/browse/explore";
-    case "landlord_reply": return "/browse/inquiries";
+    case "landlord_reply": return "/browse/messages";
     case "viewing_reminder": return "/browse/viewings";
     case "price_drop": return "/browse/saved";
-    case "inquiry_update": return "/browse/inquiries";
+    case "inquiry_update": return "/browse/messages";
     case "message": return "/browse/messages";
   }
 }

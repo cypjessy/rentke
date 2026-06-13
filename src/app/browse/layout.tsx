@@ -7,14 +7,10 @@ import {
   Search,
   Heart,
   MessageCircle,
-  Wallet,
   FileText,
   Menu,
   User,
-  Bell,
   CalendarDays,
-  Send,
-  MessageSquare,
   X as XIcon,
   Check,
   X,
@@ -26,27 +22,23 @@ import { useAuth } from "../AuthContext";
 
 const navItems = [
   { key: "home", label: "Home", icon: Home, path: "/browse" },
-  { key: "explore", label: "Explore", icon: Search, path: "/browse/explore" },
   { key: "saved", label: "Saved", icon: Heart, path: "/browse/saved" },
-  { key: "payments", label: "Payments", icon: Wallet, path: "/browse/payments" },
   { key: "messages", label: "Messages", icon: MessageCircle, path: "/browse/messages" },
   { key: "more", label: "More", icon: Menu, path: null },
 ];
 
-const EXTRA_SECTIONS = [    {
-      title: "Account",
-      items: [
-        { icon: User, label: "Profile", desc: "Your profile & settings", color: "#047857", bg: "rgba(4,120,87,0.12)", path: "/browse/profile" },
-        { icon: Wallet, label: "My Payments", desc: "Pay rent & view history", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/payments" },
-      ],
-    },
+const EXTRA_SECTIONS = [
+  {
+    title: "Account",
+    items: [
+      { icon: User, label: "Profile", desc: "Your profile & settings", color: "#047857", bg: "rgba(4,120,87,0.12)", path: "/browse/profile" },
+    ],
+  },
   {
     title: "Activity",
     items: [
-      { icon: Send, label: "Inquiries", desc: "Messages to landlords", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/browse/inquiries" },
+      { icon: Search, label: "Explore", desc: "Find rentals & properties", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/explore" },
       { icon: CalendarDays, label: "Viewings", desc: "Scheduled visits", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/viewings" },
-      { icon: Bell, label: "Notifications", desc: "Alerts & updates", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/notifications" },
-      { icon: MessageSquare, label: "Issues", desc: "Complaints & vacating", color: "#ef4444", bg: "rgba(239,68,68,0.12)", path: "/browse/issues" },
       { icon: FileText, label: "Documents", desc: "Leases, notices & forms", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/browse/documents" },
     ],
   },
@@ -236,8 +228,7 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
         <div className="sheet-handle" />
 
         <div className="px-5 pt-5 pb-2">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-lg font-bold text-white">More</h3>
+          <div className="flex items-center justify-between mb-1">              <h3 className="text-lg font-bold text-white">More</h3>
             <button
               onClick={() => setMoreOpen(false)}
               className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -247,7 +238,7 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
           <p className="text-xs" style={{ color: "#a3a3a3" }}>
-            All client portal tools &amp; pages
+            Browse, payments &amp; account tools
           </p>
         </div>
 

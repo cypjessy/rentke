@@ -41,7 +41,7 @@ import {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { showSnackbar, viewingsCount, inquiriesCount, favorites } = useBrowse();
+  const { showSnackbar, viewingsCount, favorites } = useBrowse();
 
   // ---- Bottom Sheets ----
   const [sheetOpen, setSheetOpen] = useState<string | null>(null);
@@ -246,7 +246,6 @@ export default function ProfilePage() {
   // ---- Stats (dynamic from context) ----
   const stats = [
     { value: String(viewingsCount), label: "Viewings" },
-    { value: String(inquiriesCount), label: "Inquiries" },
     { value: String(favorites.length), label: "Saved" },
   ];
 
@@ -339,7 +338,6 @@ export default function ProfilePage() {
             onClick={() => {
               const paths: Record<string, string> = {
                 Viewings: "/browse/viewings",
-                Inquiries: "/browse/inquiries",
                 Saved: "/browse/saved",
               };
               router.push(paths[stat.label] || "/browse");
