@@ -13,6 +13,7 @@ export interface CreateListingFormData {
   description: string;
   rent: number;
   amenities: string[];
+  images?: string[];
   status: "active" | "draft";
 }
 

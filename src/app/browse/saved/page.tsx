@@ -423,13 +423,9 @@ export default function SavedPage() {
                       location: prop.location || "Nairobi, Kenya",
                       price: (prop.price || 0).toLocaleString(),
                       image: prop.image || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-                      gallery: [
-                        prop.image || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-                        "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-                        "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-                        "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-                        "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-                      ],
+                      gallery: prop.image
+                        ? [prop.image]
+                        : ["https://picsum.photos/seed/prop-placeholder/800/640.jpg"],
                       verified: true,
                       featured: true,
                       type: "Bedsitter",

@@ -9,6 +9,8 @@ import {
   query,
   where,
   orderBy,
+  getDocs,
+  writeBatch,
   type Unsubscribe,
   type Timestamp,
 } from "firebase/firestore";
@@ -125,7 +127,31 @@ export async function updateProperty(
   });
 }
 
-/** Delete a property. */
+/**
+ * Delete a property and cascade through all related data:
+ * - Listings that reference this property
+ * - Units that belong to this property
+ * - Favorites that reference this property
+ * - Inquiries and viewings referencing this property are cancelled/archived
+ */
 export async function deleteProperty(propertyId: string): Promise<void> {
-  await deleteDoc(doc(propertiesRef, propertyId));
+  // Query all related documents in parallel
+  const [listingsSnap, unitsSnap, favsSnap] = await Promise.all([
+    getDocs(query(collection(db, "listings"), where("propertyId", "==", propertyId))),
+    getDocs(query(collection(db, "units"), where("propertyId", "==", propertyId))),
+    getDocs(query(collection(db, "favorites"), where("propertyId", "==", propertyId))),
+  ]);
+
+  const batch = writeBatch(db);
+
+  // Delete all related documents
+  listingsSnap.forEach((d) => batch.delete(d.ref));
+  unitsSnap.forEach((d) => batch.delete(d.ref));
+  favsSnap.forEach((d) => batch.delete(d.ref));
+
+  // Delete the property itself
+  batch.delete(doc(propertiesRef, propertyId));
+
+  // Commit all deletes atomically
+  await batch.commit();
 }

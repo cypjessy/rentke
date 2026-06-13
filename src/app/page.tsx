@@ -296,6 +296,9 @@ useEffect(() => {
     } else if (authRole === "landlord") {
       router.replace("/dashboard");
     }
+    // If role is null/undefined, the user doc may not have been created yet
+    // or there's a race condition. Don't redirect — stay on auth page.
+    // The role will be resolved when AuthContext updates.
   }
 }, [authUser, authRole, router]);
 

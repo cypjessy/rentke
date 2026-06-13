@@ -118,7 +118,7 @@ export default function ViewListingSheet({
         {/* Cover Photo Header */}
         <div className="relative" style={{ height: "180px" }}>
           <img
-            src={`https://picsum.photos/seed/${sl.id}/600/360.jpg`}
+            src={sl.images?.[0] || `https://picsum.photos/seed/${sl.id}/600/360.jpg`}
             className="w-full h-full object-cover"
           />
           <div

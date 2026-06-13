@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -55,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const router = useRouter();
 
+  // Prevents onAuthStateChanged from overwriting role during signIn/signUp/signInWithGoogle
+  const authOperationInProgress = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
     let unsubscribe: (() => void) | null = null;
@@ -64,6 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) {
         unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           if (firebaseUser && !cancelled) {
+            // If signIn/signUp is in progress, skip — it will set state itself
+            if (authOperationInProgress.current) return;
             try {
               const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
               const role = (userDoc.data()?.role as UserRole) || null;
@@ -88,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(
     async (email: string, password: string): Promise<{ error?: string }> => {
+      authOperationInProgress.current = true;
       try {
         const credential = await signInWithEmailAndPassword(auth, email, password);
         // Fetch role
@@ -104,6 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Too many attempts. Try again later." };
         }
         return { error: err.message || "Login failed" };
+      } finally {
+        authOperationInProgress.current = false;
       }
     },
     []
@@ -117,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone: string;
       role: "tenant" | "landlord";
     }): Promise<{ error?: string }> => {
+      authOperationInProgress.current = true;
       try {
         const credential = await createUserWithEmailAndPassword(
           auth,
@@ -148,6 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: "Password must be at least 6 characters" };
         }
         return { error: err.message || "Sign up failed" };
+      } finally {
+        authOperationInProgress.current = false;
       }
     },
     []
@@ -155,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(
     async (role: "tenant" | "landlord"): Promise<{ error?: string }> => {
+      authOperationInProgress.current = true;
       const provider = new GoogleAuthProvider();
       try {
         const result = await signInWithPopup(auth, provider);
@@ -171,8 +184,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: role,
             createdAt: serverTimestamp(),
           });
-          // Force-correct state in case the onAuthStateChanged listener
-          // already read the doc before we created it (race condition for new users)
           setState({ user, loading: false, role });
         } else {
           // Returning user — use role from Firestore
@@ -186,6 +197,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return {}; // User closed popup — no error to show
         }
         return { error: err.message || "Google sign-in failed" };
+      } finally {
+        authOperationInProgress.current = false;
       }
     },
     []

@@ -550,19 +550,16 @@ function ExplorePageInner() {
                 key={item.id}
                 className="browse-property-card ripple-container"
                 onClick={() => {
+                  const fullL = allListings.find((l) => l.id === item.listingId);
                   const propData: PropertyData = {
                     id: item.id,
                     title: item.title,
                     location: item.location,
                     price: item.price,
                     image: item.img,
-                    gallery: [
-                      "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-                      "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-                      "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-                      "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-                      "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-                    ],
+                    gallery: fullL?.images?.length
+                      ? fullL.images
+                      : [item.img || "https://picsum.photos/seed/prop-detail1/800/640.jpg"],
                     badge: item.badge || undefined,
                     verified: item.verified,
                     featured: !!item.badge,
@@ -711,13 +708,9 @@ function ExplorePageInner() {
                   location: listing.propertyName || "Nairobi, Kenya",
                   price: listing.rent.toLocaleString(),
                   image: listing.images?.[0] || "https://picsum.photos/seed/search-res1/300/300.jpg",
-                  gallery: [
-                    "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-                    "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-                    "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-                    "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-                    "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-                  ],
+                  gallery: listing.images?.length
+                  ? listing.images
+                  : [listing.images?.[0] || "https://picsum.photos/seed/prop-detail1/800/640.jpg"],
                   badge: listing.boosted ? "FEATURED" : "",
                   verified: true,
                   featured: !!listing.boosted,

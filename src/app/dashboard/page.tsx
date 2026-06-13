@@ -92,7 +92,14 @@ type SnackbarType = "success" | "error" | "info";
 
 export default function LandlordDashboard() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
+
+  // Role check: redirect non-landlords to browse portal
+  useEffect(() => {
+    if (role && role !== "landlord") {
+      router.replace("/browse");
+    }
+  }, [role, router]);
 
   // ---- Tab State ----
   const [activeTab, setActiveTab] = useState("home");

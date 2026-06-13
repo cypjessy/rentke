@@ -95,13 +95,9 @@ function listingToPropertyData(listing: ListingData, idx: number): PropertyData 
     location: listing.propertyName || "Nairobi, Kenya",
     price: listing.rent.toLocaleString(),
     image: listing.images?.[0] || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-    gallery: [
-      listing.images?.[0] || "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-      listing.images?.[1] || "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-      listing.images?.[2] || "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-      "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-      "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-    ],
+    gallery: listing.images?.length > 0
+      ? listing.images
+      : ["https://picsum.photos/seed/prop-detail1/800/640.jpg"],
     badge: listing.boosted ? "FEATURED" : idx === 0 ? "New" : undefined,
     featured: listing.boosted || idx === 0,
     verified: true,
@@ -286,13 +282,9 @@ export default function BrowseHome() {
           location: listing.location,
           price: listing.price,
           image: listing.img,
-          gallery: [
-            "https://picsum.photos/seed/prop-detail1/800/640.jpg",
-            "https://picsum.photos/seed/prop-detail2/800/640.jpg",
-            "https://picsum.photos/seed/prop-detail3/800/640.jpg",
-            "https://picsum.photos/seed/prop-detail4/800/640.jpg",
-            "https://picsum.photos/seed/prop-detail5/800/640.jpg",
-          ],
+          gallery: listing.img
+            ? [listing.img]
+            : ["https://picsum.photos/seed/prop-detail1/800/640.jpg"],
           badge: "FEATURED",
           featured: true,
           verified: true,

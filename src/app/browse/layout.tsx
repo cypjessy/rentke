@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { BrowseProvider, useBrowse, type SnackbarType, type RecentView } from "./BrowseContext";
 import PropertyDetailSheet from "./PropertyDetailSheet";
+import { useAuth } from "../AuthContext";
 
 const navItems = [
   { label: "Home", icon: Home, path: "/browse" },
@@ -26,7 +27,15 @@ const navItems = [
 function BrowseShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { role } = useAuth();
   const { showSnackbar: ctxShowSnackbar, closePropertyDetail, propertyDetail, unreadMessageCount } = useBrowse();
+
+  // Role check: redirect landlords to dashboard
+  useEffect(() => {
+    if (role === "landlord") {
+      router.replace("/dashboard");
+    }
+  }, [role, router]);
 
   // ---- Snackbar (local display) ----
   const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type: SnackbarType }>({ show: false, message: "", type: "info" });

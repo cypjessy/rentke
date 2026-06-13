@@ -1008,7 +1008,7 @@ export default function PropertiesPage() {
           </div>
           <h3 className="text-lg font-bold text-white">Delete Property?</h3>
           <p className="text-sm mt-2 leading-relaxed" style={{ color: "#a3a3a3" }}>
-            This will permanently remove <strong className="text-white">{selectedProperty?.name || "this property"}</strong> and all its units. This cannot be undone.
+            This will permanently remove <strong className="text-white">{selectedProperty?.name || "this property"}</strong>, all its units, associated listings from the marketplace, and any saved favorites. This cannot be undone.
           </p>
           <div className="flex gap-3 mt-6">
             <button onClick={closeSheet} className="btn-secondary flex-1" style={{ padding: "14px" }}>Cancel</button>

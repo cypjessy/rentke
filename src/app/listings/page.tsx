@@ -511,7 +511,7 @@ function ListingsPage() {
                         </div>
                       ) : (
                         <img
-                          src={`https://picsum.photos/seed/${listing.id}/220/220.jpg`}
+                          src={listing.images?.[0] || `https://picsum.photos/seed/${listing.id}/220/220.jpg`}
                           alt=""
                           className="w-full h-full object-cover"
                           style={{ minHeight: "150px", filter: imgFilter }}
@@ -939,6 +939,14 @@ function ListingsPage() {
           onSubmit={async (data) => {
             setFormLoading("create-listing");
             try {
+              // Carry over images from the property and unit
+              const srcProperty = properties.find(p => p.id === data.propertyId);
+              const srcUnit = vacantUnits.find(u => u.id === data.unitId);
+              const combinedImages = Array.from(new Set([
+                ...(srcProperty?.images || []),
+                ...(srcUnit?.images || []),
+              ]));
+
               await createListing(user.uid, {
                 propertyId: data.propertyId,
                 propertyName: data.propertyName,
@@ -948,7 +956,7 @@ function ListingsPage() {
                 description: data.description,
                 rent: data.rent,
                 amenities: data.amenities,
-                images: [],
+                images: combinedImages,
                 status: data.status,
               });
               setFormLoading(null);
