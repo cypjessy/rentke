@@ -696,13 +696,16 @@ export default function PropertiesPage() {
             </div>
             <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#047857" }}>Cancel</button>
           </div>
-          <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Recent</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Quick Filters</h4>
           <div className="flex flex-wrap gap-2">
-            {["Kilimani", "Bedsitter"].map((s) => (
-              <button key={s} className="chip" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }}>
-                <Clock className="w-3 h-3" /> {s}
-              </button>
-            ))}
+            {(() => {
+              const recentFilters = properties.slice(0, 5).map(p => p.name);
+              return [...new Set(recentFilters)].slice(0, 3).map((s) => (
+                <button key={s} className="chip" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }} onClick={() => { setSearchText(s); closeSheet(); }}>
+                  <Clock className="w-3 h-3" /> {s}
+                </button>
+              ));
+            })()}
           </div>
         </div>
       </div>

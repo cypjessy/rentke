@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import Avatar from "@/app/components/Avatar";
 import { useBrowse } from "../BrowseContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../AuthContext";
@@ -36,7 +37,10 @@ import {
   Home,
   MessageCircle,
   Megaphone,
+  Loader2,
 } from "lucide-react";
+import { pickAndUploadPhoto } from "@/lib/upload";
+import { updateProfile } from "firebase/auth";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -74,6 +78,10 @@ export default function ProfilePage() {
   };
 
   // ---- Granular Notification Preferences ----
+  // ---- Photo Upload State ----
+  const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   const [notifPrefs, setNotifPrefs] = useState({
     priceDrops: true,
     newListings: true,
@@ -99,17 +107,19 @@ export default function ProfilePage() {
     showSnackbar("Referral code copied!", "success");
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      showSnackbar("Profile photo selected!", "success");
-      // In production, upload to Firebase Storage here
+  const handleUploadPhoto = async () => {
+    if (!user?.uid) return;
+    setUploadingPhoto(true);
+    try {
+      const url = await pickAndUploadPhoto("profiles", user.uid);
+      if (url) {
+        setUserPhotoURL(url);
+        showSnackbar("Photo selected! Save your profile to apply.", "success");
+      }
+    } catch (err: any) {
+      showSnackbar(err?.message || "Failed to upload photo", "error");
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -197,10 +207,19 @@ export default function ProfilePage() {
     closeSheet();
     try {
       if (user) {
-        await updateUserProfile(user.uid, {
+        const updateData: any = {
           displayName: editName.trim(),
           email: editEmail.trim(),
           phoneNumber: editPhone.replace(/\s/g, ""),
+        };
+        if (userPhotoURL) {
+          updateData.photoURL = userPhotoURL;
+        }
+        await updateUserProfile(user.uid, updateData);
+        // Also update Firebase Auth profile
+        await updateProfile(user, {
+          displayName: editName.trim(),
+          photoURL: userPhotoURL || undefined,
         });
       }
       showSnackbar("Profile updated successfully!", "success");
@@ -261,16 +280,6 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-white">Profile</h1>
       </header>
 
-      {/* Hidden file input for camera/photo upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileChange}
-        style={{ display: "none" }}
-      />
-
       {/* ====== PROFILE CARD ====== */}
       <div className="px-3 mt-4" style={{ animation: "slideInUp 0.5s ease" }}>
         <div
@@ -281,21 +290,22 @@ export default function ProfilePage() {
           }}
         >
           <div className="relative">
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold"
-              style={{
-                background: "linear-gradient(135deg, #047857, #059669)",
-                color: "white",
-              }}
-            >
-              {userInitial || "U"}
-            </div>
+            <Avatar
+              src={userPhotoURL || user?.photoURL}
+              name={userDisplayName}
+              size={64}
+            />
             <button
-              onClick={handleCameraClick}
+              onClick={handleUploadPhoto}
+              disabled={uploadingPhoto}
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
               style={{ background: "#1A1D21", border: "2px solid #050505" }}
             >
-              <Camera className="w-3 h-3" style={{ color: "#047857" }} />
+              {uploadingPhoto ? (
+                <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#047857" }} />
+              ) : (
+                <Camera className="w-3 h-3" style={{ color: "#047857" }} />
+              )}
             </button>
           </div>
           <div className="flex-1 min-w-0">
@@ -788,24 +798,26 @@ export default function ProfilePage() {
           {/* Avatar Edit */}
           <div className="flex justify-center mb-2">
             <div className="relative">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #047857, #059669)",
-                  color: "white",
-                }}
-              >
-                D
-              </div>
+              <Avatar
+                src={userPhotoURL || user?.photoURL}
+                name={editName}
+                size={80}
+              />
               <button
-                onClick={handleCameraClick}
+                onClick={handleUploadPhoto}
+                disabled={uploadingPhoto}
                 className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
                 style={{
                   background: "#047857",
                   boxShadow: "0 2px 8px rgba(4,120,87,0.4)",
                 }}
+                type="button"
               >
-                <Camera className="w-4 h-4 text-white" />
+                {uploadingPhoto ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <Camera className="w-4 h-4 text-white" />
+                )}
               </button>
             </div>
           </div>

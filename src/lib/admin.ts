@@ -416,6 +416,7 @@ export async function updateUserProfile(
     phoneNumber?: string;
     bio?: string;
     location?: string;
+    photoURL?: string;
   }
 ): Promise<void> {
   await updateDoc(doc(db, "users", userId), {

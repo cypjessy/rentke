@@ -31,7 +31,7 @@ import {
   UserPlus,
   BarChart3,
   FileText,
-  Grid3x3,
+
   ArrowRight,
   Clock,
   LayoutDashboard,
@@ -74,6 +74,7 @@ import {
 } from "lucide-react";
 
 import AuthGuard from "../components/AuthGuard";
+import Avatar from "../components/Avatar";
 import { useAuth } from "../AuthContext";
 import { listenToProperties, addProperty, type PropertyFormData } from "../../lib/properties";
 import { updateUserProfile } from "../../lib/admin";
@@ -88,7 +89,6 @@ import type { UnitData } from "../../lib/units";
 import type { ViewingData } from "../../lib/viewings";
 import type { InquiryData } from "../../lib/inquiries";
 import type { MaintenanceData } from "../../lib/maintenance";
-type Period = "week" | "month" | "year";
 type SnackbarType = "success" | "error" | "info";
 
 export default function LandlordDashboard() {
@@ -110,9 +110,6 @@ export default function LandlordDashboard() {
 
   // ---- Search Text ----
   const [searchText, setSearchText] = useState("");
-
-  // ---- Chart Period ----
-  const [chartPeriod, setChartPeriod] = useState<Period>("week");
 
   // ---- Firestore Data ----
   const [properties, setProperties] = useState<PropertyData[]>([]);
@@ -157,12 +154,8 @@ export default function LandlordDashboard() {
   const occupiedUnits = units.filter((u) => u.status === "Occupied").length;
   const vacantUnits = units.filter((u) => u.status === "Vacant").length;
   const occupancyPct = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
-  const monthlyRevenue = units.reduce((sum, u) => sum + (u.status === "Occupied" ? u.rent : 0), 0);
   const pendingViewings = viewings.filter((v) => v.status === "pending" || v.status === "confirmed").length;
   const newInquiries = inquiries.filter((i) => i.status === "new").length;
-  const collectedRevenue = units
-    .filter((u) => u.status === "Occupied" && u.payment === "Paid")
-    .reduce((sum, u) => sum + u.rent, 0);
   const overdueUnits = units.filter((u) => u.status === "Occupied" && u.payment === "Overdue").length;
   const upcomingViewings = viewings
     .filter((v) => v.status === "pending" || v.status === "confirmed")
@@ -356,6 +349,8 @@ export default function LandlordDashboard() {
   const [editLocation, setEditLocation] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [addUAmenities, setAddUAmenities] = useState<string[]>([]);
   const [addUnitLoading, setAddUnitLoading] = useState(false);
 
@@ -396,52 +391,7 @@ export default function LandlordDashboard() {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarAnimClass, setSnackbarAnimClass] = useState("");
 
-  // ---- Chart data (computed from units where possible, fallback placeholders) ----
-  const weeklyRevenue = monthlyRevenue > 0 ? [
-    Math.round(monthlyRevenue * 0.12),
-    Math.round(monthlyRevenue * 0.15),
-    Math.round(monthlyRevenue * 0.10),
-    Math.round(monthlyRevenue * 0.18),
-    Math.round(monthlyRevenue * 0.14),
-    Math.round(monthlyRevenue * 0.08),
-    Math.round(monthlyRevenue * 0.06),
-  ] : [0, 0, 0, 0, 0, 0, 0];
-  const maxWeekly = Math.max(...weeklyRevenue, 1);
-  // ---- Chart data (computed from monthlyRevenue) ----
-  const monthlyRevenueArr = monthlyRevenue > 0 ? [
-    Math.round(monthlyRevenue * 0.22),
-    Math.round(monthlyRevenue * 0.28),
-    Math.round(monthlyRevenue * 0.20),
-    Math.round(monthlyRevenue * 0.18),
-    Math.round(monthlyRevenue * 0.32),
-    Math.round(monthlyRevenue * 0.25),
-    Math.round(monthlyRevenue * 0.30),
-  ] : [0, 0, 0, 0, 0, 0, 0];
-  const yearlyRevenueArr = monthlyRevenue > 0 ? [0,1,2,3,4,5,6].map(i => Math.round(monthlyRevenue * 12 * (0.12 + i * 0.02))) : [0,0,0,0,0,0,0];
-  const maxMonthly = Math.max(...monthlyRevenueArr, 1);
-  const maxYearly = Math.max(...yearlyRevenueArr, 1);
-  const chartData: Record<Period, { heights: number[]; values: string[] }> = {
-    week: {
-      heights: weeklyRevenue.map(v => Math.round((v / maxWeekly) * 100)),
-      values: weeklyRevenue.map(v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)),
-    },
-    month: {
-      heights: monthlyRevenueArr.map(v => Math.round((v / maxMonthly) * 100)),
-      values: monthlyRevenueArr.map(v => v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)),
-    },
-    year: {
-      heights: yearlyRevenueArr.map(v => Math.round((v / maxYearly) * 100)),
-      values: yearlyRevenueArr.map(v => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)),
-    },
-  };
-
-  const dayLabels: Record<Period, string[]> = {
-    week: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    month: ["W1", "W2", "W3", "W4", "W5", "W6", "W7"],
-    year: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-  };
-
-  // ---- Count Up Animation ----
+// ---- Count Up Animation ----
   useEffect(() => {
     if (!countsVisible) {
       const timer = setTimeout(() => setCountsVisible(true), 300);
@@ -567,6 +517,51 @@ export default function LandlordDashboard() {
     }
   };
 
+  // ---- Photo Upload ----
+  const handleUploadPhoto = async () => {
+    if (!user?.uid) return;
+    setUploadingPhoto(true);
+    try {
+      const url = await pickAndUploadPhoto("profiles", user.uid);
+      if (url) {
+        setUserPhotoURL(url);
+        showSnackbar("Photo selected! Save your profile to apply.", "success");
+      }
+    } catch (err: any) {
+      showSnackbar(err?.message || "Failed to upload photo", "error");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // ---- Save Profile ----
+  const handleSaveProfile = async () => {
+    if (!user?.uid) return;
+    setAddPropertyLoading(true);
+    try {
+      const updateData: any = { displayName: addFormName || undefined };
+      if (userPhotoURL) {
+        updateData.photoURL = userPhotoURL;
+      }
+      await updateUserProfile(user.uid, updateData);
+      // Also update Firebase Auth profile
+      const { updateProfile } = await import("firebase/auth");
+      const { auth } = await import("@/lib/firebase");
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: addFormName || undefined,
+          photoURL: userPhotoURL || undefined,
+        });
+      }
+      setAddPropertyLoading(false);
+      closeSheet();
+      setTimeout(() => showSnackbar("Profile updated! ✅", "success"), 300);
+    } catch (err: any) {
+      setAddPropertyLoading(false);
+      showSnackbar(err?.message || "Failed to update profile", "error");
+    }
+  };
+
   // ---- Mark All Read ----
   const markAllRead = () => {
     showSnackbar('All notifications marked as read', 'success');
@@ -665,17 +660,14 @@ export default function LandlordDashboard() {
         <div className="app-header">
           <div className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
-              <div
+              <Avatar
+                src={user?.photoURL}
+                name={user?.displayName}
+                size={44}
                 onClick={() => openSheet("profile")}
-                className="w-11 h-11 rounded-full overflow-hidden border-2 cursor-pointer"
+                className="border-2 cursor-pointer"
                 style={{ borderColor: "rgba(4,120,87,0.4)" }}
-              >
-                <img
-                  src=""
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              />
               <div>
                 <p className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
                   {getGreeting()} 👋
@@ -776,32 +768,30 @@ export default function LandlordDashboard() {
               </div>
               <div
                 className="stat-card animate-in stagger-3"
-                onClick={() => openSheet("revenue")}
+                onClick={() => router.push("/units")}
               >
-                <div className="glow" style={{ background: "#eab308" }} />
+                <div className="glow" style={{ background: "#a855f7" }} />
                 <div className="flex items-center justify-between mb-3">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(234,179,8,0.15)" }}
+                    style={{ background: "rgba(168,85,247,0.15)" }}
                   >
-                    <Banknote className="w-5 h-5" style={{ color: "#eab308" }} />
+                    <Layers className="w-5 h-5" style={{ color: "#a855f7" }} />
                   </div>
                   <div
                     className="chip"
-                    style={{ background: "rgba(234,179,8,0.1)", color: "#eab308" }}
+                    style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7" }}
                   >
-                    <TrendingUp className="w-3 h-3" /> +12%
+                    <TrendingUp className="w-3 h-3" /> {dataLoading ? "..." : `${occupancyPct}%`}
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-white">
-                  <span className="text-base font-medium" style={{ color: "#a3a3a3" }}>
-                    KSh
-                  </span>{" "}
-                  <span data-count={monthlyRevenue || 0}>{dataLoading ? "..." : Math.round(monthlyRevenue).toLocaleString()}</span>
+                <p className="text-2xl font-bold text-white" data-count={totalUnits || 0}>
+                  {dataLoading ? "..." : totalUnits}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-                  Monthly Revenue
+                  Total Units
                 </p>
+                <p className="text-xs" style={{ color: "#a855f7" }}>{occupiedUnits} occupied · {vacantUnits} vacant</p>
               </div>
               <div
                 className="stat-card animate-in stagger-4"
@@ -834,130 +824,120 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* REVENUE CHART */}
+            {/* PORTFOLIO SNAPSHOT */}
             <div
               className="card mt-5 animate-in stagger-5"
               style={{ padding: "20px" }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-white">
-                    Revenue Overview
-                  </h3>
+                  <h3 className="text-base font-bold text-white">Portfolio Snapshot</h3>
                   <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-                    {dataLoading ? "Loading..." : `KSh ${Math.round(monthlyRevenue).toLocaleString()} this month`}
+                    {dataLoading ? "Loading..." : `${totalProperties} properties · ${totalUnits} units`}
                   </p>
                 </div>
-                <div
-                  className="flex items-center gap-1 p-1 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.04)" }}
-                >
-                  {(["week", "month", "year"] as Period[]).map((p) => (
-                    <button
-                      key={p}
-                      className={`period-pill ${chartPeriod === p ? "active" : ""}`}
-                      onClick={() => setChartPeriod(p)}
-                    >
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div
-                className="flex items-end justify-between gap-2"
-                style={{ height: "160px", paddingTop: "8px" }}
-              >
-                {chartData[chartPeriod].heights.map((height, i) => {
-                  const isToday = chartPeriod === "week" && i === 4;
-                  const isWeekend = chartPeriod === "week" && i >= 5;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                      <div
-                        className="w-full flex justify-center"
-                        style={{ height: "130px", alignItems: "flex-end" }}
-                      >
-                        <div
-                          className="chart-bar w-full"
-                          style={{
-                            height: height + "%",
-                            background: isWeekend
-                              ? "rgba(255,255,255,0.08)"
-                              : `linear-gradient(to top, #047857, ${
-                                  isToday ? "#34d399" : "#059669"
-                                })`,
-                            boxShadow: isToday
-                              ? "0 0 20px rgba(4,120,87,0.4)"
-                              : "none",
-                            animationDelay: 0.1 + i * 0.05 + "s",
-                          }}
-                          onClick={() =>
-                            showSnackbar(
-                              dayLabels[chartPeriod][i] +
-                                ": KSh " +
-                                chartData[chartPeriod].values[i],
-                              "info"
-                            )
-                          }
-                        >
-                          <div className="chart-tooltip">
-                            KSh {chartData[chartPeriod].values[i]}
-                          </div>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs font-medium ${
-                          isToday ? "font-semibold" : ""
-                        }`}
-                        style={{
-                          color: isToday ? "#047857" : "#525252",
-                        }}
-                      >
-                        {isToday ? "Today" : dayLabels[chartPeriod][i]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div
-                className="flex items-center justify-between mt-4 pt-3"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ background: "#047857" }}
-                    />
-                    <span className="text-xs" style={{ color: "#a3a3a3" }}>
-                      Income
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ background: "rgba(255,255,255,0.15)" }}
-                    />
-                    <span className="text-xs" style={{ color: "#a3a3a3" }}>
-                      Projected
-                    </span>
-                  </div>
-                </div>
                 <button
-                  onClick={() => openSheet("revenue")}
+                  onClick={() => router.push("/properties")}
                   className="text-xs font-semibold"
-                  style={{ color: "#047857" }}
+                  style={{ color: "#a855f7" }}
                 >
-                  View Details →
+                  Manage Properties →
                 </button>
+              </div>
+
+              {/* Property Type Distribution */}
+              {!dataLoading && properties.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>
+                    Property Types
+                  </h4>
+                  <div className="space-y-2">
+                    {(() => {
+                      const typeCounts = properties.reduce((acc: Record<string, number>, p) => {
+                        acc[p.type] = (acc[p.type] || 0) + 1;
+                        return acc;
+                      }, {});
+                      const maxCount = Math.max(...Object.values(typeCounts), 1);
+                      const typeColors: Record<string, string> = {
+                        "Apartment": "#047857",
+                        "Bedsitter": "#3b82f6",
+                        "Studio": "#a855f7",
+                        "Villa": "#f97316",
+                        "Townhouse": "#eab308",
+                        "Commercial": "#ec4899",
+                      };
+                      return Object.entries(typeCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([type, count]) => {
+                          const color = typeColors[type] || "#6b7280";
+                          const pct = Math.round((count / maxCount) * 100);
+                          return (
+                            <div key={type} className="flex items-center gap-3">
+                              <span className="text-xs font-medium w-20 text-white truncate">{type}</span>
+                              <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                              </div>
+                              <span className="text-xs font-semibold" style={{ color }}>{count}</span>
+                            </div>
+                          );
+                        });
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Occupancy Summary */}
+              <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#525252" }}>Occupancy</h4>
+                  <span className="text-sm font-bold text-white">{dataLoading ? "..." : `${occupancyPct}%`}</span>
+                </div>
+                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${occupancyPct}%`, background: "linear-gradient(to right, #047857, #10b981)", boxShadow: "0 0 10px rgba(4,120,87,0.4)" }} />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs" style={{ color: "#a3a3a3" }}>{occupiedUnits} occupied</span>
+                  <span className="text-xs" style={{ color: "#a3a3a3" }}>{vacantUnits} vacant</span>
+                </div>
+              </div>
+
+              {/* Occupancy by Property */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>By Property</h4>
+                <div className="space-y-2">
+                  {properties.slice(0, 5).map((prop) => {
+                    const propUnits = units.filter((u) => u.propertyId === prop.id);
+                    const total = propUnits.length;
+                    const occupied = propUnits.filter((u) => u.status === "Occupied").length;
+                    const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+                    const color = pct >= 80 ? "#047857" : pct >= 50 ? "#eab308" : "#ef4444";
+                    return (
+                      <div key={prop.id} className="flex items-center gap-3" onClick={() => router.push("/properties")} style={{ cursor: "pointer" }}>
+                        <span className="text-xs font-medium w-28 truncate text-white">{prop.name}</span>
+                        <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                        </div>
+                        <span className="text-xs font-semibold" style={{ color }}>{occupied}/{total}</span>
+                      </div>
+                    );
+                  })}
+                  {properties.length === 0 && !dataLoading && (
+                    <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No properties yet</p>
+                  )}
+                  {dataLoading && (
+                    <div className="text-xs text-center py-4" style={{ color: "#525252" }}>Loading...</div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* OCCUPANCY + QUICK STATS */}
             <div className="grid grid-cols-5 gap-3 mt-5">
-              <div
-                className="col-span-3 card animate-in stagger-6"
-                style={{ padding: "20px" }}
-              >
+            <div
+              className="col-span-3 card animate-in stagger-6"
+              style={{ padding: "20px", cursor: "pointer" }}
+              onClick={() => router.push("/units")}
+            >
                 <div className="flex items-center gap-4">
                   <div className="relative flex-shrink-0">
                     <svg className="progress-ring" width="90" height="90">
@@ -1061,69 +1041,68 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* RENT COLLECTION */}
+            {/* INQUIRY SUMMARY */}
             <div
               className="card mt-5 animate-in stagger-8"
               style={{ padding: "20px" }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-white">Rent Collection</h3>
-                <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                  {new Date().toLocaleDateString('en', { month: 'long', year: 'numeric' })}
-                </span>
-              </div>
-              <div
-                className="w-full h-3 rounded-full overflow-hidden"
-                style={{ background: "rgba(255,255,255,0.06)" }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: "72%",
-                    background: "linear-gradient(to right, #047857, #10b981)",
-                    boxShadow: "0 0 10px rgba(4,120,87,0.4)",
-                    transition: "width 1s ease",
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <div>
-                  <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                    Collected
-                  </p>
-                  <p className="text-sm font-bold text-white">KSh {collectedRevenue.toLocaleString()}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                    Expected
-                  </p>
-                  <p className="text-sm font-bold" style={{ color: "#a3a3a3" }}>
-                    KSh {monthlyRevenue.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div
-                className="flex items-center gap-3 mt-3 p-3 rounded-xl"
-                style={{
-                  background: "rgba(234,179,8,0.06)",
-                  border: "1px solid rgba(234,179,8,0.15)",
-                }}
-              >
-                <AlertTriangle
-                  className="w-4 h-4 flex-shrink-0"
-                  style={{ color: "#eab308" }}
-                />                  <p className="text-xs" style={{ color: "#eab308" }}>
-                  {overdueUnits} tenant{overdueUnits !== 1 ? 's' : ''} ha{overdueUnits === 1 ? 's' : 've'} pending payments
-                </p>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white">Inquiry Summary</h3>
                 <button
-                  onClick={() =>
-                    showSnackbar(`Sending reminders to ${overdueUnits} tenants...`, "success")
-                  }
-                  className="text-xs font-semibold whitespace-nowrap"
-                  style={{ color: "#eab308" }}
+                  onClick={() => router.push("/messages")}
+                  className="text-xs font-semibold"
+                  style={{ color: "#a855f7" }}
                 >
-                  Remind
+                  View All →
                 </button>
+              </div>
+
+              {/* Status breakdown */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
+                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "new").length}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>New</p>
+                </div>
+                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
+                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "progress").length}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>Active</p>
+                </div>
+                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)" }}>
+                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "responded" || i.status === "archived").length}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>Done</p>
+                </div>
+              </div>
+
+              {/* Recent inquiries */}
+              <div className="space-y-2">
+                {inquiries.slice(0, 3).map((inq) => {
+                  const statusColor = inq.status === "new" ? "#047857" : inq.status === "progress" ? "#3b82f6" : inq.status === "responded" ? "#a855f7" : "#6b7280";
+                  const statusBg = inq.status === "new" ? "rgba(4,120,87,0.1)" : inq.status === "progress" ? "rgba(59,130,246,0.1)" : inq.status === "responded" ? "rgba(168,85,247,0.1)" : "rgba(107,114,128,0.1)";
+                  return (
+                    <div
+                      key={inq.id}
+                      className="flex items-start gap-3 p-3 rounded-xl cursor-pointer"
+                      style={{ background: "rgba(255,255,255,0.03)" }}
+                      onClick={() => router.push("/messages")}
+                    >
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: statusBg }}>
+                        <MessageCircle className="w-4 h-4" style={{ color: statusColor }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white">{inq.tenantName || "Tenant"}</p>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: "#a3a3a3" }}>
+                          {inq.propertyName}{inq.unitName ? ` — ${inq.unitName}` : ""}
+                        </p>
+                      </div>
+                      <span className="chip text-xs" style={{ background: statusBg, color: statusColor, fontSize: "10px", padding: "2px 8px", flexShrink: 0 }}>
+                        {inq.status.charAt(0).toUpperCase() + inq.status.slice(1)}
+                      </span>
+                    </div>
+                  );
+                })}
+                {inquiries.length === 0 && (
+                  <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No inquiries yet</p>
+                )}
               </div>
             </div>
 
@@ -1133,7 +1112,7 @@ export default function LandlordDashboard() {
                 <h3 className="section-title">Maintenance Requests</h3>
                 <button
                   className="section-action"
-                  
+                  onClick={() => router.push("/issues")}
                   >
                   View All
                 </button>
@@ -1153,7 +1132,7 @@ export default function LandlordDashboard() {
                       key={req.id}
                       className="flex items-start gap-3 p-3.5 rounded-2xl cursor-pointer"
                       style={{ background: "#1A1D21", border: "1px solid rgba(255,255,255,0.06)" }}
-                      
+                      onClick={() => router.push("/issues")}
                     >
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1242,7 +1221,7 @@ export default function LandlordDashboard() {
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => openSheet("payments")}
+                  onClick={() => router.push("/units")}
                 >
                   <div
                     className="qa-icon"
@@ -1256,7 +1235,7 @@ export default function LandlordDashboard() {
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => openSheet("tenants")}
+                  onClick={() => router.push("/tenants")}
                 >
                   <div
                     className="qa-icon"
@@ -1270,7 +1249,7 @@ export default function LandlordDashboard() {
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => openSheet("reports")}
+                  onClick={() => router.push("/listings")}
                 >
                   <div
                     className="qa-icon"
@@ -1279,35 +1258,35 @@ export default function LandlordDashboard() {
                     <BarChart3 className="w-5 h-5" style={{ color: "#f97316" }} />
                   </div>
                   <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                    Reports
+                    Listings
                   </span>
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => openSheet("invoices")}
+                  onClick={() => router.push("/calendar")}
                 >
                   <div
                     className="qa-icon"
                     style={{ background: "rgba(6,182,212,0.12)" }}
                   >
-                    <FileText className="w-5 h-5" style={{ color: "#06b6d4" }} />
+                    <CalendarDays className="w-5 h-5" style={{ color: "#06b6d4" }} />
                   </div>
                   <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                    Invoices
+                    Calendar
                   </span>
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => openSheet("moreMenu")}
+                  onClick={() => router.push("/settings")}
                 >
                   <div
                     className="qa-icon"
                     style={{ background: "rgba(255,255,255,0.06)" }}
                   >
-                    <Grid3x3 className="w-5 h-5" style={{ color: "#a3a3a3" }} />
+                    <Settings className="w-5 h-5" style={{ color: "#a3a3a3" }} />
                   </div>
                   <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                    More
+                    Settings
                   </span>
                 </div>
               </div>
@@ -1790,99 +1769,6 @@ export default function LandlordDashboard() {
           ))}
         </div>
       </div>
-{/* REVENUE DETAIL SHEET */}
-      <div
-        className={`sheet-overlay ${activeSheet === "revenue" ? "active" : ""}`}
-        onClick={closeSheet}
-      />
-      <div
-        className={`bottom-sheet ${activeSheet === "revenue" ? "active" : ""}`}
-        style={{ maxHeight: "95dvh" }}
-      >
-        <div className="sheet-handle" />
-        <div className="p-3">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-bold text-white">Revenue Details</h3>
-            <button
-              onClick={closeSheet}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.05)" }}
-            >
-              <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
-            </button>
-          </div>
-          <div
-            className="p-4 rounded-2xl mb-5"
-            style={{
-              background: "rgba(4,120,87,0.06)",
-              border: "1px solid rgba(4,120,87,0.15)",
-            }}
-          >
-            <p className="text-xs" style={{ color: "#a3a3a3" }}>
-              Total Revenue (December)
-            </p>
-            <p className="text-3xl font-bold text-white mt-1">KSh 775,000</p>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span
-                className="chip"
-                style={{
-                  background: "rgba(4,120,87,0.1)",
-                  color: "#047857",
-                  fontSize: "11px",
-                }}
-              >
-                <TrendingUp className="w-3 h-3" /> +12% vs last month
-              </span>
-            </div>
-          </div>
-          <h4
-            className="text-xs font-semibold uppercase tracking-wider mb-3"
-            style={{ color: "#525252" }}
-          >
-            Breakdown by Property
-          </h4>
-          <div className="space-y-2">
-            {[
-              { color: "#047857", name: "Kilimani Heights", units: "8 units occupied", amount: "280K" },
-              { color: "#3b82f6", name: "Westlands Suites", units: "12 units occupied", amount: "350K" },
-              { color: "#eab308", name: "Ruaka Gardens", units: "5 units occupied", amount: "145K" },
-            ].map((prop, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)" }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-2 h-8 rounded-full"
-                    style={{ background: prop.color }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-white">{prop.name}</p>
-                    <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                      {prop.units}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm font-bold text-white">KSh {prop.amount}</p>
-              </div>
-            ))}
-          </div>
-          <div
-            className="flex items-center gap-3 mt-5 p-3 rounded-xl"
-            style={{
-              background: "rgba(59,130,246,0.06)",
-              border: "1px solid rgba(59,130,246,0.15)",
-            }}
-          >
-            <Info className="w-4 h-4 flex-shrink-0" style={{ color: "#3b82f6" }} />
-            <p className="text-xs" style={{ color: "#3b82f6" }}>
-              Pending: KSh 217,000 from 2 tenants
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* ACTIVITY LOG SHEET */}
       <div className={`sheet-overlay ${activeSheet === "activityLog" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "activityLog" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
@@ -1895,18 +1781,14 @@ export default function LandlordDashboard() {
             </button>
           </div>
           <div className="space-y-0">
-            {[
-              { dot: "#047857", title: "New Inquiry", time: "2 min ago", desc: "Wanjiku asked about Bedsitter B3", chip: "Inquiry", chipBg: "rgba(4,120,87,0.1)", chipColor: "#047857" },
-              { dot: "#eab308", title: "Payment Received", time: "28 min ago", desc: "M-Pesa KSh 18,000 from Otieno — Unit A2", chip: "Payment", chipBg: "rgba(234,179,8,0.1)", chipColor: "#eab308" },
-              { dot: "#3b82f6", title: "Viewing Scheduled", time: "1h ago", desc: "Akello wants to view 2BR at Ruaka — Tomorrow 10am", chip: "Viewing", chipBg: "rgba(59,130,246,0.1)", chipColor: "#3b82f6" },
-              { dot: "#a855f7", title: "New Tenant", time: "3h ago", desc: "Maina moved into B7 at Kilimani Heights", chip: "Tenant", chipBg: "rgba(168,85,247,0.1)", chipColor: "#a855f7" },
-              { dot: "#ef4444", title: "Maintenance Reported", time: "5h ago", desc: "Hot water not working at Unit A2", chip: "Maintenance", chipBg: "rgba(239,68,68,0.1)", chipColor: "#ef4444" },
-              { dot: "#047857", title: "Lease Renewed", time: "Yesterday", desc: "Jane at Unit C4 renewed for 12 months", chip: "Lease", chipBg: "rgba(4,120,87,0.1)", chipColor: "#047857" },
-              { dot: "#f97316", title: "Listing Published", time: "Yesterday", desc: "Bedsitter B3 listed on marketplace", chip: "Listing", chipBg: "rgba(249,115,22,0.1)", chipColor: "#f97316" },
-              { dot: "#3b82f6", title: "Invoice Sent", time: "2 days ago", desc: "Rent invoice sent to 12 tenants", chip: "Invoice", chipBg: "rgba(59,130,246,0.1)", chipColor: "#3b82f6" },
-            ].map((item, i) => (
+            {recentActivity.length === 0 && (
+              <div className="text-center py-6">
+                <p className="text-sm" style={{ color: "#525252" }}>No activity yet</p>
+              </div>
+            )}
+            {recentActivity.map((item, i) => (
               <div key={i} className="flex items-start gap-3 py-3 cursor-pointer" onClick={closeSheet}>
-                <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: item.dot, boxShadow: `0 0 6px ${item.dot}66` }} />
+                <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: item.dotColor, boxShadow: `0 0 6px ${item.dotColor}66` }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-white">{item.title}</p>
@@ -2097,6 +1979,31 @@ export default function LandlordDashboard() {
               <XIcon className="w-4 h-4" style={{ color: "#a3a3a3" }} />
             </button>
           </div>
+          <div className="flex justify-center mb-4">
+            <div className="relative">
+              <Avatar
+                src={userPhotoURL || user?.photoURL}
+                name={user?.displayName}
+                size={80}
+              />
+              <button
+                onClick={handleUploadPhoto}
+                disabled={uploadingPhoto}
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
+                style={{
+                  background: "#047857",
+                  boxShadow: "0 2px 8px rgba(4,120,87,0.4)",
+                }}
+                type="button"
+              >
+                {uploadingPhoto ? (
+                  <div className="spinner" style={{ width: 16, height: 16 }} />
+                ) : (
+                  <Camera className="w-4 h-4 text-white" />
+                )}
+              </button>
+            </div>
+          </div>
           <div className="space-y-4">
             <div className="input-group">
               <input type="text" className="android-input" placeholder=" " value={addFormName} onChange={(e) => setAddFormName(e.target.value)} />
@@ -2119,49 +2026,10 @@ export default function LandlordDashboard() {
               <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Bio</label>
               <textarea className="android-input" style={{ minHeight: "60px", borderRadius: "14px" }} placeholder="A short bio..." />
             </div>
-            {/* editActions */}
-            <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              {[
-                { label: "Call", icon: Phone, color: "#047857" },
-                { label: "WhatsApp", icon: MessageCircle, color: "#25D366" },
-                { label: "Decline", icon: X, color: "#ef4444" },
-              ].map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => {
-                    if (action.label === "Call" || action.label === "WhatsApp") {
-                      if (user?.phoneNumber) {
-                        openPhoneUrl(user.phoneNumber, action.label === "Call" ? "tel" : "wa");
-                      }
-                    } else if (action.label === "Decline") {
-                      closeSheet();
-                    }
-                    closeSheet();
-                  }}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-                  style={{ background: `${action.color}15`, color: action.color }}
-                >
-                  <action.icon className="w-3.5 h-3.5" />
-                  {action.label}
-                </button>
-              ))}
-            </div>
             <button
-              onClick={async () => {
-                if (!user?.uid) return;
-                try {
-                  setAddPropertyLoading(true);
-                  await updateUserProfile(user.uid, { displayName: addFormName || undefined });
-                  setAddPropertyLoading(false);
-                  closeSheet();
-                  setTimeout(() => showSnackbar("Profile updated! ✅", "success"), 300);
-                } catch (err: any) {
-                  setAddPropertyLoading(false);
-                  showSnackbar(err?.message || "Failed to update profile", "error");
-                }
-              }}
-              className="btn-primary ripple-container"
+              onClick={handleSaveProfile}
               disabled={addPropertyLoading}
+              className="btn-primary ripple-container"
             >
               {addPropertyLoading ? <div className="spinner mx-auto" /> : <span>Save Changes</span>}
             </button>
@@ -2184,9 +2052,13 @@ export default function LandlordDashboard() {
             </button>
           </div>
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full overflow-hidden" style={{ border: "2px solid rgba(4,120,87,0.4)" }}>
-              <img src="" className="w-full h-full object-cover" />
-            </div>
+            <Avatar
+              src={user?.photoURL}
+              name={user?.displayName}
+              size={64}
+              className="border-2"
+              style={{ borderColor: "rgba(4,120,87,0.4)" }}
+            />
             <div>
               <h4 className="text-base font-bold text-white">{user?.displayName || "Landlord"}</h4>
               <p className="text-xs" style={{ color: "#a3a3a3" }}>{user?.email || ""}</p>

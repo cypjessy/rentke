@@ -579,13 +579,19 @@ export default function UnitsPage() {
             </div>
             <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#047857" }}>Cancel</button>
           </div>
-          <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Recent</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Quick Filters</h4>
           <div className="flex flex-wrap gap-2">
-            {["A1 Kilimani", "Grace Wanjiku", "Vacant"].map((s) => (
-              <button key={s} className="chip" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }}>
-                <Clock className="w-3 h-3" /> {s}
-              </button>
-            ))}
+            {(() => {
+              const recentFilters = [
+                ...units.slice(0, 3).map(u => u.name),
+                ...(units.filter(u => u.tenantName).slice(0, 2).map(u => u.tenantName!)),
+              ];
+              return [...new Set(recentFilters)].slice(0, 3).map((s) => (
+                <button key={s} className="chip" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }} onClick={() => { setSearchText(s); closeSheet(); }}>
+                  <Clock className="w-3 h-3" /> {s}
+                </button>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -604,7 +610,7 @@ export default function UnitsPage() {
               <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#525252" }}>Property</label>
               <select className="android-select mt-2">
                 <option value="">All Properties</option>
-                {["Kilimani Heights", "Westlands Suites", "Ruaka Gardens", "Rongai Meadows"].map((p) => <option key={p}>{p}</option>)}
+                {[...new Set(units.map(u => u.propertyName).filter(Boolean))].map((p) => <option key={p}>{p}</option>)}
               </select>
             </div>
             <div>
