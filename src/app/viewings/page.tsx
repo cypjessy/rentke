@@ -481,13 +481,13 @@ export default function ViewingRequests() {
                         </div>
                         {v.status === "pending" && (
                           <div className="flex items-center gap-2 mt-3">
-                            <button onClick={(e) => { e.stopPropagation(); handleQuickAction("confirm"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("confirmViewing"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
                               <Check className="w-3.5 h-3.5" /> Confirm
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
                               <CalendarClock className="w-3.5 h-3.5" /> Reschedule
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
                               <X className="w-4 h-4" style={{ color: "#ef4444" }} />
                             </button>
                           </div>
@@ -547,13 +547,13 @@ export default function ViewingRequests() {
                           <span className="flex items-center gap-1 text-xs" style={{ color: "#a3a3a3" }}><Timer className="w-3 h-3" /> {v.duration}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-3">
-                          <button onClick={(e) => { e.stopPropagation(); handleQuickAction("confirm"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("confirmViewing"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
                             <Check className="w-3.5 h-3.5" /> Confirm
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
                             <CalendarClock className="w-3.5 h-3.5" /> Reschedule
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
                             <X className="w-4 h-4" style={{ color: "#ef4444" }} />
                           </button>
                         </div>
@@ -603,13 +603,13 @@ export default function ViewingRequests() {
                         </div>
                         {v.status === "pending" && (
                           <div className="flex items-center gap-2 mt-3">
-                            <button onClick={(e) => { e.stopPropagation(); handleQuickAction("confirm"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("confirmViewing"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(4,120,87,0.12)", color: "#047857" }}>
                               <Check className="w-3.5 h-3.5" /> Confirm
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("reschedule"); }} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold" style={{ background: "rgba(59,130,246,0.08)", color: "#3b82f6" }}>
                               <CalendarClock className="w-3.5 h-3.5" /> Reschedule
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedViewing(v); openSheet("cancelConfirm"); }} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)" }}>
                               <X className="w-4 h-4" style={{ color: "#ef4444" }} />
                             </button>
                           </div>
@@ -860,7 +860,7 @@ export default function ViewingRequests() {
           {/* Actions */}
           <div className="space-y-2">
             {v.status === "pending" && (
-              <button onClick={() => { handleQuickAction("confirm"); closeSheet(); }} className="btn-primary ripple-container flex items-center justify-center gap-2">
+              <button onClick={() => { closeSheet(); setTimeout(() => openSheet("confirmViewing"), 300); }} className="btn-primary ripple-container flex items-center justify-center gap-2">
                 <Check className="w-4 h-4" /> Confirm Viewing
               </button>
             )}

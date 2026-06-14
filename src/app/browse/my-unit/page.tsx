@@ -281,7 +281,7 @@ export default function MyUnitPage() {
     <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", minHeight: "100dvh" }}>
       <div className="status-bar" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, background: "rgba(5,5,5,0.9)" }} />
 
-      <div style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "24px" }}>
+      <div style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "24px" }}>
         {/* TOP BAR */}
         <div className="top-bar flex items-center justify-between px-4 py-3" style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <div className="flex items-center gap-3">

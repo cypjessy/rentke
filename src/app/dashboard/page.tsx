@@ -60,7 +60,6 @@ import {
   MessageSquareWarning,
   DoorOpen,
   Wrench,
-  CalendarX,
   AlertCircle,
   FileWarning,
   ShieldCheck,
@@ -195,30 +194,7 @@ export default function LandlordDashboard() {
     .sort((a, b) => b.sortTime - a.sortTime)
     .slice(0, 5);
 
-  // ---- Lease Expiry Alerts (derived from units) ----
-  const leaseAlerts = units
-    .filter((u) => u.status === "Occupied" && u.tenantName && u.leaseEnd)
-    .map((u) => {
-      const endDate = u.leaseEnd!.toDate();
-      const now = new Date();
-      const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      const endsStr = `${months[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
-      const isUrgent = daysLeft <= 30;
-      const isSoon = daysLeft <= 90;
-      return {
-        tenant: u.tenantName || "Tenant",
-        unit: `${u.name} — ${u.propertyName}`,
-        ends: endsStr,
-        daysLeft: daysLeft.toString(),
-        color: isUrgent ? "#ef4444" : isSoon ? "#eab308" : "#3b82f6",
-        bg: isUrgent ? "rgba(239,68,68,0.08)" : isSoon ? "rgba(234,179,8,0.06)" : "rgba(59,130,246,0.06)",
-        border: isUrgent ? "rgba(239,68,68,0.2)" : isSoon ? "rgba(234,179,8,0.15)" : "rgba(59,130,246,0.15)",
-        sortTime: endDate.getTime(),
-      };
-    })
-    .sort((a, b) => a.sortTime - b.sortTime)
-    .slice(0, 5);
+
 
   // ---- Recent Activity (merged feed from all sources) ----
   const recentActivity = [
@@ -1221,16 +1197,16 @@ export default function LandlordDashboard() {
                 </div>
                 <div
                   className="quick-action"
-                  onClick={() => router.push("/units")}
+                  onClick={() => router.push("/messages")}
                 >
                   <div
                     className="qa-icon"
                     style={{ background: "rgba(168,85,247,0.12)" }}
                   >
-                    <Wallet className="w-5 h-5" style={{ color: "#a855f7" }} />
+                    <MessageCircle className="w-5 h-5" style={{ color: "#a855f7" }} />
                   </div>
                   <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                    Payments
+                    Messages
                   </span>
                 </div>
                 <div
@@ -1412,129 +1388,128 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* LEASE EXPIRY ALERTS */}
+            {/* PROPERTY HEALTH */}
             <div className="mt-7 animate-in stagger-11">
               <div className="section-header">
-                <h3 className="section-title">Lease Expiry Alerts</h3>
+                <h3 className="section-title">Property Health</h3>
                 <button
                   className="section-action"
-                  onClick={() => router.push("/calendar")}
+                  onClick={() => router.push("/properties")}
                 >
-                  Manage
+                  Manage →
                 </button>
               </div>
               <div className="space-y-2.5">
-                {leaseAlerts.length === 0 && (
+                {properties.length === 0 && (
                   <div className="text-center py-6">
-                    <p className="text-sm" style={{ color: "#525252" }}>No active leases</p>
+                    <p className="text-sm" style={{ color: "#525252" }}>No properties yet</p>
                   </div>
                 )}
-                {leaseAlerts.map((lease, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer"
-                    style={{
-                      background: lease.bg,
-                      border: `1px solid ${lease.border}`,
-                    }}
-                    onClick={() => router.push('/calendar')}
-                  >
+                {properties.slice(0, 5).map((prop) => {
+                  const propUnits = units.filter((u) => u.propertyId === prop.id);
+                  const total = propUnits.length;
+                  const occupied = propUnits.filter((u) => u.status === "Occupied").length;
+                  const vacant = total - occupied;
+                  const maintCount = maintenanceReqs.filter((m) => m.propertyName === prop.name).length;
+                  const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+                  const isHealthy = pct >= 80 && maintCount === 0;
+                  const isFair = pct >= 50;
+                  const healthColor = isHealthy ? "#047857" : isFair ? "#eab308" : "#ef4444";
+                  const healthBg = isHealthy ? "rgba(4,120,87,0.08)" : isFair ? "rgba(234,179,8,0.08)" : "rgba(239,68,68,0.08)";
+                  const healthBorder = isHealthy ? "rgba(4,120,87,0.15)" : isFair ? "rgba(234,179,8,0.15)" : "rgba(239,68,68,0.15)";
+                  return (
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: lease.bg, border: `1px solid ${lease.border}` }}
+                      key={prop.id}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer"
+                      style={{ background: "#1A1D21", border: "1px solid rgba(255,255,255,0.06)" }}
+                      onClick={() => router.push("/properties")}
                     >
-                      <span className="text-base font-bold" style={{ color: lease.color }}>
-                        {lease.daysLeft}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white">{lease.tenant}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-                        {lease.unit}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <CalendarX className="w-3 h-3" style={{ color: "#525252" }} />
-                        <span className="text-xs" style={{ color: "#525252" }}>
-                          Ends {lease.ends} · {lease.daysLeft} days left
-                        </span>
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: healthBg, border: `1px solid ${healthBorder}` }}
+                      >
+                        <span className="text-base font-bold" style={{ color: healthColor }}>{pct}%</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-white truncate pr-2">{prop.name}</p>
+                          <span
+                            className="chip"
+                            style={{
+                              background: healthBg,
+                              color: healthColor,
+                              fontSize: "10px",
+                              padding: "2px 8px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {isHealthy ? "Healthy" : isFair ? "Fair" : "Needs Attention"}
+                          </span>
+                        </div>
+                        <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
+                          {occupied} occupied · {vacant} vacant · {total} units
+                        </p>
+                        {maintCount > 0 && (
+                          <p className="text-xs mt-1" style={{ color: "#f97316" }}>
+                            <Wrench className="w-3 h-3 inline mr-0.5" /> {maintCount} maintenance request{maintCount !== 1 ? "s" : ""}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push('/calendar');
-                      }}
-                      className="text-xs font-semibold whitespace-nowrap"
-                      style={{ color: lease.color }}
-                    >
-                      Renew →
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* PAYMENT ACTIVITY */}
+            {/* PROPERTY INSIGHTS */}
             <div className="mt-7 animate-in stagger-12">
               <div className="section-header">
-                <h3 className="section-title">Payment Activity</h3>
+                <h3 className="section-title">Property Insights</h3>
                 <button
                   className="section-action"
-                  onClick={() => router.push("/units")}
+                  onClick={() => router.push("/properties")}
                 >
                   View All
                 </button>
               </div>
               <div className="card" style={{ padding: "6px 0" }}>
-                {paymentActivity.map((payment, i) => (
-                  <div
-                    key={i}
-                    className="payment-row px-3 py-3.5"
-                    onClick={() => router.push('/units')}
-                  >
+                {properties.length === 0 && (
+                  <div className="text-center py-6">
+                    <p className="text-sm" style={{ color: "#525252" }}>No properties yet</p>
+                  </div>
+                )}
+                {properties.slice(0, 5).map((prop) => {
+                  const propUnits = units.filter((u) => u.propertyId === prop.id);
+                  const total = propUnits.length;
+                  const occupied = propUnits.filter((u) => u.status === "Occupied").length;
+                  const vacant = total - occupied;
+                  const maintCount = maintenanceReqs.filter((m) => m.propertyName === prop.name).length;
+                  const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+                  const barColor = pct >= 80 ? "#047857" : pct >= 50 ? "#eab308" : "#ef4444";
+                  return (
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: payment.statusBg }}
+                      key={prop.id}
+                      className="payment-row px-3 py-3.5"
+                      onClick={() => router.push('/properties')}
                     >
-                      {payment.status === "overdue" ? (
-                        <X className="w-4 h-4" style={{ color: payment.statusColor }} />
-                      ) : (
-                        <Check className="w-4 h-4" style={{ color: payment.statusColor }} />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-white">
-                          {payment.name}
-                        </p>
-                        <span className="text-sm font-semibold" style={{ color: "#e5e5e5" }}>
-                          {payment.amount}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs truncate" style={{ color: "#a3a3a3" }}>
-                          {payment.desc}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs" style={{ color: "#525252" }}>
-                            {payment.time}
-                          </span>
-                          <span
-                            className="chip"
-                            style={{
-                              background: payment.statusBg,
-                              color: payment.statusColor,
-                              fontSize: "9px",
-                              padding: "1px 6px",
-                            }}
-                          >
-                            {payment.statusLabel}
-                          </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-white truncate">{prop.name}</p>
+                          <span className="chip text-xs" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3", fontSize: "10px", padding: "2px 8px", flexShrink: 0 }}>{prop.type}</span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs" style={{ color: "#a3a3a3" }}><Building2 className="w-3 h-3 inline mr-0.5" />{total} units</span>
+                          <span className="text-xs" style={{ color: "#047857" }}>{occupied} occ</span>
+                          {vacant > 0 && <span className="text-xs" style={{ color: "#ef4444" }}>{vacant} vac</span>}
+                          {maintCount > 0 && <span className="text-xs" style={{ color: "#f97316" }}>{maintCount} maint</span>}
+                        </div>
+                        <div className="w-full h-1.5 rounded-full mt-2" style={{ background: "rgba(255,255,255,0.06)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

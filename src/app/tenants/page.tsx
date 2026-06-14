@@ -397,7 +397,7 @@ export default function TenantsPage() {
         <div className="app-shell">
           <div className="status-bar" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, background: "rgba(5,5,5,0.9)" }} />
 
-          <div className="app-content" style={{ paddingTop: "env(safe-area-inset-top, 24px)" }}>
+          <div className="app-content" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
             {/* TOP BAR */}
             <div className="app-header" style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
               <div className="flex items-center justify-between px-3 py-3">

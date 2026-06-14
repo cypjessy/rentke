@@ -443,8 +443,8 @@
 
 /* Status bar spacer */
 .status-bar {
-  height: env(safe-area-inset-top, 24px);
-  min-height: 24px;
+  height: env(safe-area-inset-top, 0px);
+  min-height: 0px;
   flex-shrink: 0;
 }
 
