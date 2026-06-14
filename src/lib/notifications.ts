@@ -22,6 +22,7 @@ export type NotificationType =
   | "new_listing"
   | "landlord_reply"
   | "viewing_reminder"
+  | "viewing_update"
   | "price_drop"
   | "inquiry_update"
   | "message"
@@ -53,6 +54,8 @@ function getNotificationMeta(type: NotificationType): {
       return { icon: "💬", iconBg: "rgba(59,130,246,0.15)", iconColor: "#3b82f6" };
     case "viewing_reminder":
       return { icon: "📅", iconBg: "rgba(255,255,255,0.05)", iconColor: "#a3a3a3" };
+    case "viewing_update":
+      return { icon: "🔄", iconBg: "rgba(4,120,87,0.12)", iconColor: "#047857" };
     case "price_drop":
       return { icon: "💰", iconBg: "rgba(234,179,8,0.15)", iconColor: "#eab308" };
     case "inquiry_update":
@@ -71,6 +74,7 @@ function getNotificationLink(type: NotificationType): string {
     case "new_listing": return "/browse/explore";
     case "landlord_reply": return "/browse/messages";
     case "viewing_reminder": return "/browse/viewings";
+    case "viewing_update": return "/browse/viewings";
     case "price_drop": return "/browse/saved";
     case "inquiry_update": return "/browse/messages";
     case "message": return "/browse/messages";

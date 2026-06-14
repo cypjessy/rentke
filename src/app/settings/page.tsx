@@ -69,6 +69,9 @@ import {
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { pickAndUploadPhoto } from "@/lib/upload";
+import { normalizePhone } from "@/lib/phone";
+import { listenToNotifications } from "@/lib/notifications";
+import type { NotificationData } from "@/lib/notifications";
 type SnackbarType = "success" | "error" | "info";
 
 export default function SettingsPage() {
@@ -96,6 +99,7 @@ export default function SettingsPage() {
   const [properties, setProperties] = useState<PropertyData[]>([]);
   const [units, setUnits] = useState<UnitData[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // Fetch phone & notification preferences from Firestore on mount
   useEffect(() => {
@@ -258,7 +262,7 @@ export default function SettingsPage() {
     if (id === "changePhone") {
       try {
         if (!auth.currentUser) throw new Error("Not authenticated");
-        await updateUserProfile(user!.uid, { phoneNumber: `+254${newPhone.replace(/\s/g, "")}` });
+        await updateUserProfile(user!.uid, { phoneNumber: normalizePhone(newPhone) });
         setFormLoading(null);
         closeSheet();
         setNewPhone("");
@@ -356,6 +360,21 @@ export default function SettingsPage() {
       unsubProps();
       unsubUnits();
     };
+  }, [user?.uid]);
+
+  // ---- Listen to notifications ----
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = listenToNotifications(
+      user.uid,
+      (data) => {
+        setNotifications(data);
+      },
+      (err) => {
+        console.error("Notifications error:", err);
+      }
+    );
+    return () => unsub();
   }, [user?.uid]);
 
   const totalProperties = properties.length;

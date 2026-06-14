@@ -68,6 +68,10 @@ import {
   addUnit,
   type UnitData,
 } from "../../lib/units";
+import { listenToNotifications } from "../../lib/notifications";
+import { listenToListings } from "../../lib/listings";
+import type { NotificationData } from "../../lib/notifications";
+import type { ListingData } from "../../lib/listings";
 import ViewPropertySheet from "./ViewPropertySheet";
 import AddPropertySheet from "./AddPropertySheet";
 import EditPropertySheet from "./EditPropertySheet";
@@ -123,6 +127,8 @@ export default function PropertiesPage() {
   const [properties, setProperties] = useState<PropertyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<PropertyData | null>(null);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [listings, setListings] = useState<ListingData[]>([]);
 
   // ---- Units state for detail tab ----
   const [propertyUnits, setPropertyUnits] = useState<UnitData[]>([]);
@@ -201,13 +207,15 @@ export default function PropertiesPage() {
     };
   }
 
-  // ---- Firestore Listener ----
+  // ---- Firestore Listeners ----
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
-    const unsub = listenToProperties(
+    const unsubs: (() => void)[] = [];
+
+    unsubs.push(listenToProperties(
       user.uid,
       (props) => {
         setProperties(props);
@@ -218,8 +226,17 @@ export default function PropertiesPage() {
         setLoading(false);
         showSnackbar("Failed to load properties", "error");
       }
-    );
-    return () => unsub();
+    ));
+
+    unsubs.push(listenToNotifications(user.uid, (data) => {
+      setNotifications(data);
+    }, () => {}));
+
+    unsubs.push(listenToListings(user.uid, (data) => {
+      setListings(data);
+    }, () => {}));
+
+    return () => unsubs.forEach((u) => u());
   }, [user]);
 
   // ---- Snackbar ----
@@ -463,8 +480,9 @@ export default function PropertiesPage() {
                 <button
                   key={f.key}
                   className={`filter-chip ${activeFilter === f.key ? "active" : ""}`}
-                  onClick={() => {
+                  onClick={(e) => {
                     setActiveFilter(f.key);
+                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                     showSnackbar(`Showing ${f.label.toLowerCase()} properties`, "info");
                   }}
                 >

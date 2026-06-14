@@ -57,9 +57,13 @@ import {
   type ConversationData,
   type MessageData,
 } from "../../lib/conversations";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, collection, query, where, getDocs } from "firebase/firestore";
 import { scheduleViewing } from "../../lib/viewings";
 import { uploadPhoto, takePhoto, openFilePicker } from "@/lib/upload";
+import { listenToNotifications } from "../../lib/notifications";
+import type { NotificationData } from "../../lib/notifications";
+import { db } from "../../lib/firebase";
+import { phoneVariants } from "../../lib/phone";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -141,6 +145,7 @@ export default function MessagesPage() {
   const [currentMessages, setCurrentMessages] = useState<MessageData[]>([]);
   const [convsLoading, setConvsLoading] = useState(true);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // ---- Listen to conversations ----
   useEffect(() => {
@@ -166,6 +171,21 @@ export default function MessagesPage() {
     if (uid) markConversationRead(activeChatId, uid);
     return () => unsub();
   }, [activeChatId, uid]);
+
+  // ---- Listen to notifications ----
+  useEffect(() => {
+    if (!uid) return;
+    const unsub = listenToNotifications(
+      uid,
+      (data) => {
+        setNotifications(data);
+      },
+      (err) => {
+        console.error("Notifications error:", err);
+      }
+    );
+    return () => unsub();
+  }, [uid]);
 
   // ---- Build enriched chats from conversations ----
   const enrichedChats: EnrichedChat[] = conversations.map((conv) => {
@@ -349,10 +369,57 @@ export default function MessagesPage() {
   const [newChatName, setNewChatName] = useState("");
   const [newChatPhone, setNewChatPhone] = useState("");
   const [newChatMessage, setNewChatMessage] = useState("");
+  const [newChatTenantId, setNewChatTenantId] = useState("");
+  const [newChatTenantName, setNewChatTenantName] = useState("");
+  const [newChatLookupLoading, setNewChatLookupLoading] = useState(false);
+  const newChatPhoneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ---- Debounced tenant phone lookup ----
+  useEffect(() => {
+    if (newChatPhoneTimer.current) clearTimeout(newChatPhoneTimer.current);
+    const digits = newChatPhone.replace(/\D/g, "");
+    if (digits.length < 9) {
+      setNewChatTenantId("");
+      setNewChatTenantName("");
+      setNewChatLookupLoading(false);
+      return;
+    }
+    setNewChatLookupLoading(true);
+    newChatPhoneTimer.current = setTimeout(async () => {
+      try {
+        const variants = phoneVariants(newChatPhone);
+        if (variants.length === 0) {
+          setNewChatTenantId("");
+          setNewChatTenantName("");
+          setNewChatLookupLoading(false);
+          return;
+        }
+        const q = query(collection(db, "users"), where("phone", "in", variants.slice(0, 10)));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          setNewChatTenantId("");
+          setNewChatTenantName("");
+        } else {
+          const userData = snap.docs[0].data();
+          setNewChatTenantId(snap.docs[0].id);
+          setNewChatTenantName(userData.displayName || userData.name || userData.phone || "");
+        }
+      } catch {
+        setNewChatTenantId("");
+        setNewChatTenantName("");
+      }
+      setNewChatLookupLoading(false);
+    }, 600);
+    return () => {
+      if (newChatPhoneTimer.current) clearTimeout(newChatPhoneTimer.current);
+    };
+  }, [newChatPhone]);
 
   const resetNewChatForm = () => {
     setNewChatProp(""); setNewChatUnit(""); setNewChatName("");
     setNewChatPhone(""); setNewChatMessage("");
+    setNewChatTenantId("");
+    setNewChatTenantName("");
   };
 
   // ---- Form Handler ----
@@ -362,9 +429,10 @@ export default function MessagesPage() {
       if (id === "new") {
         if (!newChatName.trim()) { showSnackbar("Recipient name is required", "error"); setFormLoading(null); return; }
         if (!newChatMessage.trim()) { showSnackbar("Message is required", "error"); setFormLoading(null); return; }
+        const otherId = newChatTenantId || `${newChatName.replace(/\s+/g, "").toLowerCase()}@temp`;
         const convId = await createConversation({
-          participants: [uid, `${newChatName.replace(/\s+/g, "").toLowerCase()}@temp`],
-          participantNames: { [uid]: user?.displayName || "Landlord", [`${newChatName.replace(/\s+/g, "").toLowerCase()}@temp`]: newChatName },
+          participants: [uid, otherId],
+          participantNames: { [uid]: user?.displayName || "Landlord", [otherId]: newChatName },
           propertyName: newChatProp || undefined,
           unitName: newChatUnit || undefined,
           firstMessage: newChatMessage,
@@ -593,9 +661,23 @@ export default function MessagesPage() {
               <label>Recipient Name</label>
             </div>
             <div className="input-group">
-              <input type="tel" className="android-input" placeholder=" " style={{ paddingLeft: "60px" }} value={newChatPhone} onChange={(e) => setNewChatPhone(e.target.value)} />
+              <input type="tel" className="android-input" placeholder=" " style={{ paddingLeft: "60px", paddingRight: newChatTenantId || newChatLookupLoading ? "140px" : "16px" }} value={newChatPhone} onChange={(e) => setNewChatPhone(e.target.value)} />
               <label style={{ left: "60px" }}>Phone</label>
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm" style={{ color: "#a3a3a3" }}>+254</span>
+              {newChatLookupLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="spinner" style={{ width: "16px", height: "16px" }} />
+                </div>
+              )}
+              {newChatTenantId && !newChatLookupLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2" style={{ maxWidth: "130px" }}>
+                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#047857" }} />
+                  <div className="flex flex-col items-end leading-tight overflow-hidden">
+                    <span className="text-[10px] font-semibold text-white truncate w-full text-right">{newChatTenantName}</span>
+                    <span className="text-[9px] font-medium" style={{ color: "#047857" }}>Tenant Found</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Message</label>

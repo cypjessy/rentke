@@ -39,6 +39,7 @@ import {
   Megaphone,
   Loader2,
 } from "lucide-react";
+import { normalizePhone } from "@/lib/phone";
 import { pickAndUploadPhoto } from "@/lib/upload";
 import { updateProfile } from "firebase/auth";
 
@@ -210,7 +211,7 @@ export default function ProfilePage() {
         const updateData: any = {
           displayName: editName.trim(),
           email: editEmail.trim(),
-          phoneNumber: editPhone.replace(/\s/g, ""),
+          phoneNumber: normalizePhone(editPhone),
         };
         if (userPhotoURL) {
           updateData.photoURL = userPhotoURL;

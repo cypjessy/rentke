@@ -150,10 +150,18 @@ export default function PropertyDetailSheet({
   const [messageLoading, setMessageLoading] = useState(false);
   const [landlordPhone, setLandlordPhone] = useState<string | null>(null);
   const [landlordName, setLandlordName] = useState<string>("");
+  const [tenantPhone, setTenantPhone] = useState("");
   const p = prop || defaultProperty;
 
-  // ---- Fetch landlord contact info ----
+  // ---- Fetch landlord contact info and user phone ----
   useEffect(() => {
+    if (user?.uid) {
+      getDoc(doc(db, "users", user.uid)).then((snap) => {
+        if (snap.exists()) {
+          setTenantPhone(snap.data().phone || snap.data().phoneNumber || "");
+        }
+      }).catch(() => {});
+    }
     if (!p.landlordId) {
       setLandlordPhone(null);
       setLandlordName("");
@@ -166,7 +174,7 @@ export default function PropertyDetailSheet({
         setLandlordName(data.displayName || data.name || p.landlord.name || "");
       }
     }).catch(() => {});
-  }, [p.landlordId]);
+  }, [p.landlordId, user?.uid]);
 
   // ---- Gallery ----
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
@@ -243,7 +251,7 @@ export default function PropertyDetailSheet({
         unitId: "",
         unitName: "",
         tenantName: user?.displayName || "Tenant",
-        tenantPhone: user?.phoneNumber || "",
+        tenantPhone: tenantPhone,
         tenantId: user?.uid || "",
         date: viewingDate,
         startTime,

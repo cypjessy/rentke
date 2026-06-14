@@ -53,8 +53,10 @@ import {
   type LeaseFormData,
 } from "../../lib/units";
 import { LEASE_TERM_OPTIONS } from "../constants";
-import { createNotification } from "../../lib/notifications";
+import { createNotification, listenToNotifications } from "../../lib/notifications";
+import type { NotificationData } from "../../lib/notifications";
 import { uploadPhoto, openFilePicker } from "../../lib/upload";
+import { updateMaintenanceStatus } from "../../lib/maintenance";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -123,6 +125,9 @@ export default function TenantsPage() {
   // ---- Tab Data: Vacating Notices ----
   const [vacatingNotices, setVacatingNotices] = useState<any[]>([]);
   const [vacatingNoticesLoading, setVacatingNoticesLoading] = useState(false);
+
+  // ---- Notifications ----
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // ---- Form State: Maintenance ----
   const [maintReason, setMaintReason] = useState("Plumbing");
@@ -280,6 +285,21 @@ export default function TenantsPage() {
     );
     return () => unsub();
   }, [selectedUnit?.id]);
+
+  // ---- Listen to notifications ----
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenToNotifications(
+      user.uid,
+      (data) => {
+        setNotifications(data);
+      },
+      (err) => {
+        console.error("Error loading notifications:", err);
+      }
+    );
+    return () => unsub();
+  }, [user]);
 
   // ---- Pre-fill assign form when selected unit changes ----
   useEffect(() => {
@@ -901,12 +921,53 @@ export default function TenantsPage() {
                                 {c.description && (
                                   <p className="text-xs mt-2" style={{ color: "#a3a3a3", lineHeight: 1.5 }}>{c.description}</p>
                                 )}
-                                <div className="flex items-center gap-2 mt-3">
-                                  {c.urgency && (
-                                    <span className="text-xs font-medium" style={{ color: urgencyColors[c.urgency] || "#6b7280" }}>
-                                      {c.urgency}
-                                    </span>
-                                  )}
+                                <div className="flex items-center justify-between gap-2 mt-3">
+                                  <div className="flex items-center gap-2">
+                                    {c.urgency && (
+                                      <span className="text-xs font-medium" style={{ color: urgencyColors[c.urgency] || "#6b7280" }}>
+                                        {c.urgency}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {c.status === "open" && (
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            await updateMaintenanceStatus(c.id, "in-progress");
+                                            showSnackbar("Complaint marked as in progress", "info");
+                                          } catch (err: any) {
+                                            showSnackbar(err?.message || "Failed to update status", "error");
+                                          }
+                                        }}
+                                        className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                                        style={{ background: "rgba(59,130,246,0.12)", color: "#3b82f6", border: "none", cursor: "pointer" }}
+                                      >
+                                        Mark In Progress
+                                      </button>
+                                    )}
+                                    {c.status === "in-progress" && (
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            await updateMaintenanceStatus(c.id, "resolved");
+                                            showSnackbar("Complaint marked as resolved ✅", "success");
+                                          } catch (err: any) {
+                                            showSnackbar(err?.message || "Failed to update status", "error");
+                                          }
+                                        }}
+                                        className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                                        style={{ background: "rgba(4,120,87,0.12)", color: "#059669", border: "none", cursor: "pointer" }}
+                                      >
+                                        Mark Resolved
+                                      </button>
+                                    )}
+                                    {(c.status === "resolved" || c.status === "closed") && (
+                                      <span className="text-xs" style={{ color: "#525252" }}>
+                                        {c.status === "resolved" ? "Resolved ✓" : "Closed"}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             );

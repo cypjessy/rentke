@@ -46,9 +46,7 @@ import {
 } from "lucide-react";
 
 import AuthGuard from "../components/AuthGuard";
-import { useAuth } from "../AuthContext";
-import {
-  listenToListings,
+import { useAuth } from "../AuthContext";import { listenToListings,
   createListing,
   updateListing,
   toggleListingStatus,
@@ -58,6 +56,8 @@ import {
 } from "../../lib/listings";
 import { listenToUnits, type UnitData } from "../../lib/units";
 import { listenToProperties, type PropertyData } from "../../lib/properties";
+import { listenToNotifications } from "../../lib/notifications";
+import type { NotificationData } from "../../lib/notifications";
 import { getListingImage } from "../../lib/resolveImages";
 import { PLACEHOLDER_IMAGE } from "../constants";
 import CreateListingSheet from "./CreateListingSheet";
@@ -107,6 +107,7 @@ function ListingsPage() {
   const [selectedListing, setSelectedListing] = useState<ListingData | null>(null);
   const [vacantUnits, setVacantUnits] = useState<UnitData[]>([]);
   const [properties, setProperties] = useState<PropertyData[]>([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [createListingInitial, setCreateListingInitial] = useState<Record<string, string> | undefined>(undefined);
 
   // ---- Edit Listing Form State ----
@@ -212,6 +213,15 @@ function ListingsPage() {
       },
       (err) => console.error("Error loading properties for listings:", err)
     );
+    return () => unsub();
+  }, [user]);
+
+  // Listen for notifications
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenToNotifications(user.uid, (data) => {
+      setNotifications(data);
+    }, () => {});
     return () => unsub();
   }, [user]);
 
@@ -463,8 +473,9 @@ function ListingsPage() {
               <button
                 key={f.key}
                 className={`filter-chip ${activeFilter === f.key ? "active" : ""}`}
-                onClick={() => {
+                onClick={(e) => {
                   setActiveFilter(f.key);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   const count = listings.filter((l) => f.key === "all" || l.status === f.key).length;
                   showSnackbar(`Showing ${count} listings`, "info");
                 }}

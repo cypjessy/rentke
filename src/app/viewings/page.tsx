@@ -48,6 +48,11 @@ import {
   rescheduleViewing,
   type ViewingData,
 } from "../../lib/viewings";
+import { createNotification, listenToNotifications } from "../../lib/notifications";
+import type { NotificationData } from "../../lib/notifications";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { phoneVariants } from "../../lib/phone";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -83,6 +88,9 @@ export default function ViewingRequests() {
   const [viewingsLoading, setViewingsLoading] = useState(true);
   const [selectedViewing, setSelectedViewing] = useState<ViewingData | null>(null);
 
+  // ---- Notifications ----
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+
   // ---- Firestore Listener ----
   useEffect(() => {
     if (!user) { setViewingsLoading(false); return; }
@@ -93,6 +101,21 @@ export default function ViewingRequests() {
       console.error("Error loading viewings:", err);
       setViewingsLoading(false);
     });
+    return () => unsub();
+  }, [user]);
+
+  // ---- Listen to notifications ----
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenToNotifications(
+      user.uid,
+      (data) => {
+        setNotifications(data);
+      },
+      (err) => {
+        console.error("Notifications error:", err);
+      }
+    );
     return () => unsub();
   }, [user]);
 
@@ -227,6 +250,55 @@ export default function ViewingRequests() {
   const [addDuration, setAddDuration] = useState("30 minutes");
   const [addNotes, setAddNotes] = useState("");
   const [addViewingLoading, setAddViewingLoading] = useState(false);
+  const [addTenantId, setAddTenantId] = useState("");
+  const [addTenantNameFound, setAddTenantNameFound] = useState("");
+  const [tenantLookupLoading, setTenantLookupLoading] = useState(false);
+
+  // ---- Debounced phone lookup ----
+  const phoneLookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current);
+
+    const digits = addTenantPhone.replace(/\D/g, "");
+    if (digits.length < 9) {
+      setAddTenantId("");
+      setAddTenantNameFound("");
+      setTenantLookupLoading(false);
+      return;
+    }
+
+    setTenantLookupLoading(true);
+
+    phoneLookupTimer.current = setTimeout(async () => {
+      try {
+        const variants = phoneVariants(addTenantPhone);
+        if (variants.length === 0) {
+          setAddTenantId("");
+          setAddTenantNameFound("");
+          setTenantLookupLoading(false);
+          return;
+        }
+        const q = query(collection(db, "users"), where("phone", "in", variants.slice(0, 10)));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          setAddTenantId("");
+          setAddTenantNameFound("");
+        } else {
+          const userData = snap.docs[0].data();
+          setAddTenantId(snap.docs[0].id);
+          setAddTenantNameFound(userData.displayName || userData.name || userData.phone || "");
+        }
+      } catch {
+        setAddTenantId("");
+        setAddTenantNameFound("");
+      } finally {
+        setTenantLookupLoading(false);
+      }
+    }, 600);
+
+    return () => { if (phoneLookupTimer.current) clearTimeout(phoneLookupTimer.current); };
+  }, [addTenantPhone]);
 
   // ---- Reschedule Form State ----
   const [resDate, setResDate] = useState("");
@@ -247,6 +319,8 @@ export default function ViewingRequests() {
     setAddPropId(""); setAddPropName(""); setAddUnitId(""); setAddUnitName("");
     setAddTenantName(""); setAddTenantPhone(""); setAddDate("");
     setAddTime("10:00"); setAddDuration("30 minutes"); setAddNotes("");
+    setAddTenantId("");
+    setAddTenantNameFound("");
   };
   const resetRescheduleForm = () => {
     setResDate(""); setResStartTime("10:00"); setResEndTime("10:30"); setResReason("");
@@ -270,6 +344,7 @@ export default function ViewingRequests() {
           unitName: addUnitName,
           tenantName: addTenantName,
           tenantPhone: addTenantPhone,
+          tenantId: addTenantId || undefined,
           date: addDate,
           startTime: addTime,
           endTime: "",
@@ -282,20 +357,64 @@ export default function ViewingRequests() {
         setTimeout(() => showSnackbar("Viewing scheduled! 📅", "success"), 300);
       } else if (id === "confirm" && selectedViewing) {
         await confirmViewing(selectedViewing.id);
+        if (selectedViewing.tenantId) {
+          try {
+            await createNotification(
+              selectedViewing.tenantId,
+              "viewing_update",
+              "✅ Viewing Confirmed",
+              `Your viewing at ${selectedViewing.propertyName} on ${selectedViewing.date} at ${selectedViewing.startTime} has been confirmed.`,
+              "/browse/viewings"
+            );
+          } catch (_) {}
+        }
         setFormLoading(null); closeSheet();
         setTimeout(() => showSnackbar("Viewing confirmed! ✅", "success"), 300);
       } else if (id === "complete" && selectedViewing) {
         await completeViewing(selectedViewing.id, completeOutcome, completeNotes);
+        if (selectedViewing.tenantId) {
+          try {
+            await createNotification(
+              selectedViewing.tenantId,
+              "viewing_update",
+              "📋 Viewing Completed",
+              `Your viewing at ${selectedViewing.propertyName} has been marked as completed. Outcome: ${completeOutcome}`,
+              "/browse/viewings"
+            );
+          } catch (_) {}
+        }
         resetCompleteForm();
         setFormLoading(null); closeSheet();
         setTimeout(() => showSnackbar("Viewing completed ✅", "success"), 300);
       } else if (id === "cancel" && selectedViewing) {
         await cancelViewing(selectedViewing.id, cancelReason);
+        if (selectedViewing.tenantId) {
+          try {
+            await createNotification(
+              selectedViewing.tenantId,
+              "viewing_update",
+              "❌ Viewing Cancelled",
+              `Your viewing at ${selectedViewing.propertyName} has been cancelled. Reason: ${cancelReason}`,
+              "/browse/viewings"
+            );
+          } catch (_) {}
+        }
         resetCancelForm();
         setFormLoading(null); closeSheet();
         setTimeout(() => showSnackbar("Viewing cancelled", "error"), 300);
       } else if (id === "reschedule" && selectedViewing) {
         await rescheduleViewing(selectedViewing.id, resDate, resStartTime, resEndTime, resReason);
+        if (selectedViewing.tenantId) {
+          try {
+            await createNotification(
+              selectedViewing.tenantId,
+              "viewing_update",
+              "🔄 Viewing Rescheduled",
+              `Your viewing at ${selectedViewing.propertyName} has been rescheduled to ${resDate} at ${resStartTime}. Please confirm or cancel in your viewings page.`,
+              "/browse/viewings"
+            );
+          } catch (_) {}
+        }
         resetRescheduleForm();
         setFormLoading(null); closeSheet();
         setTimeout(() => showSnackbar("Reschedule proposed! 📅", "success"), 300);
@@ -1157,9 +1276,23 @@ export default function ViewingRequests() {
               <label>Tenant Name</label>
             </div>
             <div className="input-group">
-              <input type="tel" className="android-input" placeholder=" " style={{ paddingLeft: "60px" }} value={addTenantPhone} onChange={(e) => setAddTenantPhone(e.target.value)} />
+              <input type="tel" className="android-input" placeholder=" " style={{ paddingLeft: "60px", paddingRight: addTenantId || tenantLookupLoading ? "130px" : "16px" }} value={addTenantPhone} onChange={(e) => setAddTenantPhone(e.target.value)} />
               <label style={{ left: "60px" }}>Phone Number</label>
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "#a3a3a3" }}>+254</span>
+              {addTenantId && !tenantLookupLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2" style={{ maxWidth: "150px" }}>
+                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#047857" }} />
+                  <div className="flex flex-col items-end leading-tight overflow-hidden">
+                    <span className="text-[10px] font-semibold text-white truncate w-full text-right">{addTenantNameFound}</span>
+                    <span className="text-[9px] font-medium" style={{ color: "#047857" }}>Tenant Found</span>
+                  </div>
+                </div>
+              )}
+              {tenantLookupLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="spinner" style={{ width: "14px", height: "14px" }} />
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="input-group">

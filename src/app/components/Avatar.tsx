@@ -34,7 +34,7 @@ export default function Avatar({
 
   return (
     <div
-      className={`relative flex-shrink-0 ${className}`}
+      className={`relative flex-shrink-0 rounded-full ${className}`}
       style={{ ...sizeStyle, ...style }}
     >
       {src ? (

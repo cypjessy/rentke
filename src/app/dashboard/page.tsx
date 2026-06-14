@@ -83,11 +83,15 @@ import { listenToUnits, addUnit, recordLease, updateUnit, type UnitFormData } fr
 import { listenToViewings, confirmViewing, cancelViewing, scheduleViewing } from "../../lib/viewings";
 import { listenToInquiries } from "../../lib/inquiries";
 import { listenToMaintenanceRequests } from "../../lib/maintenance";
+import { listenToNotifications } from "../../lib/notifications";
+import { listenToListings } from "../../lib/listings";
 import type { PropertyData } from "../../lib/properties";
 import type { UnitData } from "../../lib/units";
 import type { ViewingData } from "../../lib/viewings";
 import type { InquiryData } from "../../lib/inquiries";
 import type { MaintenanceData } from "../../lib/maintenance";
+import type { NotificationData } from "../../lib/notifications";
+import type { ListingData } from "../../lib/listings";
 type SnackbarType = "success" | "error" | "info";
 
 export default function LandlordDashboard() {
@@ -116,6 +120,8 @@ export default function LandlordDashboard() {
   const [viewings, setViewings] = useState<ViewingData[]>([]);
   const [inquiries, setInquiries] = useState<InquiryData[]>([]);
   const [maintenanceReqs, setMaintenanceReqs] = useState<MaintenanceData[]>([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [listings, setListings] = useState<ListingData[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   // ---- Listeners ----
@@ -142,6 +148,14 @@ export default function LandlordDashboard() {
 
     unsubs.push(listenToMaintenanceRequests(user.uid, (data) => {
       setMaintenanceReqs(data);
+    }, () => {}));
+
+    unsubs.push(listenToNotifications(user.uid, (data) => {
+      setNotifications(data);
+    }, () => {}));
+
+    unsubs.push(listenToListings(user.uid, (data) => {
+      setListings(data);
     }, () => {}));
 
     return () => unsubs.forEach((u) => u());
@@ -667,7 +681,7 @@ export default function LandlordDashboard() {
                 style={{ background: "rgba(255,255,255,0.05)" }}
               >
                 <Bell className="w-5 h-5" style={{ color: "#a3a3a3" }} />
-                <span className="badge">{newInquiries || pendingViewings}</span>
+                <span className="badge">{notifications.filter(n => !n.read).length || newInquiries || pendingViewings}</span>
               </button>
               <button
                 onClick={() => openSheet("quick")}
@@ -2336,32 +2350,71 @@ export default function LandlordDashboard() {
         <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Notifications</h3>
-            <button onClick={markAllRead} className="text-xs font-semibold" style={{ color: "#047857" }}>Mark all read</button>
+            <div className="flex items-center gap-2">
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="chip" style={{ background: "rgba(4,120,87,0.1)", color: "#047857" }}>{notifications.filter(n => !n.read).length} unread</span>
+              )}
+              <button onClick={markAllRead} className="text-xs font-semibold" style={{ color: "#047857" }}>Mark all read</button>
+            </div>
           </div>
           <div className="space-y-1">
-            {recentActivity.length === 0 && (
+            {notifications.length === 0 && (
               <div className="text-center py-8">
                 <Bell className="w-10 h-10 mx-auto mb-3" style={{ color: "#525252" }} />
                 <p className="text-sm" style={{ color: "#525252" }}>No notifications yet</p>
               </div>
             )}
-            {recentActivity.slice(0, 15).map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "rgba(255,255,255,0.03)" }} onClick={() => { closeSheet(); router.push("/messages"); }}>
-                <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: item.dotColor, boxShadow: `0 0 6px ${item.dotColor}66` }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <span className="text-xs" style={{ color: "#525252" }}>{item.time}</span>
+            {notifications.slice(0, 30).map((notif) => {
+              const meta = (() => {
+                const typeMeta: Record<string, { icon: string; bg: string; color: string }> = {
+                  "new_listing": { icon: "🏠", bg: "rgba(4,120,87,0.15)", color: "#047857" },
+                  "landlord_reply": { icon: "💬", bg: "rgba(59,130,246,0.15)", color: "#3b82f6" },
+                  "viewing_reminder": { icon: "📅", bg: "rgba(255,255,255,0.05)", color: "#a3a3a3" },
+                  "price_drop": { icon: "💰", bg: "rgba(234,179,8,0.15)", color: "#eab308" },
+                  "inquiry_update": { icon: "📩", bg: "rgba(168,85,247,0.15)", color: "#a855f7" },
+                  "message": { icon: "✉️", bg: "rgba(4,120,87,0.15)", color: "#047857" },
+                  "maintenance_update": { icon: "🔧", bg: "rgba(168,85,247,0.15)", color: "#a855f7" },
+                  "vacate_notice": { icon: "🚪", bg: "rgba(234,179,8,0.15)", color: "#eab308" },
+                };
+                return typeMeta[notif.type] || { icon: "🔔", bg: "rgba(255,255,255,0.05)", color: "#a3a3a3" };
+              })();
+              const timeStr = notif.createdAt?.toDate ? timeAgo(notif.createdAt.toDate()) : "Recently";
+              return (
+                <div
+                  key={notif.id}
+                  className="flex items-start gap-3 p-3 rounded-xl cursor-pointer"
+                  style={{ background: notif.read ? "transparent" : "rgba(4,120,87,0.04)" }}
+                  onClick={() => {
+                    if (!notif.read) {
+                      import("../../lib/notifications").then(({ markNotificationRead }) => {
+                        markNotificationRead(notif.id);
+                      });
+                    }
+                    closeSheet();
+                    if (notif.link) router.push(notif.link);
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm" style={{ background: meta.bg }}>
+                    {meta.icon}
                   </div>
-                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>{item.desc}</p>
-                  <span className="chip mt-1" style={{ background: item.chipBg, color: item.chipColor, fontSize: "10px" }}>{item.chip}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm font-semibold ${notif.read ? "text-white" : "text-white"}`}>
+                        {notif.title}
+                        {!notif.read && (
+                          <span className="inline-block w-2 h-2 rounded-full ml-1.5" style={{ background: "#047857", boxShadow: "0 0 4px rgba(4,120,87,0.5)" }} />
+                        )}
+                      </p>
+                      <span className="text-xs" style={{ color: "#525252" }}>{timeStr}</span>
+                    </div>
+                    <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>{notif.description}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
-
       {/* ADD PROPERTY SHEET */}
       <div className={`sheet-overlay ${activeSheet === "addProperty" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addProperty" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>

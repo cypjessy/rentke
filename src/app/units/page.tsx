@@ -48,6 +48,8 @@ import {
   updateUnit,
   type UnitData,
 } from "../../lib/units";
+import { listenToNotifications } from "../../lib/notifications";
+import type { NotificationData } from "../../lib/notifications";
 
 import ViewUnitSheet from "./ViewUnitSheet";
 
@@ -90,6 +92,7 @@ export default function UnitsPage() {
   // ---- Units data from Firestore ----
   const [units, setUnits] = useState<UnitData[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // ---- Add Unit Form State ----
   const [addFormPropertyId, setAddFormPropertyId] = useState("");
@@ -129,13 +132,15 @@ export default function UnitsPage() {
     }
   }, [selectedUnit, activeSheet]);
 
-  // ---- Firestore Listener ----
+  // ---- Firestore Listeners ----
   useEffect(() => {
     if (!user) {
       setUnitsLoading(false);
       return;
     }
-    const unsub = listenToUnits(
+    const unsubs: (() => void)[] = [];
+
+    unsubs.push(listenToUnits(
       user.uid,
       (data) => {
         setUnits(data);
@@ -146,8 +151,13 @@ export default function UnitsPage() {
         setUnitsLoading(false);
         showSnackbar("Failed to load units", "error");
       }
-    );
-    return () => unsub();
+    ));
+
+    unsubs.push(listenToNotifications(user.uid, (data) => {
+      setNotifications(data);
+    }, () => {}));
+
+    return () => unsubs.forEach((u) => u());
   }, [user]);
 
   const filteredUnits = units
@@ -417,8 +427,9 @@ export default function UnitsPage() {
               <button
                 key={f.key}
                 className={`filter-chip ${activeFilter === f.key ? "active" : ""}`}
-                onClick={() => {
+                onClick={(e) => {
                   setActiveFilter(f.key);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   const count = units.filter((u) => {
                     if (f.key === "all") return true;
                     if (f.key === "overdue") return u.status === "Occupied" && u.payment === "Overdue";
