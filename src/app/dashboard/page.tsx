@@ -1318,7 +1318,7 @@ export default function LandlordDashboard() {
                   const statusChipColor = prop.status === "active" ? "rgba(4,120,87,0.9)" : prop.status === "partial" ? "rgba(234,179,8,0.9)" : "rgba(59,130,246,0.9)";
                   const barColor = prop.status === "active" ? "#047857" : prop.status === "partial" ? "#eab308" : "#3b82f6";
                   const pct = prop.totalUnits > 0 ? Math.round((prop.occupiedUnits / prop.totalUnits) * 100) : 0;
-                  const revLabel = prop.revenue >= 1000 ? `${(prop.revenue / 1000).toFixed(0)}K` : prop.revenue.toString();
+
                   return (
                     <div
                       key={prop.id}
@@ -1365,10 +1365,10 @@ export default function LandlordDashboard() {
                         <div className="flex items-center justify-between mt-3">
                           <div>
                             <p className="text-xs" style={{ color: "#525252" }}>
-                              Revenue
+                              Rent Range
                             </p>
                             <p className="text-sm font-bold" style={{ color: "#047857" }}>
-                              KSh {revLabel}
+                              KSh {prop.rentMin?.toLocaleString() || '—'} — {prop.rentMax?.toLocaleString() || '—'}
                             </p>
                           </div>
                           <div className="text-right">
@@ -2157,7 +2157,7 @@ export default function LandlordDashboard() {
               </div>
             )}
             {recentActivity.slice(0, 15).map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "rgba(255,255,255,0.03)" }} onClick={() => { closeSheet(); router.push("/inquiries"); }}>
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl cursor-pointer" style={{ background: "rgba(255,255,255,0.03)" }} onClick={() => { closeSheet(); router.push("/messages"); }}>
                 <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: item.dotColor, boxShadow: `0 0 6px ${item.dotColor}66` }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
