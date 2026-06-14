@@ -270,7 +270,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: "#050505" }}>
+    <div className="flex flex-col" style={{ background: "#050505" }}>
       <div className="status-bar" />
 
       {/* ====== HEADER ====== */}

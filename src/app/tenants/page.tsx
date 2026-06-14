@@ -576,7 +576,7 @@ export default function TenantsPage() {
 
   return (
     <AuthGuard>
-      <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", minHeight: "100dvh" }}>
+      <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif" }}>
         <div className="app-shell">
           <div className="status-bar" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, background: "rgba(5,5,5,0.9)" }} />
 

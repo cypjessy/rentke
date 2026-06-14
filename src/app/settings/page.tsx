@@ -510,7 +510,7 @@ export default function SettingsPage() {
   return (
     <AuthGuard>
 
-    <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", minHeight: "100dvh" }}>
+    <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif" }}>
       <div className="app-shell">
         <div className="status-bar" />
 

@@ -497,7 +497,6 @@ export default function MessagesPage() {
         overflowX: "hidden",
         width: "100%",
         maxWidth: "100vw",
-        minHeight: "100dvh",
         position: "relative",
       }}
     >

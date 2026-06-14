@@ -311,7 +311,7 @@ export default function SavedPage() {
   ];
 
   return (
-    <div style={{ overflowX: "hidden", width: "100%", maxWidth: "100vw", minHeight: "100dvh", position: "relative" }}>
+    <div style={{ overflowX: "hidden", width: "100%", maxWidth: "100vw", position: "relative" }}>
       <div className="status-bar" />
 
       {/* Glow */}

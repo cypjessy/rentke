@@ -268,7 +268,7 @@ export default function MyUnitPage() {
   // ====== LOADING STATE ======
   if (unitLoading) {
     return (
-      <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" style={{ color: "#3b82f6" }} />
           <p className="text-sm" style={{ color: "#a3a3a3" }}>Loading your unit...</p>
@@ -278,7 +278,7 @@ export default function MyUnitPage() {
   }
 
   return (
-    <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif", minHeight: "100dvh" }}>
+    <div style={{ background: "#050505", color: "#e5e5e5", fontFamily: "'Inter', sans-serif" }}>
       <div className="status-bar" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, background: "rgba(5,5,5,0.9)" }} />
 
       <div style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "24px" }}>

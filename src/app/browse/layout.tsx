@@ -143,8 +143,13 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="flex flex-col min-h-dvh"
-      style={{ background: "#050505", color: "#e5e5e5", overflowX: "hidden" }}
+      className="flex flex-col h-dvh"
+      style={{
+        background: "#050505",
+        color: "#e5e5e5",
+        overflow: "hidden",
+        position: "relative",
+      }}
     >
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20">

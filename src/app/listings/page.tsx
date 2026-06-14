@@ -1130,7 +1130,7 @@ function ListingsPage() {
 // Wrap in Suspense for useSearchParams compatibility with static export
 export default function ListingsPageWrapper() {
   return (
-    <Suspense fallback={<div style={{ background: "#050505", minHeight: "100dvh" }} />}>
+    <Suspense fallback={<div style={{ background: "#050505" }} />}>
       <ListingsPage />
     </Suspense>
   );
