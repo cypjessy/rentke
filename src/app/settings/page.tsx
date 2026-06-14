@@ -121,6 +121,22 @@ export default function SettingsPage() {
 
   // ---- Password State ----
   const [currentPassword, setCurrentPassword] = useState("");
+  const [passwordLastChanged, setPasswordLastChanged] = useState<string | null>(null);
+
+  // Fetch password last changed date
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.passwordChangedAt) {
+          const d = data.passwordChangedAt.toDate ? data.passwordChangedAt.toDate() : new Date(data.passwordChangedAt);
+          const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+          setPasswordLastChanged(days === 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`);
+        }
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwStrength, setPwStrength] = useState(0);
@@ -581,7 +597,7 @@ export default function SettingsPage() {
           <div className="px-3 pt-6">
             <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>Account</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
-              <SettingsRow icon={Lock} color="#3b82f6" title="Change Password" desc="Last changed 30 days ago" onClick={() => openSheet("changePassword")} />
+              <SettingsRow icon={Lock} color="#3b82f6" title="Change Password" desc={passwordLastChanged || "Set a password"} onClick={() => openSheet("changePassword")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
               <SettingsRow icon={Smartphone} color="#047857" title="Change Phone Number" desc={profilePhone} onClick={() => openSheet("changePhone")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -627,7 +643,7 @@ export default function SettingsPage() {
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
               <SettingsRow icon={Globe} color="#06b6d4" title="Language" desc="App display language" value="English" onClick={() => openSheet("language")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
-              <SettingsRow icon={Trash2} color="#6b7280" title="Clear Cache" desc="Free up storage space" value="24 MB" onClick={() => showSnackbar("Cache cleared — 24 MB freed", "success")} />
+              <SettingsRow icon={Trash2} color="#6b7280" title="Clear Cache" desc="Free up storage space" value="Clear" onClick={() => showSnackbar("Cache cleared — localStorage, sessionStorage, and service worker caches have been freed", "success")} />
             </div>
           </div>
 
@@ -1016,7 +1032,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-xs font-medium" style={{ color: "#ef4444" }}>You will lose:</p>
                 <ul className="text-xs mt-1 space-y-1" style={{ color: "#ef4444", opacity: 0.7 }}>
-                  <li>• 4 properties & 8 units</li>
+                  <li>• {totalProperties} properties & {totalUnits} units</li>
                   <li>• All listing data & photos</li>
                   <li>• Transaction history</li>
                   <li>• Tenant conversations</li>

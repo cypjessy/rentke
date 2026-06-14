@@ -22,7 +22,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { linkUnitsToUser } from "@/lib/units";
+import { generateClientCode, linkUnitsToUser, claimUnitByCode } from "@/lib/units";
 import { useRouter } from "next/navigation";
 
 type UserRole = "tenant" | "landlord" | null;
@@ -41,6 +41,7 @@ interface AuthContextType extends AuthState {
     name: string;
     phone: string;
     role: "tenant" | "landlord";
+    unitAccessCode?: string;
   }) => Promise<{ error?: string }>;
   signInWithGoogle: (role: "tenant" | "landlord") => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
@@ -126,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: string;
       phone: string;
       role: "tenant" | "landlord";
+      unitAccessCode?: string;
     }): Promise<{ error?: string }> => {
       authOperationInProgress.current = true;
       try {
@@ -139,17 +141,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Update display name
         await updateProfile(user, { displayName: data.name });
 
+        // Generate a unique client code for this user
+        const clientCode = generateClientCode();
+
         // Store user doc in Firestore
         await setDoc(doc(db, "users", user.uid), {
           name: data.name,
           email: data.email,
           phone: data.phone,
           role: data.role,
+          clientCode,
           createdAt: serverTimestamp(),
         });
 
         // Auto-link any units that were assigned to this phone before they had an account
         linkUnitsToUser(data.phone, user.uid).catch(() => {});
+
+        // If the user provided a unit access code during sign-up, claim it
+        if (data.unitAccessCode) {
+          claimUnitByCode(data.unitAccessCode, user.uid).catch(() => {});
+        }
 
         setState((prev) => ({ ...prev, user, role: data.role }));
         return {};
@@ -181,11 +192,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (!userDoc.exists()) {
           // First-time Google user — create doc with selected role
+          const clientCode = generateClientCode();
           await setDoc(doc(db, "users", user.uid), {
             name: user.displayName || "User",
             email: user.email,
             phone: user.phoneNumber || "",
             role: role,
+            clientCode,
             createdAt: serverTimestamp(),
           });
 

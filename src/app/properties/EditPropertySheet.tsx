@@ -108,8 +108,9 @@ export default function EditPropertySheet({
     if (!property) return;
     const updatedImages = formImages.filter((_, i) => i !== idx);
     setFormImages(updatedImages);
-    // TODO: call parent to persist removal
-    showSnackbar("Photo removed", "info");
+    // Photo is removed from the local images array; it will be persisted
+    // when the user clicks "Save Changes" (the full images array is submitted).
+    showSnackbar("Photo removed from form", "info");
   };
 
   const handleSubmit = async () => {

@@ -15,6 +15,79 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+// ---- Two-Tier Code System ----
+
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1 to avoid confusion
+
+/** Generate a random alphanumeric code with a given prefix and total length. */
+function generateCode(prefix: string, totalLength: number): string {
+  const randomLen = totalLength - prefix.length - 1; // -1 for the dash
+  let random = "";
+  for (let i = 0; i < randomLen; i++) {
+    random += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  }
+  return `${prefix}-${random}`;
+}
+
+/** Generate a unique Client Code (e.g. RK-A3F9K2) for a new user. */
+export function generateClientCode(): string {
+  return generateCode("RK", 8);
+}
+
+/** Generate a Unit Access Code (e.g. UT-4B7D) for a lease without an account. */
+export function generateUnitAccessCode(): string {
+  return generateCode("UT", 7);
+}
+
+/** Look up an app user by their client code. */
+export async function lookupUserByClientCode(
+  code: string
+): Promise<{ uid: string; name: string; phone: string } | null> {
+  if (!code) return null;
+  const clean = code.trim().toUpperCase();
+  if (clean.length < 4) return null;
+
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("clientCode", "==", clean));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  const data = d.data();
+  return { uid: d.id, name: data.name || "", phone: data.phone || "" };
+}
+
+/** Claim a unit by its unit access code. Sets the tenantId on the unit. */
+export async function claimUnitByCode(
+  code: string,
+  userId: string
+): Promise<{ unitId: string; unitName: string; propertyName: string } | null> {
+  if (!code) return null;
+  const clean = code.trim().toUpperCase();
+  if (clean.length < 4) return null;
+
+  const q = query(unitsRef, where("unitAccessCode", "==", clean));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  const data = d.data();
+
+  // Don't overwrite an existing tenantId
+  if (data.tenantId) return null;
+
+  await updateDoc(doc(unitsRef, d.id), {
+    tenantId: userId,
+    updatedAt: serverTimestamp(),
+  });
+
+  return {
+    unitId: d.id,
+    unitName: data.name || "",
+    propertyName: data.propertyName || "",
+  };
+}
+
 /** Look up an app user by phone number across common Kenyan formats. */
 export async function lookupUserByPhone(
   phone: string
@@ -72,6 +145,7 @@ export interface UnitData {
   leaseStart: Timestamp | null;
   leaseEnd: Timestamp | null;
   leaseTerm: string;
+  unitAccessCode: string | null;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 }
@@ -148,6 +222,7 @@ export function listenToUnits(
           leaseStart: data.leaseStart || null,
           leaseEnd: data.leaseEnd || null,
           leaseTerm: data.leaseTerm || "",
+          unitAccessCode: data.unitAccessCode || null,
           createdAt: data.createdAt || null,
           updatedAt: data.updatedAt || null,
         };
@@ -227,14 +302,20 @@ export async function recordLease(
 
   // Auto-resolve tenantId by phone if not provided
   let resolvedTenantId = data.tenantId || null;
+  let unitAccessCode: string | null = null;
   if (!resolvedTenantId && data.tenantPhone) {
     try {
       const user = await lookupUserByPhone(data.tenantPhone);
       if (user) resolvedTenantId = user.uid;
     } catch {
-      // Silently skip — tenantId stays null and the unit won't appear
-      // on My Unit until the landlord manually links it.
+      // Silently skip — tenantId stays null
     }
+  }
+
+  // If still no tenantId, generate a unit access code so the tenant can
+  // claim the unit later when they register.
+  if (!resolvedTenantId) {
+    unitAccessCode = generateUnitAccessCode();
   }
 
   await updateDoc(doc(unitsRef, unitId), {
@@ -249,6 +330,7 @@ export async function recordLease(
     leaseStart: start,
     leaseEnd: end,
     leaseTerm: data.leaseTerm,
+    unitAccessCode,
     updatedAt: serverTimestamp(),
   });
 

@@ -85,6 +85,7 @@ import { listenToInquiries } from "../../lib/inquiries";
 import { listenToMaintenanceRequests } from "../../lib/maintenance";
 import { listenToNotifications } from "../../lib/notifications";
 import { listenToListings } from "../../lib/listings";
+import { recordRentPayment, listenToPayments } from "../../lib/payments";
 import type { PropertyData } from "../../lib/properties";
 import type { UnitData } from "../../lib/units";
 import type { ViewingData } from "../../lib/viewings";
@@ -92,6 +93,7 @@ import type { InquiryData } from "../../lib/inquiries";
 import type { MaintenanceData } from "../../lib/maintenance";
 import type { NotificationData } from "../../lib/notifications";
 import type { ListingData } from "../../lib/listings";
+import type { PaymentData } from "../../lib/payments";
 type SnackbarType = "success" | "error" | "info";
 
 export default function LandlordDashboard() {
@@ -123,6 +125,9 @@ export default function LandlordDashboard() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [listings, setListings] = useState<ListingData[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+
+  // ---- Payments State ----
+  const [payments, setPayments] = useState<PaymentData[]>([]);
 
   // ---- Listeners ----
   useEffect(() => {
@@ -156,6 +161,10 @@ export default function LandlordDashboard() {
 
     unsubs.push(listenToListings(user.uid, (data) => {
       setListings(data);
+    }, () => {}));
+
+    unsubs.push(listenToPayments(user.uid, (data) => {
+      setPayments(data);
     }, () => {}));
 
     return () => unsubs.forEach((u) => u());
@@ -316,11 +325,9 @@ export default function LandlordDashboard() {
   const [addUDesc, setAddUDesc] = useState("");
 
   // ---- Record Payment Form State ----
-  const [payUnitId, setPayUnitId] = useState("");
-  const [payAmount, setPayAmount] = useState("");
-  const [payDate, setPayDate] = useState("");
-  const [payNotes, setPayNotes] = useState("");
-  const [payLoading, setPayLoading] = useState(false);
+  const [payMethod, setPayMethod] = useState<string>("M-Pesa");
+  const [payDateVal, setPayDateVal] = useState("");
+  const [payNotesVal, setPayNotesVal] = useState("");
 
   // ---- Add Tenant Form State ----
   const [tenantUnitId, setTenantUnitId] = useState("");
@@ -1890,6 +1897,111 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
+            {/* PAYMENT HISTORY — From actual payment records */}
+            <div className="mt-7 animate-in stagger-16">
+              <div className="section-header">
+                <h3 className="section-title">Payment History</h3>
+                <button
+                  className="section-action"
+                  onClick={() => openSheet("recordPayment")}
+                >
+                  <Plus className="w-3.5 h-3.5" /> Record
+                </button>
+              </div>
+              <div
+                style={{
+                  borderRadius: "20px",
+                  background: "linear-gradient(135deg, rgba(234,179,8,0.06) 0%, rgba(5,5,5,1) 60%)",
+                  border: "1px solid rgba(234,179,8,0.12)",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-40px",
+                    right: "-40px",
+                    width: "160px",
+                    height: "160px",
+                    borderRadius: "50%",
+                    background: "radial-gradient(circle, rgba(234,179,8,0.08) 0%, transparent 70%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  {payments.length === 0 ? (
+                    <div className="text-center py-8 px-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(234,179,8,0.1)" }}>
+                        <CreditCard className="w-5 h-5" style={{ color: "#eab308" }} />
+                      </div>
+                      <p className="text-sm font-medium text-white">No payments recorded yet</p>
+                      <p className="text-xs mt-1" style={{ color: "#525252" }}>Use the Record Payment button to log your first one</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-0">
+                      {payments.slice(0, 10).map((pay, i) => {
+                        const payTime = pay.createdAt ? timeAgo(pay.createdAt.toDate()) : "Recently";
+                        const methodColor = pay.method === "M-Pesa" ? "#25D366" : pay.method === "Cash" ? "#f97316" : pay.method === "Bank Transfer" ? "#3b82f6" : "#a855f7";
+                        return (
+                          <div
+                            key={pay.id}
+                            className="flex items-start gap-3 px-3 py-3"
+                            style={{ borderBottom: i < payments.length - 1 && i < 9 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                          >
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: "rgba(4,120,87,0.1)" }}
+                            >
+                              <Check className="w-5 h-5" style={{ color: "#047857" }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold text-white truncate pr-2">
+                                  {pay.tenantName || "Tenant"}
+                                </p>
+                                <span className="text-sm font-bold" style={{ color: "#047857" }}>
+                                  KSh {pay.amount.toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-xs mt-0.5 truncate" style={{ color: "#a3a3a3" }}>
+                                {pay.unitName} — {pay.propertyName}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span
+                                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                                  style={{ background: `${methodColor}1a`, color: methodColor }}
+                                >
+                                  {pay.method}
+                                </span>
+                                <span className="text-[10px]" style={{ color: "#525252" }}>
+                                  {payTime}
+                                </span>
+                                {pay.paymentDate && (
+                                  <span className="text-[10px]" style={{ color: "#525252" }}>
+                                    {pay.paymentDate}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {payments.length > 10 && (
+                <button
+                  onClick={() => router.push("/units")}
+                  className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold"
+                  style={{ background: "rgba(255,255,255,0.03)", color: "#a3a3a3" }}
+                >
+                  View all {payments.length} payments
+                </button>
+              )}
+            </div>
+
             <div className="h-4" />
           </div>
         </div>
@@ -2041,27 +2153,41 @@ export default function LandlordDashboard() {
             </div>
             <div>
               <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Payment Method</label>
-              <select className="android-select">
-                <option>M-Pesa</option>
-                <option>Cash</option>
-                <option>Bank Transfer</option>
-                <option>Cheque</option>
+              <select className="android-select" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                <option value="M-Pesa">M-Pesa</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
               </select>
             </div>
             <div className="input-group">
-              <input type="date" className="android-input" placeholder=" " />
+              <input type="date" className="android-input" placeholder=" " value={payDateVal} onChange={(e) => setPayDateVal(e.target.value)} />
               <label style={{ top: "10px", fontSize: "11px", color: "#047857", fontWeight: 500 }}>Payment Date</label>
             </div>
             <div>
               <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Notes</label>
-              <textarea className="android-input" style={{ minHeight: "60px", borderRadius: "14px" }} placeholder="Optional notes..." />
+              <textarea className="android-input" style={{ minHeight: "60px", borderRadius: "14px" }} placeholder="Optional notes..." value={payNotesVal} onChange={(e) => setPayNotesVal(e.target.value)} />
             </div>
             <button
               onClick={async () => {
                 if (!addUPropId) { showSnackbar("Please select a unit", "error"); return; }
+                if (!user) return;
                 try {
                   setAddUnitLoading(true);
-                  await updateUnit(addUPropId, { payment: "Paid", status: "Occupied" } as any);
+                  const unit = units.find(u => u.id === addUPropId);
+                  if (!unit) { showSnackbar("Unit not found", "error"); setAddUnitLoading(false); return; }
+                  await recordRentPayment(user.uid, {
+                    unitId: unit.id,
+                    unitName: unit.name,
+                    propertyId: unit.propertyId,
+                    propertyName: unit.propertyName,
+                    tenantName: unit.tenantName || "Tenant",
+                    tenantId: unit.tenantId,
+                    amount: parseInt(addURent.replace(/,/g, '')) || unit.rent,
+                    method: payMethod as "M-Pesa" | "Cash" | "Bank Transfer" | "Cheque",
+                    notes: payNotesVal,
+                    paymentDate: payDateVal || new Date().toISOString().split('T')[0],
+                  }, unit.id);
                   setAddUnitLoading(false);
                   closeSheet();
                   setTimeout(() => showSnackbar("Payment recorded! 💰", "success"), 300);
@@ -2122,10 +2248,10 @@ export default function LandlordDashboard() {
               </div>
               <div>
                 <label className="text-xs font-medium block mb-2" style={{ color: "#a3a3a3" }}>Lease Term</label>
-                <select className="android-select">
-                  <option>6 months</option>
-                  <option>12 months</option>
-                  <option>24 months</option>
+                <select className="android-select" value={tenantTerm} onChange={(e) => setTenantTerm(e.target.value)}>
+                  <option value="6 months">6 months</option>
+                  <option value="12 months">12 months</option>
+                  <option value="24 months">24 months</option>
                 </select>
               </div>
             </div>
@@ -2149,7 +2275,7 @@ export default function LandlordDashboard() {
                     tenantName: tenantName,
                     tenantPhone: tenantPhone,
                     leaseStart: tenantLeaseStart || new Date().toISOString().split('T')[0],
-                    leaseTerm: "12 months",
+                    leaseTerm: tenantTerm,
                     rent: parseInt(addURent.replace(/,/g, '')) || 0,
                     deposit: parseInt(addUDeposit.replace(/,/g, '')) || 0,
                     status: "Occupied",

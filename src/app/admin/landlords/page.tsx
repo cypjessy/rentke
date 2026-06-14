@@ -485,7 +485,7 @@ export default function AdminLandlords() {
   const navItems: { key: PageKey; icon: React.ElementType; label: string; snackbar?: string }[] = [
     { key: "dashboard", icon: LayoutDashboard, label: "Home", snackbar: "Dashboard" },
     { key: "landlords", icon: Users, label: "Landlords" },
-    { key: "listings", icon: Building2, label: "Listings", snackbar: "Listings page coming soon" },
+    { key: "listings", icon: Building2, label: "Listings" },
     { key: "wallet", icon: Wallet, label: "Wallet" },
     { key: "settings", icon: Settings, label: "Settings" },
   ];

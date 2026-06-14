@@ -11,6 +11,8 @@ import {
   reauthenticateWithCredential,
   updatePassword as firebaseUpdatePassword,
 } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   Edit3,
   ShieldCheck,
@@ -123,6 +125,20 @@ export default function ProfilePage() {
       setUploadingPhoto(false);
     }
   };
+
+  // ---- Client Code ----
+  const [clientCode, setClientCode] = useState("");
+
+  // Fetch clientCode from Firestore user doc
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) {
+        const code = snap.data().clientCode || "";
+        setClientCode(code);
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
 
   // ---- Password Change ----
   const [currentPassword, setCurrentPassword] = useState("");
@@ -325,6 +341,15 @@ export default function ProfilePage() {
             <p className="text-xs truncate" style={{ color: "#525252" }}>
               {userEmail}
             </p>
+            {clientCode && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(4,120,87,0.1)", border: "1px solid rgba(4,120,87,0.2)" }}>
+                <span className="text-xs font-semibold" style={{ color: "#34d399" }}>Code:</span>
+                <span className="text-xs font-mono font-bold tracking-wider" style={{ color: "#fff" }}>{clientCode}</span>
+                <button onClick={() => { navigator.clipboard.writeText(clientCode).catch(() => {}); showSnackbar("Code copied!", "success"); }} className="p-0.5">
+                  <Copy className="w-3 h-3" style={{ color: "#34d399" }} />
+                </button>
+              </div>
+            )}
           </div>
           <button
             onClick={() => {

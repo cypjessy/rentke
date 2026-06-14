@@ -51,6 +51,7 @@ export default function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [regErrors, setRegErrors] = useState<{name?:boolean; phone?:boolean; email?:boolean; confirm?:boolean; terms?:boolean}>({});
   const [regLoading, setRegLoading] = useState(false);
+  const [regUnitCode, setRegUnitCode] = useState("");
 
   // ---- OTP ----
   const [otpValues, setOtpValues] = useState(["", "", "", ""]);
@@ -268,6 +269,7 @@ export default function AuthPage() {
       name: regName,
       phone: regPhone,
       role: selectedRole || "tenant",
+      unitAccessCode: regUnitCode.trim() || undefined,
     });
 
     setRegLoading(false);
@@ -1241,6 +1243,27 @@ useEffect(() => {
                     Passwords do not match
                   </p>
                 )}
+              </div>
+
+              {/* Unit Access Code (optional) */}
+              <div>
+                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#a3a3a3" }}>HAVE A UNIT ACCESS CODE? <span style={{ color: "#525252" }}>(Optional)</span></label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="android-input flex-1 uppercase font-mono"
+                    placeholder="e.g. UT-4B7D"
+                    value={regUnitCode}
+                    onChange={(e) => setRegUnitCode(e.target.value.toUpperCase())}
+                    maxLength={7}
+                  />
+                  <div className="px-3 rounded-xl flex items-center justify-center text-sm" style={{ background: "rgba(255,255,255,0.05)", color: "#525252" }}>
+                    <Info className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: "#525252" }}>
+                  If your landlord gave you a code, enter it to link your unit instantly
+                </p>
               </div>
 
               {/* Terms */}

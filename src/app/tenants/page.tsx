@@ -50,6 +50,7 @@ import {
   setUnitMaintenance,
   updateUnit as updateUnitPartial,
   lookupUserByPhone,
+  lookupUserByClientCode,
   type UnitData,
   type LeaseFormData,
 } from "../../lib/units";
@@ -99,6 +100,10 @@ export default function TenantsPage() {
   // ---- Lookup State ----
   const [lookedUpUser, setLookedUpUser] = useState<{ uid: string; name: string; phone: string } | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
+
+  // ---- Client Code Lookup State ----
+  const [formClientCode, setFormClientCode] = useState("");
+  const [codeLoading, setCodeLoading] = useState(false);
 
   // ---- Form State: Renew Lease ----
   const [renewStart, setRenewStart] = useState("");
@@ -432,6 +437,35 @@ export default function TenantsPage() {
       showSnackbar("Failed to lookup user", "error");
     }
     setLookupLoading(false);
+  };
+
+  // ---- Lookup user by client code ----
+  const handleCodeLookup = async () => {
+    const code = formClientCode.trim().toUpperCase();
+    if (!code || code.length < 4) {
+      showSnackbar("Please enter a valid client code like RK-A3F9K2", "error");
+      return;
+    }
+    setCodeLoading(true);
+    try {
+      const result = await lookupUserByClientCode(code);
+      if (result) {
+        // Found the user — auto-fill everything
+        setLookedUpUser(result);
+        setFormPhone(result.phone);
+        const nameParts = result.name.split(" ");
+        setFormFirstName(nameParts[0] || "");
+        setFormLastName(nameParts.slice(1).join(" ") || "");
+        showSnackbar(`✓ Found ${result.name} — details auto-filled!`, "success");
+      } else {
+        setLookedUpUser(null);
+        showSnackbar("No user found with that code. Enter details manually.", "info");
+      }
+    } catch (err: any) {
+      console.error("Code lookup error:", err);
+      showSnackbar("Failed to lookup code", "error");
+    }
+    setCodeLoading(false);
   };
 
   const handleAssignTenant = async () => {
@@ -1370,6 +1404,38 @@ export default function TenantsPage() {
             <p className="text-xs mb-4" style={{ color: "#a3a3a3" }}>
               {selectedUnit?.name} — {selectedUnit?.propertyName}
             </p>
+            {/* Quick link: Enter Client Code to auto-fill */}
+            <div className="p-3 rounded-xl mb-4" style={{ background: "rgba(4,120,87,0.05)", border: "1px solid rgba(4,120,87,0.15)" }}>
+              <p className="text-xs font-semibold mb-2" style={{ color: "#047857" }}>⚡ QUICK LINK BY CLIENT CODE</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="android-input flex-1 uppercase font-mono tracking-widest"
+                  placeholder="RK-A3F9K2"
+                  value={formClientCode}
+                  onChange={(e) => setFormClientCode(e.target.value.toUpperCase())}
+                  maxLength={7}
+                />
+                <button
+                  onClick={handleCodeLookup}
+                  disabled={codeLoading || !formClientCode}
+                  className="px-4 rounded-xl text-xs font-semibold whitespace-nowrap"
+                  style={{
+                    background: codeLoading ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #047857, #059669)",
+                    color: "white",
+                    border: "none",
+                    opacity: !formClientCode ? 0.4 : 1,
+                    cursor: !formClientCode || codeLoading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {codeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Auto-Fill"}
+                </button>
+              </div>
+              <p className="text-xs mt-1.5" style={{ color: "#525252" }}>
+                Ask the tenant for their code (visible on their RentKe profile)
+              </p>
+            </div>
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>

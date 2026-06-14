@@ -420,6 +420,9 @@ export default function MyUnitPage() {
                       { label: "Security Deposit", value: `KSh ${unit.deposit.toLocaleString()}` },
                       { label: "Unit Type", value: unit.type },
                       { label: "Status", value: unit.status, color: unit.status === "Occupied" ? "#059669" : "#ef4444" },
+                      ...(unit.unitAccessCode
+                        ? [{ label: "Access Code", value: unit.unitAccessCode, color: "#eab308" as const, bold: true }]
+                        : []),
                     ].map((row, i) => (
                       <div
                         key={row.label}

@@ -565,7 +565,6 @@ export default function MessagesPage() {
                 onClick={(e) => {
                   setFilterTab(f.key);
                   e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                  showSnackbar(`Showing ${f.label.toLowerCase()} chats`, "info");
                 }}
               >
                 {f.label} <span className="tab-count">{f.count}</span>
@@ -824,7 +823,7 @@ export default function MessagesPage() {
                 if (item.label === "Camera" || item.label === "Gallery") {
                   await handleSendImage(item.label === "Camera" ? "camera" : "gallery");
                 } else {
-                  showSnackbar(`${item.label} coming soon`, "info");
+                  showSnackbar(`📎 ${item.label} — coming in the next update`, "info");
                 }
               }}>
                 <div className="attach-icon" style={{ background: item.bg }}>
@@ -846,7 +845,7 @@ export default function MessagesPage() {
                 if (item.label === "Schedule") {
                   setTimeout(() => openSheet("scheduleViewing"), 300);
                 } else {
-                  showSnackbar(`${item.label} coming soon`, "info");
+                  showSnackbar(`📎 ${item.label} — coming in the next update`, "info");
                 }
               }}>
                 <div className="attach-icon" style={{ background: item.bg }}>

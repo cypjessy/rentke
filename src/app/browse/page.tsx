@@ -18,9 +18,12 @@ import {
   Clock,
   Info,
   ArrowLeft,
+  Copy,
 } from "lucide-react";
 import { useBrowse } from "./BrowseContext";
 import { useAuth } from "../AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { PropertyData } from "./PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../constants";
 import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
@@ -214,6 +217,15 @@ export default function BrowseHome() {
       ];
 
   const displayRecentViews = recentlyViewed.length > 0 ? recentlyViewed : defaultRecentlyViewed;
+
+  // ---- Client Code ----
+  const [clientCode, setClientCode] = useState("");
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) setClientCode(snap.data().clientCode || "");
+    }).catch(() => {});
+  }, [user?.uid]);
 
   // ---- State ----
   const [selectedLocation, setSelectedLocation] = useState("Nairobi, Kenya");
@@ -463,6 +475,15 @@ export default function BrowseHome() {
           </button>
         </div>
         <div className="flex items-center gap-2">
+          {clientCode && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg sm:gap-1.5 sm:px-2.5 sm:py-1.5" style={{ background: "rgba(4,120,87,0.08)", border: "1px solid rgba(4,120,87,0.15)" }}>
+              <span className="text-[9px] font-semibold sm:text-[10px]" style={{ color: "#34d399" }}>Code:</span>
+              <span className="text-[9px] font-mono font-bold tracking-wider sm:text-[10px]" style={{ color: "#fff" }}>{clientCode}</span>
+              <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(clientCode).catch(() => {}); showSnackbar("Code copied!", "success"); }} className="p-0.5">
+                <Copy className="w-2.5 h-2.5" style={{ color: "#34d399" }} />
+              </button>
+            </div>
+          )}
           <button
             onClick={() => setNotifSheetOpen(true)}
             className="w-10 h-10 rounded-full flex items-center justify-center relative ripple-container"
