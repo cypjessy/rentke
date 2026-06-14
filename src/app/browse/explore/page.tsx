@@ -828,7 +828,7 @@ function ExplorePageInner() {
       {/* ============================================ */}
       <div className={`map-view ${viewMode === "map" ? "active" : ""}`}>
         <div className="status-bar" />
-        <div className="absolute top-0 left-0 right-0 z-30 p-4 flex items-center gap-3" style={{ paddingTop: "max(24px, env(safe-area-inset-top))" }}>
+        <div className="absolute top-0 left-0 right-0 z-30 p-4 flex items-center gap-3" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <button onClick={() => setViewMode("list")} className="w-10 h-10 rounded-full flex items-center justify-center ripple-container" style={{ background: "#1A1D21", boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>

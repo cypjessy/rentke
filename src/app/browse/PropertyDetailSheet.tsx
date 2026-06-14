@@ -376,7 +376,7 @@ export default function PropertyDetailSheet({
           <header
             className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pt-3 pb-2"
             style={{
-              paddingTop: "max(24px, env(safe-area-inset-top))",
+              paddingTop: "env(safe-area-inset-top, 0px)",
               background:
                 "linear-gradient(to bottom, rgba(5,5,5,0.8) 0%, transparent 100%)",
             }}

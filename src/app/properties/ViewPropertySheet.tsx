@@ -338,7 +338,7 @@ export default function ViewPropertySheet({
         </div>
 
         {/* Header Info */}
-        <div className="px-5 -mt-6 relative z-10">
+        <div className="px-3 -mt-6 relative z-10">
           <h2 className="text-xl font-bold text-white">{pd.name}</h2>
           <p
             className="text-sm mt-1 flex items-center gap-1"
@@ -419,7 +419,7 @@ export default function ViewPropertySheet({
 
           {/* Tabs */}
           <div
-            className="flex mt-5 -mx-5 overflow-x-auto"
+            className="flex mt-5 -mx-3 overflow-x-auto"
             style={{
               borderBottom: "1px solid rgba(255,255,255,0.06)",
               scrollbarWidth: "none",

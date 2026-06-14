@@ -42,7 +42,7 @@ import {
   Smartphone,
   Crown,
   Settings,
-  CalendarDays,
+  CalendarClock,
   HelpCircle,
   LogOut,
   Camera,
@@ -773,20 +773,20 @@ export default function LandlordDashboard() {
                 className="stat-card animate-in stagger-4"
                 onClick={() => router.push("/messages")}
               >
-                <div className="glow" style={{ background: "#a855f7" }} />
+                <div className="glow" style={{ background: "#3b82f6" }} />
                 <div className="flex items-center justify-between mb-3">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(168,85,247,0.15)" }}
+                    style={{ background: "rgba(59,130,246,0.15)" }}
                   >
-                    <MessageCircle
+                    <MessageSquare
                       className="w-5 h-5"
-                      style={{ color: "#a855f7" }}
+                      style={{ color: "#3b82f6" }}
                     />
                   </div>
                   <div
                     className="chip"
-                    style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7" }}
+                    style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}
                   >
                     <TrendingUp className="w-3 h-3" /> {dataLoading ? "..." : `+${Math.max(0, newInquiries)}`}
                   </div>
@@ -795,7 +795,7 @@ export default function LandlordDashboard() {
                   {dataLoading ? "..." : inquiries.length}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-                  Inquiries
+                  Messages
                 </p>
               </div>
             </div>
@@ -907,111 +907,221 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* OCCUPANCY + QUICK STATS */}
+            {/* OCCUPANCY — Premium */}
             <div className="grid grid-cols-5 gap-3 mt-5">
-            <div
-              className="col-span-3 card animate-in stagger-6"
-              style={{ padding: "20px", cursor: "pointer" }}
-              onClick={() => router.push("/units")}
-            >
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
-                    <svg className="progress-ring" width="90" height="90">
-                      <circle
-                        cx="45"
-                        cy="45"
-                        r="38"
-                        fill="none"
-                        stroke="rgba(255,255,255,0.06)"
-                        strokeWidth="8"
-                      />
-                      <circle
-                        className="progress-ring-circle"
-                        cx="45"
-                        cy="45"
-                        r="38"
-                        fill="none"
-                        stroke="#047857"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray="239"
-                        strokeDashoffset="45"
-                        style={{
-                          filter: "drop-shadow(0 0 6px rgba(4,120,87,0.4))",
-                        }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xl font-bold text-white">{dataLoading ? "..." : occupancyPct}%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">Occupancy</h3>
-                    <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
-                      {totalUnits} of {Math.max(totalUnits, occupiedUnits)} units
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ background: "#047857" }}
+              <div
+                className="col-span-3 animate-in stagger-6"
+                style={{
+                  padding: "0",
+                  cursor: "pointer",
+                  borderRadius: "20px",
+                  background: "linear-gradient(135deg, rgba(4,120,87,0.08) 0%, rgba(5,5,5,1) 60%)",
+                  border: "1px solid rgba(4,120,87,0.15)",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onClick={() => router.push("/units")}
+              >
+                {/* Subtle glow */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-40px",
+                    right: "-40px",
+                    width: "160px",
+                    height: "160px",
+                    borderRadius: "50%",
+                    background: "radial-gradient(circle, rgba(4,120,87,0.12) 0%, transparent 70%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <div style={{ padding: "20px", position: "relative", zIndex: 1 }}>
+                  <div className="flex items-center gap-5">
+                    {/* Premium Ring */}
+                    <div className="relative flex-shrink-0">
+                      <svg width="110" height="110" viewBox="0 0 110 110">
+                        {/* Background track */}
+                        <circle
+                          cx="55"
+                          cy="55"
+                          r="46"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.04)"
+                          strokeWidth="8"
                         />
-                        <span className="text-xs" style={{ color: "#a3a3a3" }}>
+                        {/* Gradient progress ring */}
+                        <defs>
+                          <linearGradient id="occGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#047857" />
+                            <stop offset="100%" stopColor="#10b981" />
+                          </linearGradient>
+                        </defs>
+                        <circle
+                          className="progress-ring-circle"
+                          cx="55"
+                          cy="55"
+                          r="46"
+                          fill="none"
+                          stroke="url(#occGrad)"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 46}`}
+                          strokeDashoffset={`${2 * Math.PI * 46 * (1 - (dataLoading ? 0 : occupancyPct) / 100)}`}
+                          style={{
+                            filter: "drop-shadow(0 0 12px rgba(4,120,87,0.5)) drop-shadow(0 0 24px rgba(4,120,87,0.2))",
+                            transform: "rotate(-90deg)",
+                            transformOrigin: "center",
+                          }}
+                        />
+                        {/* Inner decorative ring */}
+                        <circle
+                          cx="55"
+                          cy="55"
+                          r="32"
+                          fill="none"
+                          stroke="rgba(4,120,87,0.06)"
+                          strokeWidth="1"
+                          strokeDasharray="4 4"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold text-white" style={{ letterSpacing: "-0.5px" }}>{dataLoading ? "..." : occupancyPct}%</span>
+                        <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: "rgba(16,185,129,0.7)" }}>
                           Occupied
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-white" style={{ letterSpacing: "-0.3px" }}>Occupancy Rate</h3>
+                      <p className="text-xs mt-0.5" style={{ color: "#737373" }}>
+                        {occupiedUnits} of {totalUnits} units filled
+                      </p>
+
+                      {/* Occupancy bar */}
+                      <div className="mt-3">
                         <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ background: "rgba(255,255,255,0.15)" }}
-                        />
-                        <span className="text-xs" style={{ color: "#a3a3a3" }}>
-                          Vacant
-                        </span>
+                          className="w-full h-1.5 rounded-full overflow-hidden"
+                          style={{ background: "rgba(255,255,255,0.06)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${dataLoading ? 0 : occupancyPct}%`,
+                              background: "linear-gradient(to right, #047857, #10b981)",
+                              boxShadow: "0 0 8px rgba(4,120,87,0.3)",
+                              transition: "width 1s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stats row */}
+                      <div className="flex items-center gap-4 mt-3">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ background: "#10b981", boxShadow: "0 0 6px rgba(16,185,129,0.5)" }} />
+                          <span className="text-xs font-medium" style={{ color: "#e5e5e5" }}>{occupiedUnits}</span>
+                          <span className="text-xs" style={{ color: "#737373" }}>occupied</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.12)" }} />
+                          <span className="text-xs font-medium" style={{ color: "#e5e5e5" }}>{vacantUnits}</span>
+                          <span className="text-xs" style={{ color: "#737373" }}>vacant</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" style={{ color: "#10b981" }} />
+                          <span className="text-xs font-medium" style={{ color: "#10b981" }}>+3%</span>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-xs mt-2" style={{ color: "#047857" }}>
-                      <span className="inline-flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" /> +3% this month
-                      </span>
-                    </p>
                   </div>
                 </div>
               </div>
+
               <div className="col-span-2 flex flex-col gap-3 animate-in stagger-7">
                 <div
-                  className="card flex-1 flex flex-col items-center justify-center"
-                  style={{ padding: "14px", cursor: "pointer" }}
+                  className="flex-1 flex flex-col items-center justify-center"
+                  style={{
+                    borderRadius: "20px",
+                    background: "linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(5,5,5,1) 80%)",
+                    border: "1px solid rgba(239,68,68,0.12)",
+                    padding: "14px",
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                  }}
                   onClick={() => router.push('/units')}
                 >
                   <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center mb-2"
-                    style={{ background: "rgba(239,68,68,0.1)" }}
+                    style={{
+                      position: "absolute",
+                      bottom: "-20px",
+                      right: "-20px",
+                      width: "100px",
+                      height: "100px",
+                      borderRadius: "50%",
+                      background: "radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-2"
+                    style={{
+                      background: "rgba(239,68,68,0.12)",
+                      border: "1px solid rgba(239,68,68,0.15)",
+                    }}
                   >
-                    <DoorOpen
-                      className="w-4.5 h-4.5"
-                      style={{ color: "#ef4444" }}
-                    />
+                    <DoorOpen className="w-5 h-5" style={{ color: "#ef4444" }} />
                   </div>
-                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : vacantUnits}</p>
-                  <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                    Vacant
+                  <p className="text-xl font-bold text-white" style={{ letterSpacing: "-0.5px" }}>{dataLoading ? "..." : vacantUnits}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
+                    Vacant Units
+                  </p>
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(239,68,68,0.6)" }}>
+                    {totalUnits > 0 ? `${Math.round((vacantUnits / totalUnits) * 100)}% of total` : 'No units'}
                   </p>
                 </div>
                 <div
-                  className="card flex-1 flex flex-col items-center justify-center"
-                  style={{ padding: "14px", cursor: "pointer" }}
+                  className="flex-1 flex flex-col items-center justify-center"
+                  style={{
+                    borderRadius: "20px",
+                    background: "linear-gradient(135deg, rgba(234,179,8,0.06) 0%, rgba(5,5,5,1) 80%)",
+                    border: "1px solid rgba(234,179,8,0.12)",
+                    padding: "14px",
+                    position: "relative",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                  }}
                   onClick={() => router.push('/viewings')}
                 >
                   <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center mb-2"
-                    style={{ background: "rgba(234,179,8,0.1)" }}
+                    style={{
+                      position: "absolute",
+                      bottom: "-20px",
+                      right: "-20px",
+                      width: "100px",
+                      height: "100px",
+                      borderRadius: "50%",
+                      background: "radial-gradient(circle, rgba(234,179,8,0.08) 0%, transparent 70%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-2"
+                    style={{
+                      background: "rgba(234,179,8,0.12)",
+                      border: "1px solid rgba(234,179,8,0.15)",
+                    }}
                   >
-                    <Clock className="w-4.5 h-4.5" style={{ color: "#eab308" }} />
+                    <CalendarClock className="w-5 h-5" style={{ color: "#eab308" }} />
                   </div>
-                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : pendingViewings}</p>
-                  <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                    Pending
+                  <p className="text-xl font-bold text-white" style={{ letterSpacing: "-0.5px" }}>{dataLoading ? "..." : pendingViewings}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
+                    Pending Viewings
+                  </p>
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(234,179,8,0.6)" }}>
+                    Awaiting response
                   </p>
                 </div>
               </div>
@@ -1235,20 +1345,6 @@ export default function LandlordDashboard() {
                   </div>
                   <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
                     Listings
-                  </span>
-                </div>
-                <div
-                  className="quick-action"
-                  onClick={() => router.push("/calendar")}
-                >
-                  <div
-                    className="qa-icon"
-                    style={{ background: "rgba(6,182,212,0.12)" }}
-                  >
-                    <CalendarDays className="w-5 h-5" style={{ color: "#06b6d4" }} />
-                  </div>
-                  <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>
-                    Calendar
                   </span>
                 </div>
                 <div
