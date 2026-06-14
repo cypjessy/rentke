@@ -378,7 +378,7 @@ export default function PropertiesPage() {
 
         {/* HEADER */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div>
               <h1 className="text-xl font-bold text-white">Properties</h1>
               <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
@@ -404,7 +404,7 @@ export default function PropertiesPage() {
           </div>
 
           {/* Search */}
-          <div className="px-5 py-2">
+          <div className="px-3 py-2">
             <div className="relative" onClick={() => openSheet("search")}>
               <Search className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
               <div
@@ -426,7 +426,7 @@ export default function PropertiesPage() {
           </div>
 
           {/* Quick Stats Row */}
-          <div className="grid grid-cols-4 gap-2 px-5 py-2">
+          <div className="grid grid-cols-4 gap-2 px-3 py-2">
             <div className="p-2.5 rounded-xl text-center" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.15)" }}>
               <p className="text-base font-bold" style={{ color: "#047857" }}>{propertyStats.totalUnits}</p>
               <p className="text-xs" style={{ color: "#047857" }}>Total Units</p>
@@ -478,7 +478,7 @@ export default function PropertiesPage() {
 
           {/* Sort Bar */}
           <div
-            className="flex items-center justify-between px-5 py-2"
+            className="flex items-center justify-between px-3 py-2"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
           >
             <button
@@ -498,7 +498,7 @@ export default function PropertiesPage() {
 
         {/* MAIN CONTENT */}
         <div className="app-content">
-          <div className={`px-5 pb-28 pt-3 ${viewMode === "grid" ? "grid-view" : ""}`}>
+          <div className={`px-3 pb-28 pt-3 ${viewMode === "grid" ? "grid-view" : ""}`}>
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#047857" }} />
@@ -639,7 +639,7 @@ export default function PropertiesPage() {
         {/* FAB */}
         <button
           onClick={() => openSheet("addProperty")}
-          className="fixed z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl"
+          className="fixed z-50 flex items-center gap-2 px-3 py-3.5 rounded-2xl"
           style={{
             bottom: "80px",
             right: "20px",
@@ -662,7 +662,7 @@ export default function PropertiesPage() {
       <div className={`sheet-overlay ${activeSheet === "sort" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "sort" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Sort By</h3>
           <div className="space-y-1">
             {["Recently Added", "Name (A-Z)", "Highest Revenue", "Most Units", "Highest Occupancy"].map((s) => (
@@ -688,7 +688,7 @@ export default function PropertiesPage() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -711,7 +711,7 @@ export default function PropertiesPage() {
       <div className={`sheet-overlay ${activeSheet === "filter" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "filter" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Filters</h3>
             <button
@@ -890,7 +890,7 @@ export default function PropertiesPage() {
       <div className={`sheet-overlay ${activeSheet === "share" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "share" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-1">Share Listing</h3>
           <p className="text-xs mb-5" style={{ color: "#a3a3a3" }}>Share with potential tenants</p>
           <div className="space-y-2">
@@ -1062,7 +1062,7 @@ export default function PropertiesPage() {
       <div className={`sheet-overlay ${activeSheet === "unitDetail" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "unitDetail" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           {selectedUnit && (
             <>
           <div className="flex items-center justify-between mb-5">

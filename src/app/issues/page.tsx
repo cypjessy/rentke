@@ -176,7 +176,7 @@ export default function IssuesPage() {
       <div className="status-bar" />
 
       {/* ====== HEADER ====== */}
-      <div className="flex items-center justify-between px-5 py-4 sticky top-0 z-40" style={{ background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)" }}>
+      <div className="flex items-center justify-between px-3 py-4 sticky top-0 z-40" style={{ background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)" }}>
         <div className="flex items-center gap-3">
           <button onClick={() => showSnackbar("Back", "info")} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
             <ArrowLeft className="w-5 h-5" style={{ color: "#a3a3a3" }} />
@@ -197,14 +197,14 @@ export default function IssuesPage() {
 
       <div style={{ animation: "slideInUp 0.5s ease", paddingBottom: 80 }}>
         {/* ====== TABS ====== */}
-        <div className="flex gap-2 px-5 mb-4">
+        <div className="flex gap-2 px-3 mb-4">
           <button onClick={() => setActiveTab("complaints")} className={`tab-btn ${activeTab === "complaints" ? "active" : ""}`}>Complaints</button>
           <button onClick={() => setActiveTab("vacating")} className={`tab-btn ${activeTab === "vacating" ? "active" : ""}`}>Vacating</button>
         </div>
 
         {/* ====== COMPLAINTS TAB ====== */}
         {activeTab === "complaints" && (
-          <div className="px-5 space-y-3" style={{ animation: "slideInUp 0.3s ease" }}>
+          <div className="px-3 space-y-3" style={{ animation: "slideInUp 0.3s ease" }}>
             {/* Submit CTA */}
             <div
               onClick={() => { setCompCategory("plumbing"); setCompDesc(""); setCompUrgency("medium"); setCompHasFile(false); openSheet("submit"); }}
@@ -264,7 +264,7 @@ export default function IssuesPage() {
 
         {/* ====== VACATING TAB ====== */}
         {activeTab === "vacating" && (
-          <div className="px-5" style={{ animation: "slideInUp 0.3s ease" }}>
+          <div className="px-3" style={{ animation: "slideInUp 0.3s ease" }}>
             {/* Current Status */}
             <div className="rounded-2xl p-5 mb-4" style={{ background: "#1A1D21", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="flex items-center justify-between mb-3">

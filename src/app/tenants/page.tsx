@@ -397,10 +397,10 @@ export default function TenantsPage() {
         <div className="app-shell">
           <div className="status-bar" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, background: "rgba(5,5,5,0.9)" }} />
 
-          <div style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "80px" }}>
+          <div className="app-content" style={{ paddingTop: "env(safe-area-inset-top, 24px)" }}>
             {/* TOP BAR */}
             <div className="app-header" style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(5,5,5,0.9)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-              <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center justify-between px-3 py-3">
                 <div className="flex items-center gap-3">
                   <button onClick={() => router.back()} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
                     <ArrowLeft className="w-5 h-5" style={{ color: "#a3a3a3" }} />
@@ -417,7 +417,7 @@ export default function TenantsPage() {
             </div>
 
             {/* PROPERTY SELECTOR CARD */}
-            <div className="px-5 pt-4 pb-2" style={{ animation: "slideInUp 0.5s ease" }}>
+            <div className="px-3 pt-4 pb-2" style={{ animation: "slideInUp 0.5s ease" }}>
               <div className="card p-4 ripple-container" onClick={() => openSheet("property-selector")}>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: selectedProperty ? "linear-gradient(135deg, #047857, #059669)" : "rgba(107,114,128,0.2)" }}>
@@ -440,7 +440,7 @@ export default function TenantsPage() {
 
             {/* UNIT SELECTOR CARD (only when property is selected) */}
             {selectedProperty && (
-              <div className="px-5 pb-2" style={{ animation: "slideInUp 0.3s ease" }}>
+              <div className="px-3 pb-2" style={{ animation: "slideInUp 0.3s ease" }}>
                 <div className="card p-3 ripple-container" onClick={() => openSheet("unit-selector")}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: selectedUnit ? (isOccupied ? "linear-gradient(135deg, #047857, #059669)" : "rgba(107,114,128,0.2)") : "rgba(107,114,128,0.15)" }}>
@@ -465,7 +465,7 @@ export default function TenantsPage() {
             {/* TABS (only when unit is selected) */}
             {selectedUnit && (
               <>
-                <div className="flex overflow-x-auto px-5 gap-1 border-b" style={{ borderColor: "rgba(255,255,255,0.04)", scrollbarWidth: "none" }}>
+                <div className="flex overflow-x-auto px-3 gap-1 border-b" style={{ borderColor: "rgba(255,255,255,0.04)", scrollbarWidth: "none" }}>
                   {["overview", "financials", "complaints", "documents", "vacating"].map((tab) => (
                     <button
                       key={tab}
@@ -487,7 +487,7 @@ export default function TenantsPage() {
                 </div>
 
                 {/* TAB CONTENT */}
-                <div className="px-5 py-5 space-y-5">
+                <div className="px-3 py-5 space-y-5">
 
                   {/* ===== OVERVIEW TAB ===== */}
                   {activeTab === "overview" && (
@@ -731,7 +731,7 @@ export default function TenantsPage() {
 
             {/* No property selected — empty state */}
             {!selectedProperty && (
-              <div className="px-5 pt-10 text-center">
+              <div className="px-3 pt-10 text-center">
                 <Building2 className="w-16 h-16 mx-auto mb-4" style={{ color: "#525252" }} />
                 <h3 className="text-xl font-bold text-white">Select a Property</h3>
                 <p className="text-sm mt-2" style={{ color: "#a3a3a3" }}>
@@ -755,7 +755,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "property-selector" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "property-selector" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-4">Select Property</h3>
             {propertiesLoading ? (
               <div className="flex justify-center py-8">
@@ -813,7 +813,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "unit-selector" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "unit-selector" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-4">
               Units — {selectedProperty?.name}
             </h3>
@@ -879,7 +879,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "assign-tenant" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "assign-tenant" ? "active" : ""}`} style={{ maxHeight: "90dvh" }}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-1">
               {selectedUnit?.tenantName ? "Edit Tenant" : "Assign Tenant"}
             </h3>
@@ -939,7 +939,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "lease-renewal" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "lease-renewal" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-4">Renew Lease</h3>
             <div className="space-y-4">
               <div className="card">
@@ -982,7 +982,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "maintenance" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "maintenance" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(168,85,247,0.15)" }}>
                 <Wrench className="w-5 h-5" style={{ color: "#a855f7" }} />
@@ -1018,11 +1018,11 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "vacate-confirm" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "vacate-confirm" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.2)" }}>
-              <DoorOpen className="w-8 h-8" style={{ color: "#eab308" }} />
-            </div>
-            <h3 className="text-lg font-bold text-white">Mark as Vacant?</h3>
+          <div className="p-3 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.2)" }}>
+            <DoorOpen className="w-8 h-8" style={{ color: "#eab308" }} />
+          </div>
+          <h3 className="text-lg font-bold text-white">Mark as Vacant?</h3>
             <p className="text-sm mt-2 leading-relaxed" style={{ color: "#a3a3a3" }}>
               This will remove <strong className="text-white">{selectedUnit?.tenantName}</strong> from unit <strong className="text-white">{selectedUnit?.name}</strong> and set the status to vacant.
             </p>
@@ -1037,7 +1037,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "vacating-process" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "vacating-process" ? "active" : ""}`} style={{ maxHeight: "90dvh" }}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.15)" }}>
                 <DoorOpen className="w-5 h-5" style={{ color: "#ef4444" }} />
@@ -1080,7 +1080,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "verify-payment" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "verify-payment" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-4">Verify Payment</h3>
             {selectedUnit && (
               <div className="space-y-3">
@@ -1123,7 +1123,7 @@ export default function TenantsPage() {
         <div className={`sheet-overlay ${activeSheet === "send-notice" ? "active" : ""}`} onClick={closeSheet} />
         <div className={`bottom-sheet ${activeSheet === "send-notice" ? "active" : ""}`}>
           <div className="sheet-handle" />
-          <div className="p-5 pb-8">
+          <div className="p-3 pb-8">
             <h3 className="text-lg font-bold text-white mb-4">Send Notice</h3>
             <div className="space-y-4">
               <div>

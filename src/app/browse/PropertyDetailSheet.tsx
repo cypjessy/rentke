@@ -461,7 +461,7 @@ export default function PropertyDetailSheet({
           </div>
 
           {/* ====== MAIN CONTENT ====== */}
-          <div className="px-5 -mt-2">
+          <div className="px-3 -mt-2">
             {/* Price & Title */}
             <div style={{ animation: "slideInUp 0.5s ease" }}>
               <div className="flex items-center gap-2 mb-2">
@@ -803,7 +803,7 @@ export default function PropertyDetailSheet({
             Pick a convenient date and time to visit the property
           </p>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           <div>
             <label
               className="text-xs font-semibold uppercase tracking-wider block mb-2"
@@ -880,7 +880,7 @@ export default function PropertyDetailSheet({
             {landlordPhone ? `📞 ${landlordPhone}` : "Phone number not available"}
           </p>
         </div>
-        <div className="px-5 pb-8 space-y-3">
+        <div className="px-3 pb-8 space-y-3">
           <button
             onClick={handleCall}
             className="w-full flex items-center gap-4 p-4 rounded-2xl ripple-container"
@@ -924,7 +924,7 @@ export default function PropertyDetailSheet({
             </div>
           </button>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <button
             onClick={closeSheet}
             className="w-full py-3.5 rounded-xl font-semibold text-sm ripple-container"
@@ -949,7 +949,7 @@ export default function PropertyDetailSheet({
         <div className="p-5 pb-3">
           <h3 className="text-lg font-bold text-white">Share Listing</h3>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <div className="grid grid-cols-4 gap-4 mb-6">
             {shareOptions.map((opt) => {
               const Icon = opt.icon;

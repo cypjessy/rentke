@@ -396,7 +396,7 @@ function ListingsPage() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div>
               <h1 className="text-xl font-bold text-white">Listings</h1>
               <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
@@ -415,7 +415,7 @@ function ListingsPage() {
           </div>
 
           {/* Search */}
-          <div className="px-5 py-2">
+          <div className="px-3 py-2">
             <div className="relative" onClick={() => openSheet("search")}>
               <Search className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
               <div
@@ -437,7 +437,7 @@ function ListingsPage() {
           </div>
 
           {/* Summary Stats — computed from data */}
-          <div className="grid grid-cols-4 gap-2 px-5 py-2">
+          <div className="grid grid-cols-4 gap-2 px-3 py-2">
             {[
               { key: "active", label: "Active", color: "#047857", bg: "rgba(4,120,87,0.06)", border: "rgba(4,120,87,0.15)" },
               { key: "paused", label: "Paused", color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.15)" },
@@ -479,7 +479,7 @@ function ListingsPage() {
 
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content" id="main-content">
-          <div className="px-5 pb-28 space-y-3" id="listing-list">
+          <div className="px-3 pb-28 space-y-3" id="listing-list">
             {filteredListings.map((listing, i) => {
               const statusStyle = getStatusChip(listing.status);
               const isPaused = listing.status === "paused";
@@ -610,7 +610,7 @@ function ListingsPage() {
         {/* FAB */}
         <button
           onClick={() => openSheet("createListing")}
-          className="fixed z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl"
+          className="fixed z-50 flex items-center gap-2 px-3 py-3.5 rounded-2xl"
           style={{
             bottom: "80px",
             right: "20px",
@@ -633,7 +633,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "sort" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "sort" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Sort Listings</h3>
           <div className="space-y-1">
             {["Newest First", "Most Views", "Most Inquiries", "Highest Performance", "Expiring Soon"].map((s) => (
@@ -659,7 +659,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -697,7 +697,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "filter" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "filter" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Filters</h3>
             <button onClick={() => showSnackbar("Filters reset", "info")} className="text-sm font-semibold" style={{ color: "#047857" }}>Reset All</button>
@@ -805,7 +805,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "editListing" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "editListing" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Edit Listing</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -837,7 +837,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "boost" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "boost" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="text-center mb-5">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3" style={{ background: "linear-gradient(135deg,rgba(217,119,6,0.15),rgba(245,158,11,0.15))", border: "1px solid rgba(245,158,11,0.2)" }}>
               <Zap className="w-7 h-7" style={{ color: "#f59e0b" }} />
@@ -990,7 +990,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "performance" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "performance" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Listing Performance</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -1056,7 +1056,7 @@ function ListingsPage() {
       <div className={`sheet-overlay ${activeSheet === "inquiryStats" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "inquiryStats" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           {(() => {
             const sl = selectedListing;
             const views = sl?.views || 0;

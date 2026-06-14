@@ -451,10 +451,10 @@ function AreaPageInner() {
           <h3 className="text-lg font-bold text-white">Price Range</h3>
           <button onClick={() => setSelectedPreset(null)} className="text-xs font-semibold" style={{ color: "#047857" }}>Reset</button>
         </div>
-        <div className="px-5 pb-3">
+        <div className="px-3 pb-3">
           <p className="text-xs" style={{ color: "#a3a3a3" }}>Monthly rent in Kenyan Shillings</p>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <div className="grid grid-cols-2 gap-2">
             {pricePresets.slice(0, 4).map((p) => (
               <button key={p.value} className={`price-preset ${selectedPreset === p.value ? "selected" : ""}`} onClick={() => { setSelectedPreset(p.value); showSnackbar(`Price: ${p.value}`, "success"); }}>

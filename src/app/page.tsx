@@ -570,7 +570,7 @@ useEffect(() => {
 
         {/* Top Section */}
         <div
-          className="flex-1 flex flex-col justify-center px-6 pb-4"
+          className="flex-1 flex flex-col justify-center px-3 pb-4"
           style={{ animation: "slideInUp 0.6s ease" }}
         >
           {/* Logo & Branding */}
@@ -780,7 +780,7 @@ useEffect(() => {
 
         {/* Bottom Section */}
         <div
-          className="px-6 pb-8 pt-4 text-center"
+          className="px-3 pb-8 pt-4 text-center"
           style={{ animation: "slideInUp 0.8s ease" }}
         >
           <p className="text-sm" style={{ color: "#525252" }}>
@@ -809,7 +809,7 @@ useEffect(() => {
 
         {/* Progress Header (Steps 2-4) */}
         {regStep >= 2 && (
-          <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+          <div className="px-3 pt-4 pb-2 flex items-center justify-between">
             <button
               onClick={() => goToStep(regStep - 1)}
               className="w-10 h-10 rounded-full flex items-center justify-center ripple-container"
@@ -837,7 +837,7 @@ useEffect(() => {
         {/* STEP 1: ROLE SELECTION */}
         {/* ============================================ */}
         {regStep === 1 && (
-          <div className="flex-1 flex flex-col px-6 pb-8">
+          <div className="flex-1 flex flex-col px-3 pb-8">
             <div
               className="mt-8 mb-8"
               style={{ animation: "slideInUp 0.5s ease" }}
@@ -1011,7 +1011,7 @@ useEffect(() => {
         {/* STEP 2: PERSONAL INFO */}
         {/* ============================================ */}
         {regStep === 2 && (
-          <div className="flex-1 flex flex-col px-6 pb-8 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-3 pb-8 overflow-y-auto">
             <div className="mt-8 mb-6">
               <h1 className="text-2xl font-bold text-white">
                 Create your account
@@ -1139,7 +1139,7 @@ useEffect(() => {
         {/* STEP 3: PASSWORD & TERMS */}
         {/* ============================================ */}
         {regStep === 3 && (
-          <div className="flex-1 flex flex-col px-6 pb-8 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-3 pb-8 overflow-y-auto">
             <div className="mt-8 mb-6">
               <h1 className="text-2xl font-bold text-white">
                 Secure your account
@@ -1313,7 +1313,7 @@ useEffect(() => {
         {/* STEP 4: OTP VERIFICATION */}
         {/* ============================================ */}
         {regStep === 4 && (
-          <div className="flex-1 flex flex-col px-6 pb-8">
+          <div className="flex-1 flex flex-col px-3 pb-8">
             <div
               className="text-center mt-12 mb-8"
               style={{ animation: "slideInUp 0.5s ease" }}
@@ -1426,7 +1426,7 @@ useEffect(() => {
           <div className="flex-1" />
         </div>
 
-        <div className="flex-1 flex flex-col px-6 pb-8">
+        <div className="flex-1 flex flex-col px-3 pb-8">
           {/* Illustration */}
           <div className="text-center mb-8">
             <div
@@ -1531,7 +1531,7 @@ useEffect(() => {
           <div className="flex-1" />
         </div>
 
-        <div className="flex-1 flex flex-col px-6 pb-8">
+        <div className="flex-1 flex flex-col px-3 pb-8">
           <div className="text-center mb-8">
             <div
               className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6"
@@ -1593,7 +1593,7 @@ useEffect(() => {
       >
         <div className="status-bar" />
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-3 pb-8 text-center">
           <div
             className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6"
             style={{
@@ -1846,7 +1846,7 @@ useEffect(() => {
               : "Your account has been created successfully. Start exploring properties across Kenya."}
           </p>
         </div>
-        <div className="px-6 pb-8 space-y-3">
+        <div className="px-3 pb-8 space-y-3">
           <button
             onClick={getStarted}
             className="w-full py-4 rounded-2xl font-semibold text-base text-white ripple-container"
@@ -1879,7 +1879,7 @@ useEffect(() => {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-5 pb-8 text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>
+        <div className="px-3 pb-8 text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>
           <p className="mb-3">
             <strong className="text-white">1. Acceptance of Terms</strong>
             <br />
@@ -1932,7 +1932,7 @@ useEffect(() => {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-5 pb-8 text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>
+        <div className="px-3 pb-8 text-sm leading-relaxed" style={{ color: "#a3a3a3" }}>
           <p className="mb-3">
             <strong className="text-white">Data Collection</strong>
             <br />

@@ -191,7 +191,7 @@ export default function ViewingsPage() {
 
       {/* ====== HEADER ====== */}
       <header
-        className="px-5 pt-4 pb-3 flex items-center gap-3"
+        className="px-3 pt-4 pb-3 flex items-center gap-3"
         style={{ animation: "slideInUp 0.4s ease" }}
       >
         <button
@@ -211,7 +211,7 @@ export default function ViewingsPage() {
 
       {/* ====== TABS ====== */}
       <div
-        className="flex gap-0 px-5 border-b mb-4"
+        className="flex gap-0 px-3 border-b mb-4"
         style={{ borderColor: "rgba(255,255,255,0.06)" }}
       >
         {(["upcoming", "past"] as const).map((tab) => (
@@ -229,7 +229,7 @@ export default function ViewingsPage() {
       </div>
 
       {/* ====== VIEWINGS LIST ====== */}
-      <div className="px-5 pb-24 space-y-3">
+      <div className="px-3 pb-24 space-y-3">
         {loading ? (
           <div className="text-center py-16">
             <div className="spinner mx-auto mb-4" />
@@ -452,7 +452,7 @@ export default function ViewingsPage() {
           <h3 className="text-lg font-bold text-white">Reschedule Viewing</h3>
           <button onClick={closeReschedule} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Cancel</button>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "#525252" }}>New Date</label>
             <input
@@ -509,7 +509,7 @@ export default function ViewingsPage() {
           <button onClick={closeDetail} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Close</button>
         </div>
         {detailViewing && (
-          <div className="px-5 pb-8 space-y-4">
+          <div className="px-3 pb-8 space-y-4">
             {/* Property */}
             <div className="p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#525252" }}>Property</p>

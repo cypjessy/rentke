@@ -447,7 +447,7 @@ export default function MessagesPage() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div>
               <h1 className="text-xl font-bold text-white">Messages</h1>
               <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>{enrichedChats.length} conversations</p>
@@ -462,7 +462,7 @@ export default function MessagesPage() {
             </div>
           </div>
           {/* Tabs */}
-          <div className="flex overflow-x-auto px-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
+          <div className="flex overflow-x-auto px-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
             {tabFilters.map((f) => (
               <div
                 key={f.key}
@@ -531,7 +531,7 @@ export default function MessagesPage() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -565,7 +565,7 @@ export default function MessagesPage() {
       <div className={`sheet-overlay ${activeSheet === "newChat" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "newChat" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">New Message</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -656,7 +656,7 @@ export default function MessagesPage() {
       <div className={`sheet-overlay ${activeSheet === "callOptions" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "callOptions" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Contact</h3>
           <div className="space-y-2">
             <a href={`tel:${currentChat?.participants?.[0] as string || '254712345678'}`} className="w-full flex items-center gap-4 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -685,7 +685,7 @@ export default function MessagesPage() {
       <div className={`sheet-overlay ${activeSheet === "attach" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "attach" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Attach</h3>
           <div className="grid grid-cols-4 gap-4 mb-4">
             {[
@@ -763,7 +763,7 @@ export default function MessagesPage() {
       <div className={`sheet-overlay ${activeSheet === "scheduleViewing" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "scheduleViewing" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Schedule Viewing</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>

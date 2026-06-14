@@ -663,7 +663,7 @@ export default function LandlordDashboard() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 py-3">
+          <div className="flex items-center justify-between px-3 py-3">
             <div className="flex items-center gap-3">
               <div
                 onClick={() => openSheet("profile")}
@@ -717,7 +717,7 @@ export default function LandlordDashboard() {
 
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content" id="main-content">
-          <div className="px-5 pb-28">
+          <div className="px-3 pb-28">
             {/* STAT CARDS */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div
@@ -1510,7 +1510,7 @@ export default function LandlordDashboard() {
                 {paymentActivity.map((payment, i) => (
                   <div
                     key={i}
-                    className="payment-row px-4 py-3.5"
+                    className="payment-row px-3 py-3.5"
                     onClick={() => router.push('/units')}
                   >
                     <div
@@ -1573,7 +1573,7 @@ export default function LandlordDashboard() {
                 {recentActivity.map((item, i) => (
                   <div
                     key={i}
-                    className="activity-item flex items-start gap-3 px-4 py-3 cursor-pointer relative"
+                    className="activity-item flex items-start gap-3 px-3 py-3 cursor-pointer relative"
                     onClick={() => router.push('/messages')}
                   >
                     {i < recentActivity.length - 1 && (
@@ -1800,7 +1800,7 @@ export default function LandlordDashboard() {
         style={{ maxHeight: "95dvh" }}
       >
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Revenue Details</h3>
             <button
@@ -1887,7 +1887,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "activityLog" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "activityLog" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Activity Log</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -1926,7 +1926,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "recordPayment" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "recordPayment" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Record Payment</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -1998,7 +1998,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "addTenant" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addTenant" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Add Tenant</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2090,7 +2090,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "editProfile" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "editProfile" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Edit Profile</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2176,7 +2176,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "profile" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "profile" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Profile</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2223,7 +2223,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -2272,7 +2272,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "notifications" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "notifications" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Notifications</h3>
             <button onClick={markAllRead} className="text-xs font-semibold" style={{ color: "#047857" }}>Mark all read</button>
@@ -2305,7 +2305,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "addProperty" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addProperty" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Add Property</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2401,7 +2401,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "addUnit" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addUnit" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Add Unit</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2500,7 +2500,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "payments" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "payments" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Payments</h3>
             <button onClick={() => { closeSheet(); openSheet("recordPayment"); }} className="text-xs font-semibold flex items-center gap-1" style={{ color: "#047857" }}>
@@ -2544,7 +2544,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "tenants" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "tenants" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Tenants</h3>
             <button onClick={() => { closeSheet(); openSheet("addTenant"); }} className="text-xs font-semibold flex items-center gap-1" style={{ color: "#047857" }}>
@@ -2582,7 +2582,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "reports" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "reports" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Reports</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -2617,7 +2617,7 @@ export default function LandlordDashboard() {
       <div className={`sheet-overlay ${activeSheet === "invoices" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "invoices" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Invoices</h3>
             <button onClick={() => { closeSheet(); showSnackbar("Creating new invoice...", "info"); }} className="text-xs font-semibold flex items-center gap-1" style={{ color: "#047857" }}>

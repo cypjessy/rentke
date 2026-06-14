@@ -491,7 +491,7 @@ export default function MessagesPage() {
 
           {/* Header */}
           <header
-            className="px-5 pt-4 pb-3 flex items-center justify-between"
+            className="px-3 pt-4 pb-3 flex items-center justify-between"
             style={{ animation: "slideInUp 0.5s ease" }}
           >
             <h1 className="text-2xl font-bold text-white">Messages</h1>
@@ -515,7 +515,7 @@ export default function MessagesPage() {
 
           {/* Search Bar */}
           <div
-            className="px-5 mb-4"
+            className="px-3 mb-4"
             style={{ animation: "slideInUp 0.6s ease" }}
           >
             <div
@@ -539,7 +539,7 @@ export default function MessagesPage() {
 
           {/* ====== TAB FILTERS ====== */}
           <div
-            className="flex gap-2 px-5 mt-1 mb-3 overflow-x-auto browse-scroll-hidden"
+            className="flex gap-2 px-3 mt-1 mb-3 overflow-x-auto browse-scroll-hidden"
             style={{ animation: "slideInUp 0.6s ease" }}
           >
             {[
@@ -1336,7 +1336,7 @@ export default function MessagesPage() {
             />
           </div>
         </div>
-        <div className="px-5 pb-3">
+        <div className="px-3 pb-3">
           <p
             className="text-xs font-semibold uppercase tracking-wider mb-3"
             style={{ color: "#525252" }}
@@ -1375,7 +1375,7 @@ export default function MessagesPage() {
         <div className="p-5 pb-3">
           <h3 className="text-lg font-bold text-white">Attach</h3>
         </div>
-        <div className="grid grid-cols-4 gap-4 px-5 pb-8">
+        <div className="grid grid-cols-4 gap-4 px-3 pb-8">
           {attachOptions.map((opt) => {
             const Icon = opt.icon;
             return (

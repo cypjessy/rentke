@@ -380,7 +380,7 @@ export default function ViewingRequests() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div>
               <h1 className="text-xl font-bold text-white">Viewing Requests</h1>
               <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>Manage property viewings</p>
@@ -393,7 +393,7 @@ export default function ViewingRequests() {
           </div>
 
           {/* Search */}
-          <div className="px-5 py-2">
+          <div className="px-3 py-2">
             <div className="relative" onClick={() => openSheet("search")}>
               <CalendarDays className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
               <div
@@ -406,7 +406,7 @@ export default function ViewingRequests() {
           </div>
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-4 gap-2 px-5 py-2">
+          <div className="grid grid-cols-4 gap-2 px-3 py-2">
             <div className="p-2.5 rounded-xl text-center" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.15)" }}>
               <p className="text-base font-bold" style={{ color: "#eab308" }}>{viewingCounts.pending}</p>
               <p className="text-xs" style={{ color: "#eab308" }}>Pending</p>
@@ -426,7 +426,7 @@ export default function ViewingRequests() {
           </div>
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto px-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
+          <div className="flex overflow-x-auto px-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", scrollbarWidth: "none" }}>
             {statusFilters.map((f) => (
               <div
                 key={f.key}
@@ -441,7 +441,7 @@ export default function ViewingRequests() {
 
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content">
-          <div className="px-5 pb-28 pt-3 space-y-3" id="viewing-list">
+          <div className="px-3 pb-28 pt-3 space-y-3" id="viewing-list">
             {/* Today Section */}
             {filteredViewings.filter(v => getViewingSection(v) === "today").length > 0 && (
               <>
@@ -669,7 +669,7 @@ export default function ViewingRequests() {
         </div>
 
         {/* FAB */}
-        <button onClick={() => openSheet("addViewing")} className="fixed z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl" style={{ bottom: "80px", right: "20px", background: "linear-gradient(135deg,#047857,#059669)", boxShadow: "0 8px 32px rgba(4,120,87,0.4)", border: "none", cursor: "pointer" }}>
+        <button onClick={() => openSheet("addViewing")} className="fixed z-50 flex items-center gap-2 px-3 py-3.5 rounded-2xl" style={{ bottom: "80px", right: "20px", background: "linear-gradient(135deg,#047857,#059669)", boxShadow: "0 8px 32px rgba(4,120,87,0.4)", border: "none", cursor: "pointer" }}>
           <CalendarPlus className="w-5 h-5 text-white" />
           <span className="text-sm font-semibold text-white">New Viewing</span>
         </button>
@@ -685,7 +685,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "sort" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "sort" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Sort Viewings</h3>
           <div className="space-y-1">
             {["Date (Nearest First)", "Date (Furthest First)", "By Status", "By Property", "By Tenant Name"].map((opt) => (
@@ -708,7 +708,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <CalendarDays className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -756,7 +756,7 @@ export default function ViewingRequests() {
           const fullDate = d.toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
 
           return (
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Viewing Details</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -886,7 +886,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "reschedule" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "reschedule" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Reschedule</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -973,7 +973,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "directions" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "directions" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           {(() => {
             const v = selectedViewing;
             const propName = v?.propertyName || 'Property';
@@ -1019,7 +1019,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "contactTenant" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "contactTenant" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           {(() => {
             const v = selectedViewing;
             const initials = v?.tenantName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
@@ -1130,7 +1130,7 @@ export default function ViewingRequests() {
       <div className={`sheet-overlay ${activeSheet === "addViewing" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addViewing" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">New Viewing</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>

@@ -301,7 +301,7 @@ export default function MyUnitPage() {
 
         {!unit ? (
           /* ---- No Unit Assigned ---- */
-          <div className="px-5 pt-10 text-center">
+          <div className="px-3 pt-10 text-center">
             <Home className="w-16 h-16 mx-auto mb-4" style={{ color: "#525252" }} />
             <h3 className="text-xl font-bold text-white">No Unit Assigned</h3>
             <p className="text-sm mt-2" style={{ color: "#a3a3a3" }}>
@@ -311,7 +311,7 @@ export default function MyUnitPage() {
         ) : (
           <>
             {/* UNIT CARD */}
-            <div className="px-5 pt-4 pb-2" style={{ animation: "slideInUp 0.5s ease" }}>
+            <div className="px-3 pt-4 pb-2" style={{ animation: "slideInUp 0.5s ease" }}>
               <div className="card p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #2563eb, #3b82f6)" }}>
@@ -333,7 +333,7 @@ export default function MyUnitPage() {
             </div>
 
             {/* RENT STATUS BANNER */}
-            <div className="px-5 pb-2">
+            <div className="px-3 pb-2">
               <div className="rounded-2xl p-4" style={{ background: unit.payment === "Paid" ? "rgba(4,120,87,0.08)" : "rgba(234,179,8,0.08)", border: `1px solid ${unit.payment === "Paid" ? "rgba(4,120,87,0.15)" : "rgba(234,179,8,0.15)"}` }}>
                 <div className="flex items-center justify-between mb-2">
                   <div>
@@ -365,7 +365,7 @@ export default function MyUnitPage() {
             </div>
 
             {/* TABS */}
-            <div className="flex overflow-x-auto px-5 gap-1 border-b" style={{ borderColor: "rgba(255,255,255,0.04)", scrollbarWidth: "none" }}>
+            <div className="flex overflow-x-auto px-3 gap-1 border-b" style={{ borderColor: "rgba(255,255,255,0.04)", scrollbarWidth: "none" }}>
               {tabs.map((tab) => (
                 <button
                   key={tab}
@@ -387,7 +387,7 @@ export default function MyUnitPage() {
             </div>
 
             {/* TAB CONTENT */}
-            <div className="px-5 py-5 space-y-5">
+            <div className="px-3 py-5 space-y-5">
 
               {/* ===== OVERVIEW ===== */}
               {activeTab === "overview" && (

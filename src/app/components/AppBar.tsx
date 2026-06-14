@@ -70,7 +70,7 @@ export default function AppBar({
         backdropFilter: "blur(20px)",
       }}
     >
-      <div className="flex items-center justify-between px-5 py-4">
+      <div className="flex items-center justify-between px-3 py-4">
         {/* ── Left section ── */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Back button */}

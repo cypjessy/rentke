@@ -226,7 +226,7 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
       <div className={`bottom-sheet ${moreOpen ? "active" : ""}`}>
         <div className="sheet-handle" />
 
-        <div className="px-5 pt-5 pb-2">
+        <div className="px-3 pt-5 pb-2">
           <div className="flex items-center justify-between mb-1">              <h3 className="text-lg font-bold text-white">More</h3>
             <button
               onClick={() => setMoreOpen(false)}

@@ -255,7 +255,7 @@ export default function ProfilePage() {
 
       {/* ====== HEADER ====== */}
       <header
-        className="px-5 pt-4 pb-2 flex items-center justify-between"
+        className="px-3 pt-4 pb-2 flex items-center justify-between"
         style={{ animation: "slideInUp 0.4s ease" }}
       >
         <h1 className="text-2xl font-bold text-white">Profile</h1>
@@ -272,7 +272,7 @@ export default function ProfilePage() {
       />
 
       {/* ====== PROFILE CARD ====== */}
-      <div className="px-5 mt-4" style={{ animation: "slideInUp 0.5s ease" }}>
+      <div className="px-3 mt-4" style={{ animation: "slideInUp 0.5s ease" }}>
         <div
           className="p-5 rounded-2xl flex items-center gap-4"
           style={{
@@ -329,7 +329,7 @@ export default function ProfilePage() {
 
       {/* ====== QUICK STATS ====== */}
       <div
-        className="grid grid-cols-3 gap-3 px-5 mt-5"
+        className="grid grid-cols-3 gap-3 px-3 mt-5"
         style={{ animation: "slideInUp 0.6s ease" }}
       >
         {stats.map((stat) => (
@@ -358,7 +358,7 @@ export default function ProfilePage() {
 
       {/* ====== ACCOUNT SETTINGS ====== */}
       <div
-        className="mt-8 px-5"
+        className="mt-8 px-3"
         style={{ animation: "slideInUp 0.7s ease" }}
       >
         <p
@@ -439,7 +439,7 @@ export default function ProfilePage() {
 
       {/* ====== PREFERENCES ====== */}
       <div
-        className="mt-6 px-5"
+        className="mt-6 px-3"
         style={{ animation: "slideInUp 0.8s ease" }}
       >
         <p
@@ -508,7 +508,7 @@ export default function ProfilePage() {
 
       {/* ====== SECURITY ====== */}
       <div
-        className="mt-6 px-5"
+        className="mt-6 px-3"
         style={{ animation: "slideInUp 0.85s ease" }}
       >
         <p
@@ -589,7 +589,7 @@ export default function ProfilePage() {
 
       {/* ====== REFER & EARN ====== */}
       <div
-        className="mt-6 px-5"
+        className="mt-6 px-3"
         style={{ animation: "slideInUp 0.88s ease" }}
       >
         <p
@@ -670,7 +670,7 @@ export default function ProfilePage() {
 
       {/* ====== SUPPORT ====== */}
       <div
-        className="mt-6 px-5"
+        className="mt-6 px-3"
         style={{ animation: "slideInUp 0.9s ease" }}
       >
         <p
@@ -737,7 +737,7 @@ export default function ProfilePage() {
 
       {/* ====== LOG OUT / DELETE ====== */}
       <div
-        className="mt-6 px-5 mb-4"
+        className="mt-6 px-3 mb-4"
         style={{ animation: "slideInUp 1.0s ease" }}
       >
         <button
@@ -752,7 +752,7 @@ export default function ProfilePage() {
           </div>
         </button>
       </div>
-      <div className="px-5 mb-12">
+      <div className="px-3 mb-12">
         <button
           onClick={() => openSheet("bs-delete")}
           className="w-full text-center text-xs py-2"
@@ -784,7 +784,7 @@ export default function ProfilePage() {
             Cancel
           </button>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           {/* Avatar Edit */}
           <div className="flex justify-center mb-2">
             <div className="relative">
@@ -909,7 +909,7 @@ export default function ProfilePage() {
             </span>
           </div>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <p className="text-sm mb-6" style={{ color: "#a3a3a3" }}>
             Verified users get faster responses and priority viewings.
           </p>
@@ -1037,7 +1037,7 @@ export default function ProfilePage() {
             <div className="toggle-thumb" />
           </div>
         </div>
-        <p className="px-5 text-xs mb-4" style={{ color: "#525252" }}>
+        <p className="px-3 text-xs mb-4" style={{ color: "#525252" }}>
           Manage which alerts you receive
         </p>
         <div className="px-3 pb-8 space-y-1">
@@ -1211,7 +1211,7 @@ export default function ProfilePage() {
             messages, and viewing history. This action cannot be undone.
           </p>
         </div>
-        <div className="px-5 pb-8 space-y-3">
+        <div className="px-3 pb-8 space-y-3">
           <button
             onClick={() => {
               closeSheet();
@@ -1256,7 +1256,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-bold text-white">Payment Methods</h3>
           <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Done</button>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           {/* M-Pesa */}
           <div
             className="p-4 rounded-2xl flex items-center gap-3"
@@ -1313,7 +1313,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-bold text-white">Add Payment Method</h3>
           <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Cancel</button>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: "rgba(4,120,87,0.08)", border: "1px solid rgba(4,120,87,0.15)" }}>
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(4,120,87,0.15)" }}>
               <Smartphone className="w-6 h-6" style={{ color: "#34d399" }} />
@@ -1366,7 +1366,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-bold text-white">Change Password</h3>
           <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Cancel</button>
         </div>
-        <div className="px-5 pb-8 space-y-4">
+        <div className="px-3 pb-8 space-y-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider block mb-2" style={{ color: "#525252" }}>Current Password</label>
             <input
@@ -1434,7 +1434,7 @@ export default function ProfilePage() {
         <div className="p-5 pb-3">
           <h3 className="text-lg font-bold text-white">Two-Factor Authentication</h3>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(59,130,246,0.1)" }}>
               <Smartphone className="w-6 h-6" style={{ color: "#3b82f6" }} />
@@ -1502,7 +1502,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-bold text-white">Active Sessions</h3>
           <button onClick={closeSheet} className="text-sm font-semibold" style={{ color: "#a3a3a3" }}>Done</button>
         </div>
-        <div className="px-5 pb-8 space-y-3">
+        <div className="px-3 pb-8 space-y-3">
           {[
             { device: "Google Pixel 7", location: "Nairobi, Kenya", time: "Current session", active: true },
             { device: "Chrome on Windows", location: "Nairobi, Kenya", time: "Active 2 hours ago", active: true },
@@ -1558,7 +1558,7 @@ export default function ProfilePage() {
         <div className="p-5 pb-3">
           <h3 className="text-lg font-bold text-white">About RentKe</h3>
         </div>
-        <div className="px-5 pb-8 space-y-5">
+        <div className="px-3 pb-8 space-y-5">
           <div className="text-center">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: "linear-gradient(135deg, #047857, #059669)" }}>
               <Home className="w-8 h-8 text-white" />
@@ -1610,7 +1610,7 @@ export default function ProfilePage() {
             messages.
           </p>
         </div>
-        <div className="px-5 pb-8 space-y-3">
+        <div className="px-3 pb-8 space-y-3">
           <button
             onClick={handleLogout}
             className="w-full py-3.5 rounded-xl font-semibold text-sm ripple-container"

@@ -165,7 +165,7 @@ export default function CalendarPage() {
 
           {/* HEADER */}
           <div className="app-header">
-            <div className="flex items-center justify-between px-5 pt-3 pb-1">
+            <div className="flex items-center justify-between px-3 pt-3 pb-1">
               <button onClick={() => router.back()} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -176,7 +176,7 @@ export default function CalendarPage() {
 
           {/* MAIN CONTENT */}
           <div className="app-content">
-            <div className="px-5 pb-28">
+            <div className="px-3 pb-28">
               {/* Month Navigation */}
               <div className="flex items-center justify-between mt-4 mb-5">
                 <button onClick={prevMonth} className="w-10 h-10 rounded-full flex items-center justify-center ripple-container" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -420,7 +420,7 @@ export default function CalendarPage() {
         <div className={`bottom-sheet ${activeSheet === "viewingDetail" ? "active" : ""}`}>
           <div className="sheet-handle" />
           {selectedViewing && (
-            <div className="p-5">
+            <div className="p-3">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-bold text-white">Viewing Details</h3>
                 <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>

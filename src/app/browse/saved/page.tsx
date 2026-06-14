@@ -319,7 +319,7 @@ export default function SavedPage() {
       <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(4,120,87,0.06)", filter: "blur(120px)", pointerEvents: "none" }} />
 
       {/* ====== HEADER ====== */}
-      <header className="px-5 pt-4 pb-2 flex items-center justify-between" style={{ animation: "slideInUp 0.5s ease" }}>
+      <header className="px-3 pt-4 pb-2 flex items-center justify-between" style={{ animation: "slideInUp 0.5s ease" }}>
         <h1 className="text-2xl font-bold text-white">Saved</h1>
         <div className="flex gap-2">
           {favoriteListings.length > 0 && (
@@ -336,7 +336,7 @@ export default function SavedPage() {
 
       {/* ====== SEARCH WITHIN SAVED ====== */}
       {favoriteListings.length > 0 && (
-        <div className="px-5 mt-2" style={{ animation: "slideInUp 0.55s ease" }}>
+        <div className="px-3 mt-2" style={{ animation: "slideInUp 0.55s ease" }}>
           <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.05)" }}>
             <Search className="w-4 h-4" style={{ color: "#525252" }} />
             <input
@@ -355,10 +355,10 @@ export default function SavedPage() {
       {/* ====== SAVED SEARCHES ====== */}
       {!selectMode && favoriteSearches.length > 0 && (
         <div className="mt-4" style={{ animation: "slideInUp 0.6s ease" }}>
-          <div className="flex items-center justify-between px-5 mb-3">
+          <div className="flex items-center justify-between px-3 mb-3">
             <h2 className="text-base font-bold text-white">Saved Searches</h2>
           </div>
-          <div className="flex gap-3 px-5 overflow-x-auto browse-scroll-hidden pb-2">
+          <div className="flex gap-3 px-3 overflow-x-auto browse-scroll-hidden pb-2">
             {favoriteSearches.map((s) => (
               <div key={s.id} className="saved-search-card ripple-container" onClick={() => openSheet("search-alert")}>
                 <div className="flex items-center justify-between mb-2">
@@ -401,7 +401,7 @@ export default function SavedPage() {
 
       {/* ====== FILTERS ====== */}
       {hasProperties && (
-        <div className="flex gap-2 px-5 mt-4 overflow-x-auto browse-scroll-hidden pb-2" style={{ animation: "slideInUp 0.7s ease" }}>
+        <div className="flex gap-2 px-3 mt-4 overflow-x-auto browse-scroll-hidden pb-2" style={{ animation: "slideInUp 0.7s ease" }}>
           {filterChips.map((chip) => (
             <button
               key={chip}
@@ -420,7 +420,7 @@ export default function SavedPage() {
 
       {/* ====== SAVED PROPERTIES LIST ====== */}
       {favLoading ? (
-        <div className="px-5 mt-4 space-y-4 pb-4">
+        <div className="px-3 mt-4 space-y-4 pb-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-2xl" style={{ height: "112px", background: "rgba(255,255,255,0.03)" }} />
           ))}
@@ -447,7 +447,7 @@ export default function SavedPage() {
           <p className="text-sm" style={{ color: "#525252" }}>Try a different search term</p>
         </div>
       ) : (
-        <div id="property-list" className="px-5 mt-4 space-y-4 pb-4" style={{ animation: "slideInUp 0.8s ease" }}>
+        <div id="property-list" className="px-3 mt-4 space-y-4 pb-4" style={{ animation: "slideInUp 0.8s ease" }}>
           {filteredProperties.map((prop) => {
             const isSelected = selectedIds.has(prop.listingId);
             return (
@@ -649,7 +649,7 @@ export default function SavedPage() {
           <h3 className="text-lg font-bold text-white mb-1">Add Note</h3>
           <p className="text-xs" style={{ color: "#525252" }}>Save a private note about this property</p>
         </div>
-        <div className="px-5 pb-8">
+        <div className="px-3 pb-8">
           <textarea
             className="android-input"
             style={{ minHeight: "100px", borderRadius: "14px" }}

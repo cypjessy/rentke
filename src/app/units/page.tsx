@@ -335,7 +335,7 @@ export default function UnitsPage() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div>
               <h1 className="text-xl font-bold text-white">Units</h1>
               <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
@@ -354,7 +354,7 @@ export default function UnitsPage() {
           </div>
 
           {/* Search */}
-          <div className="px-5 py-2">
+          <div className="px-3 py-2">
             <div className="relative" onClick={() => openSheet("search")}>
               <Search className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
               <div
@@ -376,7 +376,7 @@ export default function UnitsPage() {
           </div>
 
           {/* Quick Stats Row */}
-          <div className="grid grid-cols-3 gap-2 px-5 py-2">
+          <div className="grid grid-cols-3 gap-2 px-3 py-2">
             <div className="p-2.5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <p className="text-base font-bold text-white">{unitStats.total}</p>
               <p className="text-xs" style={{ color: "#a3a3a3" }}>Total Units</p>
@@ -390,7 +390,7 @@ export default function UnitsPage() {
               <p className="text-xs" style={{ color: "#a3a3a3" }}>Total Rent</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 px-5 pb-2 -mt-2">
+          <div className="grid grid-cols-3 gap-2 px-3 pb-2 -mt-2">
             <div className="p-2 rounded-xl text-center" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
               <p className="text-base font-bold" style={{ color: "#ef4444" }}>{unitStats.vacant}</p>
               <p className="text-xs" style={{ color: "#ef4444" }}>Vacant</p>
@@ -437,7 +437,7 @@ export default function UnitsPage() {
 
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content" id="main-content">
-          <div className="px-5 pb-28 space-y-2.5" id="unit-list">
+          <div className="px-3 pb-28 space-y-2.5" id="unit-list">
             {filteredUnits.map((unit, i) => {
               const s = getStatusStyle(unit.status);
               const isVacant = unit.status === "Vacant";
@@ -522,7 +522,7 @@ export default function UnitsPage() {
         {/* FAB */}
         <button
           onClick={() => openSheet("addUnit")}
-          className="fixed z-50 flex items-center gap-2 px-5 py-3.5 rounded-2xl"
+          className="fixed z-50 flex items-center gap-2 px-3 py-3.5 rounded-2xl"
           style={{
             bottom: "80px",
             right: "20px",
@@ -545,7 +545,7 @@ export default function UnitsPage() {
       <div className={`sheet-overlay ${activeSheet === "sort" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "sort" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-base font-bold text-white mb-4">Sort Units</h3>
           <div className="space-y-1">
             {["By Property", "By Unit Name", "Rent (Low to High)", "Rent (High to Low)", "By Status"].map((s) => (
@@ -571,7 +571,7 @@ export default function UnitsPage() {
       <div className={`sheet-overlay ${activeSheet === "search" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "search" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "#525252" }} />
@@ -594,7 +594,7 @@ export default function UnitsPage() {
       <div className={`sheet-overlay ${activeSheet === "filter" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "filter" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Filters</h3>
             <button onClick={() => { setFilterUnitTypes([]); setFilterRentMin(""); setFilterRentMax(""); showSnackbar("Filters reset", "info"); }} className="text-sm font-semibold" style={{ color: "#047857" }}>Reset All</button>
@@ -655,7 +655,7 @@ export default function UnitsPage() {
       <div className={`sheet-overlay ${activeSheet === "addUnit" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "addUnit" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Add Unit</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -775,7 +775,7 @@ export default function UnitsPage() {
       <div className={`sheet-overlay ${activeSheet === "editUnit" ? "active" : ""}`} onClick={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "editUnit" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Edit {selectedUnit?.name || 'Unit'}</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>

@@ -497,7 +497,7 @@ export default function SettingsPage() {
 
         {/* ====== HEADER ====== */}
         <div className="app-header">
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+          <div className="flex items-center justify-between px-3 pt-2 pb-1">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push("/dashboard")} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <ArrowLeft className="w-5 h-5" style={{ color: "#a3a3a3" }} />
@@ -516,7 +516,7 @@ export default function SettingsPage() {
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content" style={{ paddingBottom: "80px" }}>
           {/* PROFILE CARD */}
-          <div className="px-5 pt-4 pb-2">
+          <div className="px-3 pt-4 pb-2">
             <div className="section-card p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
               <div className="flex items-center gap-4">
                 <div style={{ padding: "3px", borderRadius: "50%", background: "linear-gradient(135deg, #047857, #059669)" }}>
@@ -559,8 +559,8 @@ export default function SettingsPage() {
           </div>
 
           {/* ACCOUNT */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>Account</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>Account</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <SettingsRow icon={Lock} color="#3b82f6" title="Change Password" desc="Last changed 30 days ago" onClick={() => openSheet("changePassword")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -573,8 +573,8 @@ export default function SettingsPage() {
           </div>
 
           {/* M-PESA & PAYMENTS */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>M-Pesa & Payments</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>M-Pesa & Payments</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <SettingsRow icon={Smartphone} color="#047857" title="M-Pesa Details" desc="Receive rent payments via M-Pesa" onClick={() => openSheet("mpesa")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -585,8 +585,8 @@ export default function SettingsPage() {
           </div>
 
           {/* NOTIFICATIONS */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>Notifications</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>Notifications</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <ToggleRow icon={MessageSquare} color="#3b82f6" title="New Inquiries" desc="When tenants ask about your property" toggled={toggles.newInquiries} onToggle={() => toggleSwitch("newInquiries")} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -601,8 +601,8 @@ export default function SettingsPage() {
           </div>
 
           {/* APP */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>App</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>App</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <ToggleRow icon={Moon} color="#8b5cf6" title="Dark Mode" desc="Currently enabled" toggled={toggles.darkMode} onToggle={() => { toggleSwitch("darkMode"); showSnackbar("Dark mode preference saved", "success"); }} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -613,8 +613,8 @@ export default function SettingsPage() {
           </div>
 
           {/* STORAGE & INTEGRATIONS */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>Storage & Integrations</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>Storage & Integrations</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <button
                 onClick={handleTestBunnyConnection}
@@ -640,8 +640,8 @@ export default function SettingsPage() {
           </div>
 
           {/* SUPPORT & LEGAL */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#525252" }}>Support & Legal</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#525252" }}>Support & Legal</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px", overflow: "hidden" }}>
               <SettingsRow icon={LifeBuoy} color="#047857" title="Help Center" onClick={() => window.open('https://rentke.com/help', '_blank')} />
               <div className="section-divider" style={{ height: "1px", background: "rgba(255,255,255,0.05)", margin: "0 16px" }} />
@@ -656,8 +656,8 @@ export default function SettingsPage() {
           </div>
 
           {/* DANGER ZONE */}
-          <div className="px-5 pt-6">
-            <p className="section-title text-xs font-semibold uppercase tracking-wider px-4 mb-2" style={{ color: "#ef4444" }}>Danger Zone</p>
+          <div className="px-3 pt-6">
+            <p className="section-title text-xs font-semibold uppercase tracking-wider px-3 mb-2" style={{ color: "#ef4444" }}>Danger Zone</p>
             <div className="section-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(239,68,68,0.1)", borderRadius: "20px", overflow: "hidden" }}>
               <button onClick={() => openSheet("logout")} style={settingsRowStyle}>
                 <div className="row-icon w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
@@ -698,7 +698,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "editProfile"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "editProfile" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Edit Profile</h3>
             <button onClick={closeSheet} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -734,7 +734,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "avatar"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "avatar" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-4">Change Photo</h3>
           <div className="space-y-2">
             <ActionButton icon={Camera} color="#047857" label="Take Photo" onClick={async () => { closeSheet(); if (user?.uid) { const url = await pickAndUploadPhoto('profiles', user.uid); if (url) { setProfileAvatar(url); showSnackbar('Photo updated', 'success'); } } }} />
@@ -749,7 +749,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "changePassword"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "changePassword" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-1">Change Password</h3>
           <p className="text-sm mb-5" style={{ color: "#a3a3a3" }}>Your password must be at least 8 characters</p>
           <div className="space-y-4">
@@ -784,7 +784,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "changePhone"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "changePhone" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-1">Change Phone Number</h3>
           <p className="text-sm mb-5" style={{ color: "#a3a3a3" }}>We'll send an OTP to verify your new number</p>
           <div className="space-y-4">
@@ -810,7 +810,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "mpesa"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "mpesa" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-1">M-Pesa Details</h3>
           <p className="text-sm mb-5" style={{ color: "#a3a3a3" }}>Where tenants will send rent payments</p>
           <div className="space-y-4">
@@ -875,7 +875,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "language"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "language" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-4">Language</h3>
           <div className="space-y-2">
             <button onClick={() => { closeSheet(); showSnackbar("Language set to English", "success"); }} className="w-full flex items-center justify-between p-4 rounded-2xl" style={{ background: "rgba(4,120,87,0.1)", border: "1px solid rgba(4,120,87,0.3)" }}>
@@ -894,7 +894,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "verification"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "verification" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-4">Verification Status</h3>
           <div className="space-y-3">
             {[
@@ -922,7 +922,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "emailPrefs"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "emailPrefs" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-4">Email Preferences</h3>
           <div className="space-y-1">
             <ToggleRow icon={MessageSquare} color="#3b82f6" title="New Inquiries" toggled={toggles.emailNewInquiries} onToggle={() => toggleSwitch("emailNewInquiries")} />
@@ -940,7 +940,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "payout"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "payout" ? "active" : ""}`}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <h3 className="text-lg font-bold text-white mb-1">Payout Schedule</h3>
           <p className="text-sm mb-5" style={{ color: "#a3a3a3" }}>How often you receive M-Pesa payouts</p>
           <div className="space-y-2">
@@ -981,7 +981,7 @@ export default function SettingsPage() {
       <SheetOverlay active={activeSheet === "deleteAccount"} onClose={closeSheet} />
       <div className={`bottom-sheet ${activeSheet === "deleteAccount" ? "active" : ""}`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="p-3">
           <div className="text-center mb-5">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "rgba(239,68,68,0.1)" }}>
               <AlertTriangle className="w-8 h-8" style={{ color: "#ef4444" }} />

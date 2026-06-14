@@ -411,7 +411,7 @@ export default function BrowseHome() {
 
       {/* ====== HEADER ====== */}
       <header
-        className="px-5 pt-4 pb-2 flex items-center justify-between"
+        className="px-3 pt-4 pb-2 flex items-center justify-between"
         style={{ animation: "slideInUp 0.5s ease" }}
       >
         <div>
@@ -457,7 +457,7 @@ export default function BrowseHome() {
       </header>
 
       {/* ====== SEARCH BAR ====== */}
-      <div className="px-5 mt-3" style={{ animation: "slideInUp 0.6s ease" }}>
+      <div className="px-3 mt-3" style={{ animation: "slideInUp 0.6s ease" }}>
         <div
           className="browse-search-bar"
           onClick={() => openSheet(() => setSearchSheetOpen(true), true)}
@@ -476,7 +476,7 @@ export default function BrowseHome() {
       </div>
 
       {/* ====== MY ACTIVITY QUICK ACCESS ====== */}
-      <div className="px-5 mt-5" style={{ animation: "slideInUp 0.65s ease" }}>
+      <div className="px-3 mt-5" style={{ animation: "slideInUp 0.65s ease" }}>
         <div className="flex gap-3">
           <button
             onClick={() => router.push("/browse/viewings")}
@@ -515,7 +515,7 @@ export default function BrowseHome() {
 
       {/* ====== CATEGORIES ====== */}
       <div className="mt-5" style={{ animation: "slideInUp 0.7s ease" }}>
-        <div className="flex gap-2 px-5 overflow-x-auto browse-scroll-hidden pb-2">
+        <div className="flex gap-2 px-3 overflow-x-auto browse-scroll-hidden pb-2">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -530,7 +530,7 @@ export default function BrowseHome() {
 
       {/* ====== FEATURED LISTINGS ====== */}
       <div className="mt-7" style={{ animation: "slideInUp 0.8s ease" }}>
-        <div className="flex items-center justify-between px-5 mb-4">
+        <div className="flex items-center justify-between px-3 mb-4">
           <h2 className="text-lg font-bold text-white">Featured Listings</h2>
           <button
             onClick={() => router.push("/browse/explore")}
@@ -541,7 +541,7 @@ export default function BrowseHome() {
           </button>
         </div>
         {listingsLoading ? (
-          <div className="flex gap-4 px-5 overflow-x-auto browse-scroll-hidden pb-2">
+          <div className="flex gap-4 px-3 overflow-x-auto browse-scroll-hidden pb-2">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -551,13 +551,13 @@ export default function BrowseHome() {
             ))}
           </div>
         ) : displayFeatured.length === 0 ? (
-          <div className="px-5">
+          <div className="px-3">
             <p className="text-sm" style={{ color: "#525252" }}>
               No featured listings yet. Check back soon!
             </p>
           </div>
         ) : (
-          <div className="flex gap-4 px-5 overflow-x-auto browse-scroll-hidden pb-2">
+          <div className="flex gap-4 px-3 overflow-x-auto browse-scroll-hidden pb-2">
             {displayFeatured.map((listing) => (
               <div
                 key={listing.id}
@@ -643,7 +643,7 @@ export default function BrowseHome() {
 
       {/* ====== POPULAR AREAS ====== */}
       <div className="mt-8" style={{ animation: "slideInUp 0.9s ease" }}>
-        <div className="flex items-center justify-between px-5 mb-4">
+        <div className="flex items-center justify-between px-3 mb-4">
           <h2 className="text-lg font-bold text-white">Popular Areas</h2>
           <button
             onClick={() => router.push("/browse/explore")}
@@ -653,7 +653,7 @@ export default function BrowseHome() {
             See All
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-3 px-5">
+        <div className="grid grid-cols-2 gap-3 px-3">
           {popularAreas.map((area) => (
             <div
               key={area.name}
@@ -680,7 +680,7 @@ export default function BrowseHome() {
 
       {/* ====== RECENTLY VIEWED ====== */}
       <div className="mt-8" style={{ animation: "slideInUp 0.95s ease" }}>
-        <div className="flex items-center justify-between px-5 mb-4">
+        <div className="flex items-center justify-between px-3 mb-4">
           <h2 className="text-lg font-bold text-white">Recently Viewed</h2>
           <button
             onClick={() => router.push("/browse/explore")}
@@ -690,7 +690,7 @@ export default function BrowseHome() {
             See All
           </button>
         </div>
-        <div className="flex gap-4 px-5 overflow-x-auto browse-scroll-hidden pb-2">
+        <div className="flex gap-4 px-3 overflow-x-auto browse-scroll-hidden pb-2">
           {displayRecentViews.map((item) => (
             <div
               key={item.id}
@@ -728,7 +728,7 @@ export default function BrowseHome() {
       </div>
 
       {/* ====== RECENT LISTINGS ====== */}
-      <div className="mt-8 px-5 pb-4" style={{ animation: "slideInUp 1.0s ease" }}>
+      <div className="mt-8 px-3 pb-4" style={{ animation: "slideInUp 1.0s ease" }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Recent Listings</h2>
           <button
@@ -821,13 +821,13 @@ export default function BrowseHome() {
           <h3 className="text-lg font-bold text-white mb-1">Select Location</h3>
           <p className="text-xs" style={{ color: "#a3a3a3" }}>Choose your preferred area in Kenya</p>
         </div>
-        <div className="px-5 pb-2">
+        <div className="px-3 pb-2">
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)" }}>
             <Search className="w-4 h-4" style={{ color: "#525252" }} />
             <input type="text" placeholder="Search city or estate..." className="bg-transparent outline-none text-sm flex-1" style={{ color: "#e5e5e5" }} />
           </div>
         </div>
-        <div className="px-5 pb-2">
+        <div className="px-3 pb-2">
           <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Popular Cities</p>
         </div>
         <div className="px-3 pb-8">
@@ -874,7 +874,7 @@ export default function BrowseHome() {
             {searchQuery && <button onClick={() => setSearchQuery("")} className="p-1"><X className="w-4 h-4" style={{ color: "#525252" }} /></button>}
           </div>
         </div>
-        <div className="px-5 pb-3">
+        <div className="px-3 pb-3">
           <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Trending Searches</p>
           <div className="flex flex-wrap gap-2">
             {trendingSearches.map((term) => (
@@ -882,7 +882,7 @@ export default function BrowseHome() {
             ))}
           </div>
         </div>
-        <div className="px-5 pb-3">
+        <div className="px-3 pb-3">
           <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>Quick Filters</p>
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => handleSearch("Under KSh 10,000")} className="p-3 rounded-xl text-left ripple-container" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -945,7 +945,7 @@ export default function BrowseHome() {
 
         <div className="px-3 pb-8">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-5">
+            <div className="flex flex-col items-center justify-center py-12 px-3">
               <Bell className="w-12 h-12 mb-3" style={{ color: "#262626" }} />
               <p className="text-sm font-medium text-white mb-1">No notifications yet</p>
               <p className="text-xs text-center" style={{ color: "#525252" }}>
