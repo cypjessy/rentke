@@ -527,6 +527,11 @@ export default function ViewPropertySheet({
                 <div
                   className="flex-shrink-0 w-28 h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer"
                   style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                    setTimeout(onEdit, 300);
+                  }}
                 >
                   <Plus className="w-5 h-5" style={{ color: "#525252" }} />
                   <span

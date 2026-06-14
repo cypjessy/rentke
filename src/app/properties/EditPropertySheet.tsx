@@ -135,7 +135,7 @@ export default function EditPropertySheet({
       <div className={`sheet-overlay active`} onClick={handleClose} />
       <div className={`bottom-sheet active`} style={{ maxHeight: "95dvh" }}>
         <div className="sheet-handle" />
-        <div className="p-5">
+        <div className="px-3 py-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-white">Edit Property</h3>
             <button

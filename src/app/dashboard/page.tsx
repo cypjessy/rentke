@@ -936,10 +936,11 @@ export default function LandlordDashboard() {
                   }}
                 />
                 <div style={{ padding: "20px", position: "relative", zIndex: 1 }}>
-                  <div className="flex items-center gap-5">
+                  {/* Flex row on larger screens, stacks on small screens */}
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
                     {/* Premium Ring */}
                     <div className="relative flex-shrink-0">
-                      <svg width="110" height="110" viewBox="0 0 110 110">
+                      <svg width="100" height="100" viewBox="0 0 110 110" className="sm:w-[110px] sm:h-[110px]">
                         {/* Background track */}
                         <circle
                           cx="55"
@@ -985,7 +986,7 @@ export default function LandlordDashboard() {
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-white" style={{ letterSpacing: "-0.5px" }}>{dataLoading ? "..." : occupancyPct}%</span>
+                        <span className="text-xl sm:text-2xl font-bold text-white" style={{ letterSpacing: "-0.5px" }}>{dataLoading ? "..." : occupancyPct}%</span>
                         <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: "rgba(16,185,129,0.7)" }}>
                           Occupied
                         </span>
@@ -993,7 +994,7 @@ export default function LandlordDashboard() {
                     </div>
 
                     {/* Details */}
-                    <div className="flex-1 min-w-0">
+                    <div className="w-full sm:flex-1 min-w-0 text-center sm:text-left">
                       <h3 className="text-sm font-bold text-white" style={{ letterSpacing: "-0.3px" }}>Occupancy Rate</h3>
                       <p className="text-xs mt-0.5" style={{ color: "#737373" }}>
                         {occupiedUnits} of {totalUnits} units filled
@@ -1018,7 +1019,7 @@ export default function LandlordDashboard() {
                       </div>
 
                       {/* Stats row */}
-                      <div className="flex items-center gap-4 mt-3">
+                      <div className="flex items-center justify-center sm:justify-start gap-4 mt-3">
                         <div className="flex items-center gap-1.5">
                           <div className="w-2 h-2 rounded-full" style={{ background: "#10b981", boxShadow: "0 0 6px rgba(16,185,129,0.5)" }} />
                           <span className="text-xs font-medium" style={{ color: "#e5e5e5" }}>{occupiedUnits}</span>
@@ -1593,7 +1594,7 @@ export default function LandlordDashboard() {
                           <p className="text-sm font-semibold text-white truncate">{prop.name}</p>
                           <span className="chip text-xs" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3", fontSize: "10px", padding: "2px 8px", flexShrink: 0 }}>{prop.type}</span>
                         </div>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                           <span className="text-xs" style={{ color: "#a3a3a3" }}><Building2 className="w-3 h-3 inline mr-0.5" />{total} units</span>
                           <span className="text-xs" style={{ color: "#047857" }}>{occupied} occ</span>
                           {vacant > 0 && <span className="text-xs" style={{ color: "#ef4444" }}>{vacant} vac</span>}
@@ -1727,30 +1728,45 @@ export default function LandlordDashboard() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            confirmViewing(v.id).then(() => {
-                              showSnackbar("Viewing confirmed!", "success");
-                            }).catch(() => showSnackbar("Failed to confirm", "error"));
-                          }}
-                          className="w-9 h-9 rounded-full flex items-center justify-center"
-                          style={{ background: "rgba(4,120,87,0.15)" }}
-                        >
-                          <Check className="w-4 h-4" style={{ color: "#047857" }} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cancelViewing(v.id, "Scheduling conflict").then(() => {
-                              showSnackbar("Viewing cancelled", "info");
-                            }).catch(() => showSnackbar("Failed to cancel", "error"));
-                          }}
-                          className="w-9 h-9 rounded-full flex items-center justify-center"
-                          style={{ background: "rgba(239,68,68,0.1)" }}
-                        >
-                          <X className="w-4 h-4" style={{ color: "#ef4444" }} />
-                        </button>
+                        {v.status === "pending" ? (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmViewing(v.id).then(() => {
+                                  showSnackbar("Viewing confirmed!", "success");
+                                }).catch(() => showSnackbar("Failed to confirm", "error"));
+                              }}
+                              className="w-9 h-9 rounded-full flex items-center justify-center"
+                              style={{ background: "rgba(4,120,87,0.15)" }}
+                            >
+                              <Check className="w-4 h-4" style={{ color: "#047857" }} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cancelViewing(v.id, "Scheduling conflict").then(() => {
+                                  showSnackbar("Viewing cancelled", "info");
+                                }).catch(() => showSnackbar("Failed to cancel", "error"));
+                              }}
+                              className="w-9 h-9 rounded-full flex items-center justify-center"
+                              style={{ background: "rgba(239,68,68,0.1)" }}
+                            >
+                              <X className="w-4 h-4" style={{ color: "#ef4444" }} />
+                            </button>
+                          </>
+                        ) : (
+                          <span
+                            className="chip text-xs font-semibold"
+                            style={{
+                              background: statusBg,
+                              color: statusColor,
+                              padding: "6px 12px",
+                            }}
+                          >
+                            {v.status === "confirmed" ? "Confirmed" : v.status === "completed" ? "Completed" : v.status}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
