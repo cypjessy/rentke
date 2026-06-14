@@ -25,7 +25,6 @@ import { useAuth } from "../../AuthContext";
 import type { PropertyData } from "../PropertyDetailSheet";
 import { PLACEHOLDER_IMAGE } from "../../constants";
 import {
-  listenToFavorites,
   listenToSavedSearches,
   listenToBrowseListings,
   listenToBrowseProperties,
@@ -55,12 +54,13 @@ const itemMenuItems = [
 export default function SavedPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { showSnackbar, openPropertyDetail } = useBrowse();
+  const { showSnackbar, openPropertyDetail, favoriteListings: contextFavs, favoritesLoading } = useBrowse();
 
-  // ---- Firestore favorites ----
-  const [favoriteListings, setFavoriteListings] = useState<FavoriteData[]>([]);
+  // ---- Favorite listings come from BrowseContext (consolidated) ----
+  const favoriteListings = contextFavs;
   const [favoriteSearches, setFavoriteSearches] = useState<SavedSearchData[]>([]);
-  const [favLoading, setFavLoading] = useState(true);
+  const [searchesLoading, setSearchesLoading] = useState(true);
+  const [searchesError, setSearchesError] = useState<string | null>(null);
 
   // ---- Browse listings & properties for image fallback ----
   const [allListings, setAllListings] = useState<ListingData[]>([]);
@@ -88,31 +88,31 @@ export default function SavedPage() {
 
   useEffect(() => {
     if (!user) {
-      setFavLoading(false);
+      setSearchesLoading(false);
       return;
     }
 
-    const unsub1 = listenToFavorites(
-      user.uid,
-      (favs) => {
-        setFavoriteListings(favs);
-        setFavLoading(false);
-      },
-      () => setFavLoading(false)
-    );
+    setSearchesLoading(true);
+    setSearchesError(null);
 
-    const unsub2 = listenToSavedSearches(
+    const unsub1 = listenToSavedSearches(
       user.uid,
-      (searches) => setFavoriteSearches(searches),
-      () => {}
+      (searches) => {
+        setFavoriteSearches(searches);
+        setSearchesLoading(false);
+      },
+      (err) => {
+        setSearchesError(err?.message || "Failed to load saved searches");
+        setSearchesLoading(false);
+      }
     );
 
     // Listen to all active listings + properties for image fallback
-    const unsub3 = listenToBrowseListings(
+    const unsub2 = listenToBrowseListings(
       (listings) => setAllListings(listings),
       () => {}
     );
-    const unsub4 = listenToBrowseProperties(
+    const unsub3 = listenToBrowseProperties(
       (props) => setAllProperties(props),
       () => {}
     );
@@ -121,7 +121,6 @@ export default function SavedPage() {
       unsub1();
       unsub2();
       unsub3();
-      unsub4();
     };
   }, [user]);
 
@@ -353,7 +352,12 @@ export default function SavedPage() {
       )}
 
       {/* ====== SAVED SEARCHES ====== */}
-      {!selectMode && favoriteSearches.length > 0 && (
+      {!selectMode && !searchesLoading && searchesError && (
+        <div className="mx-3 mt-4 p-3 rounded-xl text-xs flex items-center gap-2" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <span>⚠️</span> {searchesError}
+        </div>
+      )}
+      {!selectMode && !searchesLoading && favoriteSearches.length > 0 && (
         <div className="mt-4" style={{ animation: "slideInUp 0.6s ease" }}>
           <div className="flex items-center justify-between px-3 mb-3">
             <h2 className="text-base font-bold text-white">Saved Searches</h2>
@@ -419,7 +423,7 @@ export default function SavedPage() {
       )}
 
       {/* ====== SAVED PROPERTIES LIST ====== */}
-      {favLoading ? (
+      {favoritesLoading ? (
         <div className="px-3 mt-4 space-y-4 pb-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-2xl" style={{ height: "112px", background: "rgba(255,255,255,0.03)" }} />

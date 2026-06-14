@@ -5,8 +5,14 @@ import type { PropertyData } from "./PropertyDetailSheet";
 import { PLACEHOLDER_IMAGE } from "../constants";
 import { useAuth } from "../AuthContext";
 import { listenToTenantViewings, listenToFavorites, toggleFavorite as toggleFavoriteFS } from "@/lib/browse";
+import type { FavoriteData } from "@/lib/browse";
 import { listenToConversations } from "@/lib/conversations";
+import type { ConversationData } from "@/lib/conversations";
 import { listenToNotifications } from "@/lib/notifications";
+import type { NotificationData } from "@/lib/notifications";
+import type { ViewingData } from "@/lib/viewings";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export type SnackbarType = "success" | "error" | "info";
 
@@ -39,9 +45,26 @@ export type BrowseContextType = {
   recentlyViewed: RecentView[];
   addToRecentlyViewed: (item: RecentView) => void;
 
+  // Full data arrays (consolidated — pages read from context instead of owning duplicate listeners)
+  viewings: ViewingData[];
+  notifications: NotificationData[];
+  conversations: ConversationData[];
+  favoriteListings: FavoriteData[];
+
+  // Loading states for each listener
+  viewingsLoading: boolean;
+  notificationsLoading: boolean;
+  conversationsLoading: boolean;
+  favoritesLoading: boolean;
+
+  // Error states for each listener (null = no error, string = error message)
+  viewingsError: string | null;
+  notificationsError: string | null;
+  conversationsError: string | null;
+  favoritesError: string | null;
+
   // Dynamic badge counts
   unreadMessageCount: number;
-  setUnreadMessageCount: (count: number) => void;
   unreadNotificationCount: number;
 
   // Home page quick stats
@@ -59,65 +82,118 @@ export const BrowseContext = createContext<BrowseContextType>({
   isFavorite: () => false,
   recentlyViewed: [],
   addToRecentlyViewed: () => {},
+  viewings: [],
+  notifications: [],
+  conversations: [],
+  favoriteListings: [],
+  viewingsLoading: true,
+  notificationsLoading: true,
+  conversationsLoading: true,
+  favoritesLoading: true,
+  viewingsError: null,
+  notificationsError: null,
+  conversationsError: null,
+  favoritesError: null,
   unreadMessageCount: 0,
-  setUnreadMessageCount: () => {},
   unreadNotificationCount: 0,
   viewingsCount: 0,
 });
 
 export function BrowseProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [viewingsCount, setViewingsCount] = useState(0);
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
-  // Listen to tenant viewings for count
+  // ---- Full data arrays (single source of truth) ----
+  const [viewings, setViewings] = useState<ViewingData[]>([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [conversations, setConversations] = useState<ConversationData[]>([]);
+  const [favoriteListings, setFavoriteListings] = useState<FavoriteData[]>([]);
+
+  // ---- Loading & error states for each listener ----
+  const [viewingsLoading, setViewingsLoading] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [viewingsError, setViewingsError] = useState<string | null>(null);
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [conversationsError, setConversationsError] = useState<string | null>(null);
+  const [favoritesError, setFavoritesError] = useState<string | null>(null);
+
+  // ---- Derived counts ----
+  const viewingsCount = viewings.filter(
+    (v) => v.status === "pending" || v.status === "confirmed"
+  ).length;
+  const unreadMessageCount = conversations.reduce((sum, c) => sum + (c.unreadCount?.[user?.uid || ""] || 0), 0);
+  const unreadNotificationCount = notifications.filter((n) => !n.read).length;
+  const favoriteIds = favoriteListings.map((f) => f.listingId);
+
+  const [userPhone, setUserPhone] = useState("");
+
+  // ---- Fetch user phone from Firestore (used by viewings listener) ----
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) {
+        setUserPhone(snap.data().phone || "");
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
+
+  // ---- Listener: Viewings ----
   useEffect(() => {
     if (!user) return;
     const uid = user.uid || "";
     if (!uid) return;
+    setViewingsLoading(true);
+    setViewingsError(null);
     const unsub = listenToTenantViewings(
       uid,
-      user.phoneNumber || "",
-      (viewings) => {
-        const upcoming = viewings.filter(
-          (v) => v.status === "pending" || v.status === "confirmed"
-        ).length;
-        setViewingsCount(upcoming);
+      userPhone,
+      (data) => {
+        setViewings(data);
+        setViewingsLoading(false);
       },
-      () => {}
+      (err) => {
+        setViewingsError(err?.message || "Failed to load viewings");
+        setViewingsLoading(false);
+      }
     );
     return () => unsub();
-  }, [user]);
+  }, [user, userPhone]);
 
-  // Listen to conversations for unread count
+  // ---- Listener: Conversations ----
   useEffect(() => {
     if (!user) return;
+    setConversationsLoading(true);
+    setConversationsError(null);
     const unsub = listenToConversations(
       user.uid,
-      (convs) => {
-        let total = 0;
-        convs.forEach((c) => {
-          total += c.unreadCount?.[user.uid] || 0;
-        });
-        setUnreadMessageCount(total);
+      (data) => {
+        setConversations(data);
+        setConversationsLoading(false);
       },
-      () => {}
+      (err) => {
+        setConversationsError(err?.message || "Failed to load conversations");
+        setConversationsLoading(false);
+      }
     );
     return () => unsub();
   }, [user]);
 
-  // Listen to notifications for unread badge count
+  // ---- Listener: Notifications ----
   useEffect(() => {
     if (!user) return;
+    setNotificationsLoading(true);
+    setNotificationsError(null);
     const unsub = listenToNotifications(
       user.uid,
-      (notifs) => {
-        const unread = notifs.filter((n) => !n.read).length;
-        setUnreadNotificationCount(unread);
+      (data) => {
+        setNotifications(data);
+        setNotificationsLoading(false);
       },
-      () => {}
+      (err) => {
+        setNotificationsError(err?.message || "Failed to load notifications");
+        setNotificationsLoading(false);
+      }
     );
     return () => unsub();
   }, [user]);
@@ -141,15 +217,21 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
     setPropertyDetail({ isOpen: false });
   }, []);
 
-  // Firestore favorites listener
+  // ---- Listener: Favorites ----
   useEffect(() => {
     if (!user) return;
+    setFavoritesLoading(true);
+    setFavoritesError(null);
     const unsub = listenToFavorites(
       user.uid,
-      (favs) => {
-        setFavoriteIds(favs.map((f) => f.listingId));
+      (data) => {
+        setFavoriteListings(data);
+        setFavoritesLoading(false);
       },
-      () => {}
+      (err) => {
+        setFavoritesError(err?.message || "Failed to load favorites");
+        setFavoritesLoading(false);
+      }
     );
     return () => unsub();
   }, [user]);
@@ -209,8 +291,19 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
         isFavorite,
         recentlyViewed,
         addToRecentlyViewed,
+        viewings,
+        notifications,
+        conversations,
+        favoriteListings,
+        viewingsLoading,
+        notificationsLoading,
+        conversationsLoading,
+        favoritesLoading,
+        viewingsError,
+        notificationsError,
+        conversationsError,
+        favoritesError,
         unreadMessageCount,
-        setUnreadMessageCount,
         unreadNotificationCount,
         viewingsCount,
       }}

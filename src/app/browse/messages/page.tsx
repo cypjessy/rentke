@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Search,
   Edit3,
@@ -42,6 +42,8 @@ import {
 import type { ConversationData, MessageData } from "../../../lib/conversations";
 import { Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { startTrackingPresence, stopTrackingPresence, listenToUserPresence } from "@/lib/presence";
+import type { PresenceData } from "@/lib/presence";
 import { uploadPhoto, takePhoto, openFilePicker } from "@/lib/upload";
 
 const attachOptions = [
@@ -90,7 +92,7 @@ const autoReplies = [
 
 export default function MessagesPage() {
   const router = useRouter();
-  const { showSnackbar, setUnreadMessageCount } = useBrowse();
+  const { showSnackbar, conversations: contextConversations, conversationsLoading } = useBrowse();
 
   // ---- State ----
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -117,21 +119,49 @@ export default function MessagesPage() {
 
   const { user } = useAuth();
 
-  // ---- Firestore Listener for Conversations ----
+  // ---- Presence (online/offline) tracking ----
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
-    const uid = user?.uid || "";
-    if (!uid) return;
-    const unsub = listenToConversations(uid, (data) => {
-      setConversations(data);
-      setMessagesLoading(false);
-      const totalUnread = data.reduce((sum, c) => sum + (c.unreadCount?.[uid] || 0), 0);
-      setUnreadMessageCount(totalUnread);
-    }, (err) => {
-      console.error("Conversations listener error:", err);
-      setMessagesLoading(false);
-    });
-    return () => unsub();
+    if (!user?.uid) return;
+    // Start tracking this user's presence
+    startTrackingPresence(user.uid);
+    return () => stopTrackingPresence();
   }, [user?.uid]);
+
+  // ---- Listen to presence of all conversation participants ----
+  const participantIds = useMemo(() => {
+    if (!user?.uid) return "";
+    const ids = new Set<string>();
+    contextConversations.forEach((c) =>
+      c.participants.forEach((p) => {
+        if (p !== user.uid) ids.add(p);
+      })
+    );
+    return [...ids].sort().join(",");
+  }, [contextConversations, user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid || !participantIds) return;
+    const unsubs: (() => void)[] = [];
+    const ids = participantIds.split(",").filter(Boolean);
+
+    for (const pid of ids) {
+      const unsub = listenToUserPresence(pid, (data: PresenceData) => {
+        setOnlineUsers((prev) => ({ ...prev, [pid]: data.online }));
+      });
+      unsubs.push(unsub);
+    }
+
+    return () => unsubs.forEach((u) => u());
+  }, [user?.uid, participantIds]);
+
+  // ---- Conversations come from BrowseContext (consolidated listener) ----
+  useEffect(() => {
+    if (!user?.uid) return;
+    setConversations(contextConversations);
+    setMessagesLoading(conversationsLoading);
+  }, [contextConversations, user?.uid, conversationsLoading]);
 
   // ---- Firestore Listener for Messages in Active Chat ----
   useEffect(() => {
@@ -170,7 +200,7 @@ export default function MessagesPage() {
       lastMsg: conv.lastMessage || "",
       time: lastMsgTime,
       unread,
-      online: false,
+      online: onlineUsers[otherParticipantId] || false,
       property: conv.propertyName || "",
       propertyPrice: "",
       propertyImg: "",

@@ -280,7 +280,7 @@ function ExplorePageInner() {
   useEffect(() => {
     const unsub = listenToBrowseProperties(
       (props) => setAllProperties(props),
-      () => {}
+      () => setListingsLoading(false)
     );
     return () => unsub();
   }, []);

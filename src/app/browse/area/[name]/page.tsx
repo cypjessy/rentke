@@ -184,7 +184,7 @@ function AreaPageInner() {
   useEffect(() => {
     const unsub = listenToBrowseProperties(
       (props) => setAllProperties(props),
-      () => {}
+      () => setListingsLoading(false)
     );
     return () => unsub();
   }, []);

@@ -16,13 +16,14 @@ import {
 import { useBrowse } from "../BrowseContext";
 import { useAuth } from "../../AuthContext";
 import {
-  listenToTenantViewings,
   confirmViewing as confirmViewingFS,
   cancelViewing as cancelViewingFS,
 } from "../../../lib/browse";
 import { rescheduleViewing } from "../../../lib/viewings";
 import { openPhoneUrl } from "../../../lib/phone";
+import { createNotification } from "../../../lib/notifications";
 import type { ViewingData } from "../../../lib/viewings";
+
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   confirmed: { label: "Confirmed", color: "#047857", bg: "rgba(4,120,87,0.12)" },
@@ -32,43 +33,15 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function ViewingsPage() {
-  const { showSnackbar } = useBrowse();
+  const { showSnackbar, viewings, viewingsLoading } = useBrowse();
   const { user } = useAuth();
   const router = useRouter();
 
   const [filterTab, setFilterTab] = useState<"upcoming" | "past">("upcoming");
-  const [allViewings, setAllViewings] = useState<ViewingData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-
-
-  // ---- Firestore Listener ----
-  useEffect(() => {
-    const uid = user?.uid || "";
-    if (!uid) {
-      setLoading(false);
-      return;
-    }
-
-    const unsub = listenToTenantViewings(
-      uid,
-      user?.phoneNumber || "",
-      (viewings) => {
-        setAllViewings(viewings);
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Viewings listener error:", err);
-        setLoading(false);
-      }
-    );
-
-    return () => unsub();
-  }, [user?.uid, user?.phoneNumber]);
 
   // ---- Derived Data ----
   const now = new Date();
-  const upcoming = allViewings.filter((v) => {
+  const upcoming = viewings.filter((v) => {
     if (v.status === "completed" || v.status === "cancelled") return false;
     const dateStr = v.date;
     if (!dateStr) return true;
@@ -77,7 +50,7 @@ export default function ViewingsPage() {
     } catch { return true; }
   });
 
-  const past = allViewings.filter((v) => {
+  const past = viewings.filter((v) => {
     if (v.status === "completed" || v.status === "cancelled") return true;
     const dateStr = v.date;
     if (!dateStr) return false;
@@ -101,10 +74,43 @@ export default function ViewingsPage() {
     return () => { document.body.style.overflow = ""; };
   }, [rescheduleViewingId, detailViewing]);
 
+  // ---- Notify landlord of tenant actions ----
+  const notifyLandlord = async (viewing: ViewingData, action: "confirmed" | "cancelled" | "rescheduled") => {
+    if (!viewing.landlordId) return;
+    try {
+      if (action === "confirmed") {
+        await createNotification(
+          viewing.landlordId,
+          "viewing_update",
+          "✅ Tenant Confirmed",
+          `${viewing.tenantName} has confirmed the viewing at ${viewing.propertyName} on ${viewing.date} at ${viewing.startTime}.`,
+          "/viewings"
+        );
+      } else if (action === "cancelled") {
+        await createNotification(
+          viewing.landlordId,
+          "viewing_update",
+          "❌ Tenant Cancelled",
+          `${viewing.tenantName} has cancelled the viewing at ${viewing.propertyName}.`,
+          "/viewings"
+        );
+      } else if (action === "rescheduled") {
+        await createNotification(
+          viewing.landlordId,
+          "viewing_update",
+          "🔄 Tenant Rescheduled",
+          `${viewing.tenantName} has proposed a reschedule for the viewing at ${viewing.propertyName}. Please review the new time.`,
+          "/viewings"
+        );
+      }
+    } catch (_) {}
+  };
+
   // ---- Actions ----
   const handleConfirm = async (viewing: ViewingData) => {
     try {
       await confirmViewingFS(viewing.id);
+      await notifyLandlord(viewing, "confirmed");
       showSnackbar("Viewing confirmed!", "success");
     } catch (err) {
       showSnackbar("Failed to confirm viewing", "error");
@@ -114,6 +120,7 @@ export default function ViewingsPage() {
   const handleCancel = async (viewing: ViewingData) => {
     try {
       await cancelViewingFS(viewing.id);
+      await notifyLandlord(viewing, "cancelled");
       showSnackbar("Viewing cancelled", "info");
     } catch (err) {
       showSnackbar("Failed to cancel viewing", "error");
@@ -143,6 +150,11 @@ export default function ViewingsPage() {
     }
     try {
       await rescheduleViewing(rescheduleViewingId, rescheduleDate, rescheduleTime, rescheduleTime, rescheduleReason);
+      // Notify landlord about tenant's reschedule proposal
+      const rescheduledViewing = viewings.find((v: ViewingData) => v.id === rescheduleViewingId);
+      if (rescheduledViewing) {
+        await notifyLandlord(rescheduledViewing, "rescheduled");
+      }
       closeReschedule();
       showSnackbar("Viewing rescheduled!", "success");
     } catch {
@@ -204,7 +216,7 @@ export default function ViewingsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">My Viewings</h1>
           <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-            {loading ? "Loading..." : `${upcoming.length} upcoming • ${past.length} past`}
+            {viewingsLoading ? "Loading..." : `${upcoming.length} upcoming • ${past.length} past`}
           </p>
         </div>
       </header>
@@ -230,12 +242,12 @@ export default function ViewingsPage() {
 
       {/* ====== VIEWINGS LIST ====== */}
       <div className="px-3 pb-24 space-y-3">
-        {loading ? (
+        {viewingsLoading && viewings.length === 0 ? (
           <div className="text-center py-16">
             <div className="spinner mx-auto mb-4" />
             <p className="text-sm" style={{ color: "#525252" }}>Loading viewings...</p>
           </div>
-        ) : displayList.length === 0 ? (
+        ) : !viewingsLoading && displayList.length === 0 ? (
           <div className="text-center py-16">
             <Calendar className="w-14 h-14 mx-auto mb-4" style={{ color: "#525252" }} />
             <h3 className="text-lg font-bold text-white mb-2">
@@ -374,6 +386,21 @@ export default function ViewingsPage() {
                             <MessageCircle className="w-3.5 h-3.5" style={{ color: "#25D366" }} />
                           </button>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Reschedule proposed badge */}
+                    {isUpcoming && viewing.status === "pending" && viewing.notes?.startsWith("Rescheduled:") && (
+                      <div
+                        className="mt-2 px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5"
+                        style={{
+                          background: "rgba(59,130,246,0.1)",
+                          color: "#60a5fa",
+                          border: "1px solid rgba(59,130,246,0.2)",
+                        }}
+                      >
+                        <Calendar className="w-3 h-3" />
+                        Reschedule proposed — please confirm or cancel
                       </div>
                     )}
 

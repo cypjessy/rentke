@@ -17,6 +17,7 @@ import {
   Check,
   Clock,
   Info,
+  ArrowLeft,
 } from "lucide-react";
 import { useBrowse } from "./BrowseContext";
 import { useAuth } from "../AuthContext";
@@ -24,7 +25,7 @@ import type { PropertyData } from "./PropertyDetailSheet";
 import { UNIT_TYPE_OPTIONS, BROWSE_TYPE_META, PLACEHOLDER_IMAGE } from "../constants";
 import { listenToBrowseListings, listenToBrowseProperties } from "@/lib/browse";
 import { getListingImage, getListingImages } from "@/lib/resolveImages";
-import { listenToNotifications, getNotificationMeta, getNotificationLink, markNotificationRead } from "@/lib/notifications";
+import { getNotificationMeta, getNotificationLink, markNotificationRead } from "@/lib/notifications";
 import type { NotificationData } from "@/lib/notifications";
 import type { ListingData } from "@/lib/listings";
 import type { PropertyData as PropData } from "@/lib/properties";
@@ -138,6 +139,9 @@ export default function BrowseHome() {
     recentlyViewed,
     viewingsCount,
     unreadNotificationCount,
+    notifications,
+    notificationsLoading,
+    notificationsError,
   } = useBrowse();
 
   const { user } = useAuth();
@@ -161,21 +165,10 @@ export default function BrowseHome() {
   useEffect(() => {
     const unsub = listenToBrowseProperties(
       (props) => setAllProperties(props),
-      () => {}
+      () => setListingsLoading(false)
     );
     return () => unsub();
   }, []);
-
-  // Listen to notifications
-  useEffect(() => {
-    if (!user?.uid) return;
-    const unsub = listenToNotifications(
-      user.uid,
-      (list) => setNotifications(list),
-      () => {}
-    );
-    return () => unsub();
-  }, [user?.uid]);
 
   // Mark notification as read
   const handleNotifClick = async (notif: NotificationData) => {
@@ -229,7 +222,10 @@ export default function BrowseHome() {
   const [searchSheetOpen, setSearchSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [notifSheetOpen, setNotifSheetOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+
+  // ---- In-page category filter results ----
+  const [showResults, setShowResults] = useState(false);
+  const [filterType, setFilterType] = useState<string | null>(null);
 
   // ---- Derive popular areas dynamically from active listings ----
   const popularAreas = useMemo(() => {
@@ -280,16 +276,45 @@ export default function BrowseHome() {
     document.body.style.overflow = "";
   };
 
-  // ---- Category Selection ----
+  // ---- Category Selection (in-page filtering) ----
   const handleCategorySelect = (cat: string) => {
     setSelectedCategory(cat);
-    if (cat === "All") {
-      router.push("/browse/explore");
-    } else {
-      // Extract the name from emoji-prefixed categories like "🏠 Bedsitter"
-      const clean = cat.replace(/^[^\s]*\s*/, "");
-      router.push(`/browse/explore?q=${encodeURIComponent(clean)}`);
+    const clean = cat.replace(/^[^\s]*\s*/, "");
+    const type = cat === "All" ? "all" : clean;
+    setFilterType(type);
+    setShowResults(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ---- Filtered listings based on selected category ----
+  const filteredCategoryListings = useMemo(() => {
+    if (!filterType || filterType === "all") {
+      return allListings.filter((l) => l.status === "active");
     }
+    const q = filterType.toLowerCase();
+    return allListings.filter((l) => {
+      if (l.status !== "active") return false;
+      const title = (l.title || l.propertyName || "").toLowerCase();
+      if (q === "bedsitter") return title.includes("bedsitter") || title.includes("studio");
+      if (q === "mansion") return title.includes("mansion");
+      if (q === "office") return title.includes("office") || title.includes("commercial");
+      if (q === "plot") return title.includes("plot") || title.includes("land");
+      if (q === "shop") return title.includes("shop") || title.includes("retail");
+      // Match bedroom types like "1 Bedroom", "2 Bedroom"
+      if (q.includes("bedroom")) {
+        const br = q.replace(" bedroom", "");
+        return title.includes(`${br}br`) || title.includes(`${br} bed`) || title.includes(q);
+      }
+      return title.includes(q);
+    });
+  }, [filterType, allListings]);
+
+  // ---- Clear in-page filter and go back to home ----
+  const clearFilter = () => {
+    setShowResults(false);
+    setFilterType(null);
+    setSelectedCategory("All");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ---- Favorite Toggle ----
@@ -528,18 +553,142 @@ export default function BrowseHome() {
         </div>
       </div>
 
-      {/* ====== FEATURED LISTINGS ====== */}
-      <div className="mt-7" style={{ animation: "slideInUp 0.8s ease" }}>
-        <div className="flex items-center justify-between px-3 mb-4">
-          <h2 className="text-lg font-bold text-white">Featured Listings</h2>
-          <button
-            onClick={() => router.push("/browse/explore")}
-            className="text-xs font-semibold"
-            style={{ color: "#047857" }}
-          >
-            See All
-          </button>
+      {/* ====== FILTERED RESULTS (in-page, shown when a category is selected) ====== */}
+      {showResults && (
+        <div className="mt-5 px-3" style={{ animation: "slideInUp 0.6s ease" }}>
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={clearFilter}
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
+              <ArrowLeft className="w-5 h-5" style={{ color: "#e5e5e5" }} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                {filterType === "all" ? "All Properties" : filterType}
+              </h2>
+              <p className="text-xs" style={{ color: "#a3a3a3" }}>{filteredCategoryListings.length} properties found</p>
+            </div>
+          </div>
+
+          {filteredCategoryListings.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(255,255,255,0.03)" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#525252" }}>
+                  <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-white mb-1">No properties found</p>
+              <p className="text-xs" style={{ color: "#525252" }}>Try selecting a different category</p>
+            </div>
+          ) : (
+            <div className="space-y-4 pb-4">
+              {filteredCategoryListings.slice(0, 20).map((listing, i) => {
+                const img = getListingImage(listing, allProperties) || PLACEHOLDER_IMAGE;
+                const isNew = listing.createdAt
+                  ? (Date.now() - listing.createdAt.toDate().getTime()) < 7 * 86400000
+                  : false;
+                return (
+                  <div
+                    key={listing.id}
+                    className="browse-property-card ripple-container"
+                    onClick={() => {
+                      const propData = listingToPropertyData(listing, allProperties, i);
+                      openPropertyDetail(propData);
+                      trackRecentView({ id: i + 1, title: listing.title || listing.propertyName || "", location: listing.propertyName || "", price: listing.rent.toLocaleString(), img });
+                    }}
+                  >
+                    <div className="flex">
+                      <div className="relative w-32 h-32 flex-shrink-0">
+                        <img
+                          src={img}
+                          alt={listing.title || "Property"}
+                          className="w-full h-full object-cover"
+                          style={{ borderRadius: "20px 0 0 20px" }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
+                        />
+                        {listing.boosted && (
+                          <span className="absolute top-2 left-2 text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "#047857", color: "white" }}>FEATURED</span>
+                        )}
+                        {!listing.boosted && isNew && (
+                          <span className="absolute top-2 left-2 text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "#ea580c", color: "white" }}>NEW</span>
+                        )}
+                      </div>
+                      <div className="flex-1 p-3.5 flex flex-col justify-between min-w-0">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-white text-sm truncate pr-2">{listing.title || listing.propertyName || "Untitled"}</h3>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const idx = i + 1;
+                                handleFavorite(e, idx, { title: listing.title || "", location: listing.propertyName || "", price: listing.rent, image: img, landlordId: listing.landlordId || "", propertyId: listing.propertyId || "" });
+                              }}
+                              className="p-1 flex-shrink-0"
+                            >
+                              <Heart
+                                className="w-4 h-4"
+                                style={{
+                                  color: favorites.includes(i + 1) ? "#ef4444" : "#525252",
+                                  fill: favorites.includes(i + 1) ? "#ef4444" : "transparent",
+                                }}
+                              />
+                            </button>
+                          </div>
+                          <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: "#a3a3a3" }}>
+                            <MapPin className="w-3 h-3" />
+                            {listing.propertyName || "Nairobi, Kenya"}
+                          </p>
+                          {(listing.amenities || []).length > 0 && (
+                            <div className="flex gap-1.5 mt-2 flex-wrap">
+                              {(listing.amenities || []).slice(0, 3).map((a) => (
+                                <span key={a} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.05)", color: "#a3a3a3" }}>✅ {a}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-sm font-bold" style={{ color: "#047857" }}>
+                            KSh {listing.rent.toLocaleString()}
+                            <span className="text-xs font-normal" style={{ color: "#525252" }}>/mo</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredCategoryListings.length > 20 && (
+                <div className="text-center pt-2 pb-4">
+                  <button
+                    onClick={() => router.push(`/browse/explore?q=${encodeURIComponent(filterType === "all" ? "" : filterType || "")}`)}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "#e5e5e5", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    View All {filteredCategoryListings.length} Properties
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      )}
+
+      {/* ====== FEATURED LISTINGS ====== */}
+      {!showResults && (
+        <div className="mt-7" style={{ animation: "slideInUp 0.8s ease" }}>
+          <div className="flex items-center justify-between px-3 mb-4">
+            <h2 className="text-lg font-bold text-white">Featured Listings</h2>
+            <button
+              onClick={() => router.push("/browse/explore")}
+              className="text-xs font-semibold"
+              style={{ color: "#047857" }}
+            >
+              See All
+            </button>
+          </div>
         {listingsLoading ? (
           <div className="flex gap-4 px-3 overflow-x-auto browse-scroll-hidden pb-2">
             {[1, 2, 3].map((i) => (
@@ -640,8 +789,10 @@ export default function BrowseHome() {
           </div>
         )}
       </div>
+      )}
 
       {/* ====== POPULAR AREAS ====== */}
+      {!showResults && (
       <div className="mt-8" style={{ animation: "slideInUp 0.9s ease" }}>
         <div className="flex items-center justify-between px-3 mb-4">
           <h2 className="text-lg font-bold text-white">Popular Areas</h2>
@@ -678,7 +829,10 @@ export default function BrowseHome() {
         </div>
       </div>
 
+      )}
+
       {/* ====== RECENTLY VIEWED ====== */}
+      {!showResults && (
       <div className="mt-8" style={{ animation: "slideInUp 0.95s ease" }}>
         <div className="flex items-center justify-between px-3 mb-4">
           <h2 className="text-lg font-bold text-white">Recently Viewed</h2>
@@ -727,7 +881,10 @@ export default function BrowseHome() {
         </div>
       </div>
 
+      )}
+
       {/* ====== RECENT LISTINGS ====== */}
+      {!showResults && (
       <div className="mt-8 px-3 pb-4" style={{ animation: "slideInUp 1.0s ease" }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white">Recent Listings</h2>
@@ -807,6 +964,7 @@ export default function BrowseHome() {
           ))
         )}
       </div>
+      )}
 
       {/* ============================================ */}
       {/* BOTTOM SHEET: LOCATION SELECTOR */}
@@ -944,7 +1102,22 @@ export default function BrowseHome() {
         </div>
 
         <div className="px-3 pb-8">
-          {notifications.length === 0 ? (
+          {notificationsLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 px-3">
+              <div className="spinner mx-auto mb-4" />
+              <p className="text-sm" style={{ color: "#525252" }}>Loading notifications...</p>
+            </div>
+          ) : notificationsError ? (
+            <div className="flex flex-col items-center justify-center py-12 px-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: "rgba(239,68,68,0.1)" }}>
+                <Bell className="w-6 h-6" style={{ color: "#ef4444" }} />
+              </div>
+              <p className="text-sm font-medium text-white mb-1">Couldn't load notifications</p>
+              <p className="text-xs text-center" style={{ color: "#525252" }}>
+                {notificationsError}
+              </p>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-3">
               <Bell className="w-12 h-12 mb-3" style={{ color: "#262626" }} />
               <p className="text-sm font-medium text-white mb-1">No notifications yet</p>
