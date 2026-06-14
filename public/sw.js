@@ -45,6 +45,10 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") return;
 
+  // Skip non-http(s) requests (e.g. chrome-extension://, blob:, data:)
+  const url = new URL(event.request.url);
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
   // For navigation requests, try network first
   if (event.request.mode === "navigate") {
     event.respondWith(
