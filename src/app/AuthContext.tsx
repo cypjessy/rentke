@@ -22,6 +22,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { linkUnitsToUser } from "@/lib/units";
 import { useRouter } from "next/navigation";
 
 type UserRole = "tenant" | "landlord" | null;
@@ -147,6 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: serverTimestamp(),
         });
 
+        // Auto-link any units that were assigned to this phone before they had an account
+        linkUnitsToUser(data.phone, user.uid).catch(() => {});
+
         setState((prev) => ({ ...prev, user, role: data.role }));
         return {};
       } catch (err: any) {
@@ -184,6 +188,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: role,
             createdAt: serverTimestamp(),
           });
+
+          // Auto-link any units that were assigned to this phone before they had an account
+          linkUnitsToUser(user.phoneNumber || "", user.uid).catch(() => {});
+
           setState({ user, loading: false, role });
         } else {
           // Returning user — use role from Firestore

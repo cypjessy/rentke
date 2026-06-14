@@ -387,6 +387,45 @@ export async function reactivateListingsForUnit(unitId: string): Promise<void> {
   }
 }
 
+/** When a user registers, find any units assigned to them by phone (without a tenantId) and link them.
+ *  This handles the case where a landlord assigned a tenant before they had an account. */
+export async function linkUnitsToUser(
+  phone: string,
+  userId: string
+): Promise<number> {
+  if (!phone) return 0;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 9) return 0;
+
+  const last9 = digits.slice(-9);
+  const formats = [...new Set([
+    digits,
+    `+254${last9}`,
+    `254${last9}`,
+    `0${last9}`,
+  ])];
+
+  let linkedCount = 0;
+
+  for (const fmt of formats) {
+    const q = query(
+      unitsRef,
+      where("tenantPhone", "==", fmt),
+      where("tenantId", "==", null)
+    );
+    const snap = await getDocs(q);
+    for (const docSnap of snap.docs) {
+      await updateDoc(doc(unitsRef, docSnap.id), {
+        tenantId: userId,
+        updatedAt: serverTimestamp(),
+      });
+      linkedCount++;
+    }
+  }
+
+  return linkedCount;
+}
+
 /** Listen to units assigned to a specific tenant (by tenantId). */
 export function listenToTenantUnits(
   tenantId: string,
