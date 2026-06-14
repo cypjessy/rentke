@@ -15,6 +15,38 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+/** Look up an app user by phone number across common Kenyan formats. */
+export async function lookupUserByPhone(
+  phone: string
+): Promise<{ uid: string; name: string; phone: string } | null> {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 9) return null;
+
+  // Derive common Kenyan phone formats from the input
+  const last9 = digits.slice(-9);
+  const formats = [
+    digits,                        // 0712345678 (as typed)
+    `+254${last9}`,                // +254712345678
+    `254${last9}`,                 // 254712345678
+    `0${last9}`,                   // 0712345678
+  ];
+
+  const uniqueFormats = [...new Set(formats)];
+  const usersRef = collection(db, "users");
+
+  for (const fmt of uniqueFormats) {
+    const q = query(usersRef, where("phone", "==", fmt));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const d = snap.docs[0];
+      const data = d.data();
+      return { uid: d.id, name: data.name || "", phone: data.phone || "" };
+    }
+  }
+  return null;
+}
+
 export interface UnitData {
   id: string;
   propertyId: string;
@@ -166,7 +198,11 @@ export async function addUnit(
   return docRef.id;
 }
 
-/** Record a lease (assign tenant to unit). */
+/** Record a lease (assign tenant to unit).
+ *
+ * If `data.tenantId` is not provided, this function attempts to auto-resolve
+ * the app user by phone number and sets `tenantId` so the tenant's My Unit
+ * page works without manual lookup. */
 export async function recordLease(
   unitId: string,
   data: LeaseFormData
@@ -189,10 +225,22 @@ export async function recordLease(
   const end = new Date(start);
   end.setMonth(end.getMonth() + termMonths);
 
+  // Auto-resolve tenantId by phone if not provided
+  let resolvedTenantId = data.tenantId || null;
+  if (!resolvedTenantId && data.tenantPhone) {
+    try {
+      const user = await lookupUserByPhone(data.tenantPhone);
+      if (user) resolvedTenantId = user.uid;
+    } catch {
+      // Silently skip — tenantId stays null and the unit won't appear
+      // on My Unit until the landlord manually links it.
+    }
+  }
+
   await updateDoc(doc(unitsRef, unitId), {
     tenantName: data.tenantName,
     tenantPhone: data.tenantPhone,
-    tenantId: data.tenantId || null,
+    tenantId: resolvedTenantId,
     tenantInitials: initials,
     status: "Occupied",
     payment: "Paid",
@@ -203,6 +251,33 @@ export async function recordLease(
     leaseTerm: data.leaseTerm,
     updatedAt: serverTimestamp(),
   });
+
+  // Mark any active listings for this unit as "taken" so they
+  // stop appearing in browse and show as "Taken" in saved/favorites.
+  await markListingsAsTaken(unitId);
+}
+
+/** Mark all active (or paused) listings for a unit as "taken".
+ *  This removes them from browse results while preserving
+ *  their data for existing favorites/inquiries. */
+export async function markListingsAsTaken(unitId: string): Promise<void> {
+  try {
+    const listingsRef = collection(db, "listings");
+    const q = query(
+      listingsRef,
+      where("unitId", "==", unitId),
+      where("status", "in", ["active", "paused"])
+    );
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      await updateDoc(doc(listingsRef, docSnap.id), {
+        status: "taken",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to mark listings as taken:", err);
+  }
 }
 
 /** Update an existing unit. */
@@ -276,7 +351,7 @@ async function activateListingForUnit(unitId: string): Promise<void> {
   }
 }
 
-/** Vacate a unit (remove tenant). */
+/** Vacate a unit (remove tenant) and re-activate any "taken" listings. */
 export async function vacateUnit(unitId: string): Promise<void> {
   await updateDoc(doc(unitsRef, unitId), {
     tenantId: null,
@@ -290,6 +365,26 @@ export async function vacateUnit(unitId: string): Promise<void> {
     leaseTerm: "",
     updatedAt: serverTimestamp(),
   });
+
+  // Re-activate any "taken" listings for this unit back to the marketplace
+  await reactivateListingsForUnit(unitId);
+}
+
+/** Find and re-activate any "taken" listing linked to this unit. */
+export async function reactivateListingsForUnit(unitId: string): Promise<void> {
+  try {
+    const listingsRef = collection(db, "listings");
+    const q = query(listingsRef, where("unitId", "==", unitId), where("status", "==", "taken"));
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      await updateDoc(doc(listingsRef, docSnap.id), {
+        status: "active",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to reactivate listings:", err);
+  }
 }
 
 /** Listen to units assigned to a specific tenant (by tenantId). */

@@ -10,6 +10,7 @@ import {
   Menu,
   User,
   CalendarDays,
+  Compass,
   X as XIcon,
   Check,
   X,
@@ -21,6 +22,7 @@ import { useAuth } from "../AuthContext";
 
 const navItems = [
   { key: "home", label: "Home", icon: Home, path: "/browse" },
+  { key: "explore", label: "Explore", icon: Compass, path: "/browse/explore" },
   { key: "saved", label: "Saved", icon: Heart, path: "/browse/saved" },
   { key: "messages", label: "Messages", icon: MessageCircle, path: "/browse/messages" },
   { key: "more", label: "More", icon: Menu, path: null },
@@ -37,7 +39,6 @@ const EXTRA_SECTIONS = [
   {
     title: "Activity",
     items: [
-      { icon: Search, label: "Explore", desc: "Find rentals & properties", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/explore" },
       { icon: CalendarDays, label: "Viewings", desc: "Scheduled visits", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/viewings" },
     ],
   },
@@ -176,7 +177,11 @@ function BrowseShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = item.key === "explore"
+              ? pathname.startsWith("/browse/explore") || pathname.startsWith("/browse/area")
+              : item.key === "more"
+                ? false
+                : pathname === item.path;
             const Icon = item.icon;
             return (
               <button

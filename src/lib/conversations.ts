@@ -59,6 +59,51 @@ export interface MessageData {
   createdAt: Timestamp | null;
 }
 
+// ---- Cache Helpers (localStorage for offline-first & cost savings) ----
+
+const CACHE_PREFIX = "rentke_cache_";
+const CONV_CACHE_KEY = (uid: string) => `${CACHE_PREFIX}conversations_${uid}`;
+const CONV_CACHE_TS_KEY = (uid: string) => `${CACHE_PREFIX}conversations_ts_${uid}`;
+const MSG_CACHE_KEY = (cid: string) => `${CACHE_PREFIX}messages_${cid}`;
+const MSG_CACHE_TS_KEY = (cid: string) => `${CACHE_PREFIX}messages_ts_${cid}`;
+
+function safeJson<T>(raw: string | null): T | null {
+  if (!raw) return null;
+  try { return JSON.parse(raw) as T; } catch { return null; }
+}
+
+export function getCachedConversations(userId: string): ConversationData[] | null {
+  if (typeof window === "undefined") return null;
+  return safeJson<ConversationData[]>(localStorage.getItem(CONV_CACHE_KEY(userId)));
+}
+
+export function setCachedConversations(userId: string, convs: ConversationData[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CONV_CACHE_KEY(userId), JSON.stringify(convs));
+    localStorage.setItem(CONV_CACHE_TS_KEY(userId), String(Date.now()));
+  } catch { /* quota exceeded — silently ignore */ }
+}
+
+export function getCachedConversationsTimestamp(userId: string): number | null {
+  if (typeof window === "undefined") return null;
+  const ts = localStorage.getItem(CONV_CACHE_TS_KEY(userId));
+  return ts ? parseInt(ts, 10) : null;
+}
+
+export function getCachedMessages(conversationId: string): MessageData[] | null {
+  if (typeof window === "undefined") return null;
+  return safeJson<MessageData[]>(localStorage.getItem(MSG_CACHE_KEY(conversationId)));
+}
+
+export function setCachedMessages(conversationId: string, msgs: MessageData[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(MSG_CACHE_KEY(conversationId), JSON.stringify(msgs));
+    localStorage.setItem(MSG_CACHE_TS_KEY(conversationId), String(Date.now()));
+  } catch { /* silently ignore */ }
+}
+
 // ---- Refs ----
 
 const conversationsRef = collection(db, "conversations");

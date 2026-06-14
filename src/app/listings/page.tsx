@@ -393,6 +393,7 @@ function ListingsPage() {
       case "paused": return { bg: "rgba(234,179,8,0.9)", color: "white", label: "Paused" };
       case "expired": return { bg: "rgba(239,68,68,0.9)", color: "white", label: "Expired" };
       case "draft": return { bg: "rgba(168,85,247,0.9)", color: "white", label: "Draft" };
+      case "taken": return { bg: "rgba(107,114,128,0.9)", color: "white", label: "Taken" };
       default: return { bg: "rgba(4,120,87,0.9)", color: "white", label: status };
     }
   };
@@ -453,6 +454,7 @@ function ListingsPage() {
               { key: "paused", label: "Paused", color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.15)" },
               { key: "expired", label: "Expired", color: "#ef4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.15)" },
               { key: "draft", label: "Draft", color: "#a855f7", bg: "rgba(168,85,247,0.06)", border: "rgba(168,85,247,0.15)" },
+              { key: "taken", label: "Taken", color: "#6b7280", bg: "rgba(107,114,128,0.06)", border: "rgba(107,114,128,0.15)" },
             ].map((s) => (
               <div key={s.key} className="p-2.5 rounded-xl text-center" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
                 <p className="text-base font-bold" style={{ color: s.color }}>{listings.filter(l => l.status === s.key).length}</p>
@@ -469,6 +471,7 @@ function ListingsPage() {
               { key: "paused", label: "Paused", count: listings.filter(l => l.status === "paused").length.toString(), dot: "#eab308" },
               { key: "expired", label: "Expired", count: listings.filter(l => l.status === "expired").length.toString(), dot: "#ef4444" },
               { key: "draft", label: "Draft", count: listings.filter(l => l.status === "draft").length.toString(), dot: "#a855f7" },
+              { key: "taken", label: "Taken", count: listings.filter(l => l.status === "taken").length.toString(), dot: "#6b7280" },
             ].map((f) => (
               <button
                 key={f.key}
@@ -496,8 +499,9 @@ function ListingsPage() {
               const isPaused = listing.status === "paused";
               const isExpired = listing.status === "expired";
               const isDraft = listing.status === "draft";
-              const opacity = isExpired ? 0.6 : isDraft ? 0.5 : isPaused ? 0.7 : 1;
-              const imgFilter = isExpired ? "grayscale(60%)" : isPaused ? "grayscale(40%)" : "none";
+              const isTaken = listing.status === "taken";
+              const opacity = isExpired ? 0.6 : isDraft ? 0.5 : isPaused ? 0.7 : isTaken ? 0.55 : 1;
+              const imgFilter = isExpired ? "grayscale(60%)" : isPaused || isTaken ? "grayscale(40%)" : "none";
               const perfPct = Math.min(Math.round(((listing.views + listing.inquiries * 10) / 100) * 100), 100);
               const perfColor = perfPct >= 80 ? "#047857" : perfPct >= 50 ? "#eab308" : "#ef4444";
               const perfLabel = perfPct >= 80 ? "High" : perfPct >= 50 ? "Medium" : perfPct >= 20 ? "Low" : "—";
@@ -582,7 +586,7 @@ function ListingsPage() {
                         </div>
                       )}
 
-                      {/* Paused / Draft / Expired banners */}
+                      {/* Paused / Draft / Expired / Taken banners */}
                       {isPaused && (
                         <div className="flex items-center gap-2 mt-2 p-2 rounded-lg" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.12)" }}>
                           <PauseCircle className="w-3.5 h-3.5" style={{ color: "#eab308" }} />
@@ -602,6 +606,12 @@ function ListingsPage() {
                           <AlertCircle className="w-3.5 h-3.5" style={{ color: "#a855f7" }} />
                           <p className="text-xs" style={{ color: "#a855f7" }}>Complete setup to publish</p>
                           <button onClick={(e) => { e.stopPropagation(); openSheet("editListing"); }} className="text-xs font-semibold ml-auto" style={{ color: "#a855f7" }}>Edit</button>
+                        </div>
+                      )}
+                      {isTaken && (
+                        <div className="flex items-center gap-2 mt-2 p-2 rounded-lg" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.15)" }}>
+                          <Check className="w-3.5 h-3.5" style={{ color: "#6b7280" }} />
+                          <p className="text-xs" style={{ color: "#6b7280" }}>Tenant assigned — not available</p>
                         </div>
                       )}
 
@@ -716,7 +726,7 @@ function ListingsPage() {
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#525252" }}>Status</label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {["active", "paused", "expired", "draft"].map((s) => {
+                {["active", "paused", "expired", "draft", "taken"].map((s) => {
                   const selected = filterListTypes.includes(s);
                   return (
                   <button

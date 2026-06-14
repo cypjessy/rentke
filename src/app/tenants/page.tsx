@@ -49,6 +49,7 @@ import {
   vacateUnit,
   setUnitMaintenance,
   updateUnit as updateUnitPartial,
+  lookupUserByPhone,
   type UnitData,
   type LeaseFormData,
 } from "../../lib/units";
@@ -94,6 +95,10 @@ export default function TenantsPage() {
   const [formDeposit, setFormDeposit] = useState("");
   const [formLeaseTerm, setFormLeaseTerm] = useState("12 months");
   const [formSaving, setFormSaving] = useState(false);
+
+  // ---- Lookup State ----
+  const [lookedUpUser, setLookedUpUser] = useState<{ uid: string; name: string; phone: string } | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   // ---- Form State: Renew Lease ----
   const [renewStart, setRenewStart] = useState("");
@@ -303,6 +308,10 @@ export default function TenantsPage() {
 
   // ---- Pre-fill assign form when selected unit changes ----
   useEffect(() => {
+    // Reset lookup state when the assign sheet opens
+    if (activeSheet === "assign-tenant") {
+      setLookedUpUser(null);
+    }
     if (selectedUnit && activeSheet === "assign-tenant" && selectedUnit.tenantName) {
       const nameParts = selectedUnit.tenantName.split(" ");
       setFormFirstName(nameParts[0] || "");
@@ -397,6 +406,34 @@ export default function TenantsPage() {
   };
 
   // ---- Handlers ----
+  // ---- Lookup user by phone ----
+  const handleLookupUser = async () => {
+    if (!formPhone || formPhone.trim().length < 9) {
+      showSnackbar("Please enter a valid phone number first", "error");
+      return;
+    }
+    setLookupLoading(true);
+    setLookedUpUser(null);
+    try {
+      const result = await lookupUserByPhone(formPhone);
+      if (result) {
+        setLookedUpUser(result);
+        // Auto-fill name from the app user
+        const nameParts = result.name.split(" ");
+        setFormFirstName(nameParts[0] || "");
+        setFormLastName(nameParts.slice(1).join(" ") || "");
+        showSnackbar(`✓ Found ${result.name} on RentKe!`, "success");
+      } else {
+        setLookedUpUser(null);
+        showSnackbar("No app user found with that phone. You can still assign manually.", "info");
+      }
+    } catch (err: any) {
+      console.error("Lookup error:", err);
+      showSnackbar("Failed to lookup user", "error");
+    }
+    setLookupLoading(false);
+  };
+
   const handleAssignTenant = async () => {
     if (!selectedUnit || !user) return;
     if (!formFirstName || !formLastName) {
@@ -409,6 +446,7 @@ export default function TenantsPage() {
       const leaseData: LeaseFormData = {
         tenantName,
         tenantPhone: formPhone,
+        tenantId: lookedUpUser?.uid || undefined,
         leaseStart: formLeaseStart || new Date().toISOString().split("T")[0],
         leaseTerm: formLeaseTerm,
         rent: parseInt(formRent.replace(/,/g, "")) || selectedUnit.rent,
@@ -1345,7 +1383,47 @@ export default function TenantsPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#a3a3a3" }}>PHONE NUMBER</label>
-                <input type="tel" className="android-input" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+254 712 345 678" />
+                <div className="flex gap-2">
+                  <input type="tel" className="android-input flex-1" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+254 712 345 678" />
+                  <button
+                    onClick={handleLookupUser}
+                    disabled={lookupLoading || !formPhone}
+                    className="px-3 rounded-xl text-xs font-semibold whitespace-nowrap"
+                    style={{
+                      background: lookupLoading ? "rgba(255,255,255,0.05)" : "rgba(4,120,87,0.15)",
+                      color: lookupLoading ? "#525252" : "#047857",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      opacity: !formPhone ? 0.4 : 1,
+                      cursor: !formPhone || lookupLoading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {lookupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍 Find"}
+                  </button>
+                </div>
+
+                {/* Lookup result */}
+                {lookedUpUser && (
+                  <div className="mt-2 p-3 rounded-xl" style={{ background: "rgba(4,120,87,0.08)", border: "1px solid rgba(4,120,87,0.2)" }}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "rgba(4,120,87,0.2)", color: "#047857" }}>
+                        {lookedUpUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-white flex items-center gap-1">
+                          {lookedUpUser.name}
+                          <Check className="w-3.5 h-3.5" style={{ color: "#047857" }} />
+                        </p>
+                        <p className="text-xs" style={{ color: "#047857" }}>RentKe app user · will access My Unit portal</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!lookedUpUser && formPhone && formPhone.trim().length >= 9 && (
+                  <p className="text-xs mt-1.5" style={{ color: "#525252" }}>
+                    Click 🔍 Find to search for an existing RentKe user by phone
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#a3a3a3" }}>ID NUMBER</label>

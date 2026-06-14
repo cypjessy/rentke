@@ -54,6 +54,10 @@ import {
   archiveConversation,
   unarchiveConversation,
   toggleMuteConversation,
+  getCachedConversations,
+  setCachedConversations,
+  getCachedMessages,
+  setCachedMessages,
   type ConversationData,
   type MessageData,
 } from "../../lib/conversations";
@@ -148,11 +152,21 @@ export default function MessagesPage() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  // ---- Listen to conversations ----
+  // ---- Load cached conversations instantly, then listen to Firestore ----
   useEffect(() => {
     if (!uid) { setConvsLoading(false); return; }
+
+    // 1. Show cached data immediately (zero-cost, no Firestore reads)
+    const cached = getCachedConversations(uid);
+    if (cached) {
+      setConversations(cached);
+      setConvsLoading(false);
+    }
+
+    // 2. Firestore listener — updates cache when new data arrives
     const unsub = listenToConversations(uid, (data) => {
       setConversations(data);
+      setCachedConversations(uid, data);  // persist to localStorage
       setConvsLoading(false);
     }, (err) => {
       console.error("Conversations error:", err);
@@ -161,12 +175,21 @@ export default function MessagesPage() {
     return () => unsub();
   }, [uid]);
 
-  // ---- Listen to messages for active chat ----
+  // ---- Listen to messages for active chat (with cache) ----
   useEffect(() => {
     if (!activeChatId) { setCurrentMessages([]); return; }
     setMessagesLoading(true);
+
+    // Show cached messages instantly
+    const cached = getCachedMessages(activeChatId);
+    if (cached) {
+      setCurrentMessages(cached);
+      setMessagesLoading(false);
+    }
+
     const unsub = listenToMessages(activeChatId, (data) => {
       setCurrentMessages(data);
+      setCachedMessages(activeChatId, data);  // persist to localStorage
       setMessagesLoading(false);
     }, (err) => {
       console.error("Messages error:", err);
@@ -554,6 +577,21 @@ export default function MessagesPage() {
         {/* ====== MAIN CONTENT ====== */}
         <div className="app-content">
           <div id="chat-list" className="pb-4">
+            {/* Skeleton Loading */}
+            {convsLoading && filteredChats.length === 0 && (
+              <div className="px-3 mt-2 space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
+                    <div className="w-12 h-12 rounded-full flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-2/5 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+                      <div className="h-2.5 w-3/5 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+                      <div className="h-2 w-1/3 rounded" style={{ background: "rgba(255,255,255,0.03)" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {filteredChats.map((chat, i) => (
               <div
                 key={i}

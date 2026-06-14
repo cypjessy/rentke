@@ -72,6 +72,8 @@ export default function ViewListingSheet({
         return { bg: "rgba(239,68,68,0.9)", color: "white", label: "Expired" };
       case "draft":
         return { bg: "rgba(168,85,247,0.9)", color: "white", label: "Draft" };
+      case "taken":
+        return { bg: "rgba(107,114,128,0.9)", color: "white", label: "Taken" };
       default:
         return { bg: "rgba(4,120,87,0.9)", color: "white", label: status };
     }

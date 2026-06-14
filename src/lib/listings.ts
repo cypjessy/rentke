@@ -27,7 +27,7 @@ export interface ListingData {
   rent: number;
   images: string[];
   amenities: string[];
-  status: "active" | "paused" | "expired" | "draft";
+  status: "active" | "paused" | "expired" | "draft" | "taken";
   boosted: boolean;
   boostExpiry: Timestamp | null;
   views: number;

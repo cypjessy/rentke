@@ -38,6 +38,8 @@ import {
   sendMessage as sendMessageFS,
   markConversationRead,
   createConversation,
+  getCachedMessages,
+  setCachedMessages,
 } from "../../../lib/conversations";
 import type { ConversationData, MessageData } from "../../../lib/conversations";
 import { Timestamp, doc, getDoc } from "firebase/firestore";
@@ -164,15 +166,24 @@ export default function MessagesPage() {
     setMessagesLoading(conversationsLoading);
   }, [contextConversations, user?.uid, conversationsLoading]);
 
-  // ---- Firestore Listener for Messages in Active Chat ----
+  // ---- Firestore Listener for Messages in Active Chat (with cache) ----
   useEffect(() => {
     if (!activeChat) {
       setCurrentMessages([]);
       return;
     }
     setMessagesLoading(true);
+
+    // Show cached messages instantly
+    const cached = getCachedMessages(activeChat);
+    if (cached) {
+      setCurrentMessages(cached);
+      setMessagesLoading(false);
+    }
+
     const unsub = listenToMessages(activeChat, (data) => {
       setCurrentMessages(data);
+      setCachedMessages(activeChat, data);  // persist to localStorage
       setMessagesLoading(false);
     }, (err) => {
       console.error("Messages listener error:", err);
@@ -599,7 +610,22 @@ export default function MessagesPage() {
 
           {/* Chat List */}
           <div className="px-2 pb-24">
-            {chatGroups.length === 0 && (
+            {/* Skeleton Loading */}
+            {(conversationsLoading) && enrichedChats.length === 0 && (
+              <div className="px-3 mt-2 space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
+                    <div className="w-12 h-12 rounded-full flex-shrink-0" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-2/5 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+                      <div className="h-2.5 w-3/5 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+                      <div className="h-2 w-1/3 rounded" style={{ background: "rgba(255,255,255,0.03)" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {chatGroups.length === 0 && conversations.length > 0 && (
               <div className="text-center py-12">
                 <MessageCircle className="w-12 h-12 mx-auto mb-3" style={{ color: "#525252" }} />
                 <p className="text-sm" style={{ color: "#525252" }}>

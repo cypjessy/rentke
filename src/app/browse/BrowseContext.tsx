@@ -6,7 +6,7 @@ import { PLACEHOLDER_IMAGE } from "../constants";
 import { useAuth } from "../AuthContext";
 import { listenToTenantViewings, listenToFavorites, toggleFavorite as toggleFavoriteFS } from "@/lib/browse";
 import type { FavoriteData } from "@/lib/browse";
-import { listenToConversations } from "@/lib/conversations";
+import { listenToConversations, getCachedConversations, setCachedConversations } from "@/lib/conversations";
 import type { ConversationData } from "@/lib/conversations";
 import { listenToNotifications } from "@/lib/notifications";
 import type { NotificationData } from "@/lib/notifications";
@@ -160,15 +160,24 @@ export function BrowseProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [user, userPhone]);
 
-  // ---- Listener: Conversations ----
+  // ---- Listener: Conversations (with localStorage cache) ----
   useEffect(() => {
     if (!user) return;
     setConversationsLoading(true);
     setConversationsError(null);
+
+    // Show cached data instantly (zero-cost, no Firestore reads)
+    const cached = getCachedConversations(user.uid);
+    if (cached) {
+      setConversations(cached);
+      setConversationsLoading(false);
+    }
+
     const unsub = listenToConversations(
       user.uid,
       (data) => {
         setConversations(data);
+        setCachedConversations(user.uid, data);  // persist to localStorage
         setConversationsLoading(false);
       },
       (err) => {

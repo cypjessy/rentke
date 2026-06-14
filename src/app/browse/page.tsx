@@ -434,6 +434,17 @@ export default function BrowseHome() {
         }}
       />
 
+      {/* ====== STICKY TOP: Header, Search, Categories ====== */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 20,
+          background: "#050505",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+
       {/* ====== HEADER ====== */}
       <header
         className="px-3 pt-4 pb-2 flex items-center justify-between"
@@ -551,6 +562,7 @@ export default function BrowseHome() {
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       {/* ====== FILTERED RESULTS (in-page, shown when a category is selected) ====== */}
