@@ -578,14 +578,11 @@ export default function ViewListingSheet({
                   Activity log will show views, inquiries, and status changes for
                   this listing. Check the{" "}
                   <button
-                    onClick={() => {
-                      onClose();
-                      setTimeout(() => router.push("/inquiries"), 300);
-                    }}
+                    onClick={onClose}
                     className="font-semibold"
-                    style={{ color: "#047857" }}
+                    style={{ color: "#525252" }}
                   >
-                    Inquiries page
+                    Messages page
                   </button>{" "}
                   for detailed inquiry activity.
                 </p>

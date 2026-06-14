@@ -7,7 +7,6 @@ import {
   Search,
   Heart,
   MessageCircle,
-  FileText,
   Menu,
   User,
   CalendarDays,
@@ -31,15 +30,15 @@ const EXTRA_SECTIONS = [
   {
     title: "Account",
     items: [
+      { icon: Home, label: "My Unit", desc: "Your rental & payments", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/my-unit" },
       { icon: User, label: "Profile", desc: "Your profile & settings", color: "#047857", bg: "rgba(4,120,87,0.12)", path: "/browse/profile" },
-    ],
+    ]
   },
   {
     title: "Activity",
     items: [
       { icon: Search, label: "Explore", desc: "Find rentals & properties", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/browse/explore" },
       { icon: CalendarDays, label: "Viewings", desc: "Scheduled visits", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/browse/viewings" },
-      { icon: FileText, label: "Documents", desc: "Leases, notices & forms", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/browse/documents" },
     ],
   },
 ];

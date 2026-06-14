@@ -10,14 +10,7 @@ import {
   Menu,
   CalendarDays,
   MessageSquare,
-  MessageCircle,
-  DoorOpen,
-  BadgeCheck,
-  Megaphone,
-  MessageSquareWarning,
-  Wrench,
-  FileText,
-  CreditCard,
+  Users,
   Settings,
   X as XIcon,
 } from "lucide-react";
@@ -48,33 +41,16 @@ interface MenuSection {
 
 const MENU_SECTIONS: MenuSection[] = [
   {
-    title: "Quick Access",
+    title: "Management",
     items: [
-      { icon: MessageCircle, label: "Inquiries", desc: "Tenant requests & leads", color: "#047857", bg: "rgba(4,120,87,0.12)", path: "/inquiries" },
+      { icon: Users, label: "Tenants", desc: "Unit & tenant management", color: "#06b6d4", bg: "rgba(6,182,212,0.12)", path: "/tenants" },
       { icon: MessageSquare, label: "Messages", desc: "Conversations", color: "#a855f7", bg: "rgba(168,85,247,0.12)", path: "/messages" },
       { icon: CalendarDays, label: "Viewings", desc: "Schedule & manage", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/viewings" },
-    ],
-  },
-  {
-    title: "Tenants & Rent",
-    items: [
-      { icon: DoorOpen, label: "Vacating", desc: "Move-out management", color: "#f97316", bg: "rgba(249,115,22,0.12)", path: "/vacating" },
-      { icon: BadgeCheck, label: "Rent Verification", desc: "Confirm payments", color: "#6366f1", bg: "rgba(99,102,241,0.12)", path: "/rent-verification" },
-      { icon: Megaphone, label: "Notices", desc: "Broadcast to tenants", color: "#f97316", bg: "rgba(249,115,22,0.12)", path: "/notices" },
-    ],
-  },
-  {
-    title: "Operations",
-    items: [
-      { icon: Wrench, label: "Maintenance", desc: "Repair requests", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", path: "/maintenance" },
-      { icon: MessageSquareWarning, label: "Complaints", desc: "Issues & disputes", color: "#ef4444", bg: "rgba(239,68,68,0.12)", path: "/complaints" },
-      { icon: FileText, label: "Documents", desc: "Leases & reports", color: "#06b6d4", bg: "rgba(6,182,212,0.12)", path: "/documents" },
-    ],
+    ]
   },
   {
     title: "Account",
     items: [
-      { icon: CreditCard, label: "My Payments", desc: "Transaction history", color: "#eab308", bg: "rgba(234,179,8,0.12)", path: "/my-payments" },
       { icon: Settings, label: "Settings", desc: "Account & preferences", color: "#525252", bg: "rgba(255,255,255,0.06)", path: "/settings" },
     ],
   },

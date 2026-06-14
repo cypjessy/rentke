@@ -245,6 +245,23 @@ export async function vacateUnit(unitId: string): Promise<void> {
   });
 }
 
+/** Listen to units assigned to a specific tenant (by tenantId). */
+export function listenToTenantUnits(
+  tenantId: string,
+  onData: (units: UnitData[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  const q = query(
+    unitsRef,
+    where("tenantId", "==", tenantId),
+    orderBy("updatedAt", "desc")
+  );
+  return onSnapshot(q, (snapshot) => {
+    const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as UnitData));
+    onData(list);
+  }, (err) => onError(err));
+}
+
 /** Delete a unit. */
 export async function deleteUnit(unitId: string): Promise<void> {
   await deleteDoc(doc(unitsRef, unitId));

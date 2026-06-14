@@ -11,10 +11,6 @@ import {
   Menu,
   ChevronRight,
   Clock,
-  BadgeCheck,
-  Megaphone,
-  MessageSquareWarning,
-  DoorOpen,
   Timer,
   Check,
   CheckCircle,
@@ -37,7 +33,6 @@ import {
   Layers,
   MessageSquare,
   Settings,
-  Wrench,
   CalendarDays,
   Home,
 } from "lucide-react";
@@ -1272,17 +1267,11 @@ export default function ViewingRequests() {
         </div>
         <div className="px-3 pb-8">
           {[
-            { icon: MessageCircle, label: "Inquiries", desc: "3 new inquiries", color: "#047857", path: "/inquiries" },
             { icon: Layers, label: "Units", desc: "8 units across 4 properties", color: "#3b82f6", path: "/units" },
             { icon: CalendarDays, label: "Viewings", desc: "8 viewing requests", color: "#eab308", path: "/viewings" },
             { icon: CalendarDays, label: "Calendar", desc: "Viewings & schedule", color: "#eab308", path: "/calendar" },
             { icon: MessageSquare, label: "Messages", desc: "18 conversations", color: "#a855f7", path: "/messages" },
-            { icon: DoorOpen, label: "Vacating", desc: "Move-out management", color: "#f97316", path: "/vacating" },
-            { icon: BadgeCheck, label: "Rent Verification", desc: "Review & confirm payments", color: "#6366f1", path: "/rent-verification" },
-            { icon: Megaphone, label: "Notices", desc: "Broadcast to tenants", color: "#f97316", path: "/notices" },
-            { icon: MessageSquareWarning, label: "Complaints", desc: "Tenant issues & maintenance", color: "#ef4444", path: "/complaints" },
             { icon: Settings, label: "Settings", desc: "Account & preferences", color: "#525252", path: "/settings" },
-            { icon: Wrench, label: "Maintenance", desc: "", color: "#f97316", path: "/maintenance" },
           ].map((item, i) => (
             <button
               key={i}

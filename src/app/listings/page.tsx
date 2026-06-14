@@ -1089,8 +1089,8 @@ function ListingsPage() {
               <p className="text-sm" style={{ color: "#a3a3a3" }}>View inquiries for this listing on the inquiries page</p>
             </div>
           </div>
-          <button onClick={() => router.push("/inquiries")} className="w-full text-center text-sm font-semibold mt-6" style={{ color: "#047857" }}>
-            See All Inquiries →
+          <button onClick={closeSheet} className="w-full text-center text-sm font-semibold mt-6" style={{ color: "#525252" }}>
+            View inquiries in Messages
           </button>
           </>;
           })()}

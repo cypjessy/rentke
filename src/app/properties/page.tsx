@@ -1131,8 +1131,8 @@ export default function PropertiesPage() {
             <button onClick={() => { closeSheet(); setTimeout(() => router.push(`/units`), 300); }} className="btn-secondary flex items-center justify-center gap-2" style={{ padding: "12px" }}>
               <Pencil className="w-4 h-4" /><span className="text-sm">Edit in Units</span>
             </button>
-            <button onClick={() => { closeSheet(); setTimeout(() => router.push('/maintenance'), 300); }} className="btn-secondary flex items-center justify-center gap-2" style={{ padding: "12px" }}>
-              <Wrench className="w-4 h-4" /><span className="text-sm">Maintenance</span>
+            <button onClick={() => { closeSheet(); setTimeout(() => router.push('/units'), 300); }} className="btn-secondary flex items-center justify-center gap-2" style={{ padding: "12px" }}>
+              <Wrench className="w-4 h-4" /><span className="text-sm">Units</span>
             </button>
           </div>
             </>

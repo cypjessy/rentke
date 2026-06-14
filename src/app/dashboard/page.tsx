@@ -805,7 +805,7 @@ export default function LandlordDashboard() {
               </div>
               <div
                 className="stat-card animate-in stagger-4"
-                onClick={() => router.push("/inquiries")}
+                onClick={() => router.push("/messages")}
               >
                 <div className="glow" style={{ background: "#a855f7" }} />
                 <div className="flex items-center justify-between mb-3">
@@ -1133,8 +1133,8 @@ export default function LandlordDashboard() {
                 <h3 className="section-title">Maintenance Requests</h3>
                 <button
                   className="section-action"
-                  onClick={() => router.push("/maintenance")}
-                >
+                  
+                  >
                   View All
                 </button>
               </div>
@@ -1153,7 +1153,7 @@ export default function LandlordDashboard() {
                       key={req.id}
                       className="flex items-start gap-3 p-3.5 rounded-2xl cursor-pointer"
                       style={{ background: "#1A1D21", border: "1px solid rgba(255,255,255,0.06)" }}
-                      onClick={() => router.push('/maintenance')}
+                      
                     >
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1574,7 +1574,7 @@ export default function LandlordDashboard() {
                   <div
                     key={i}
                     className="activity-item flex items-start gap-3 px-4 py-3 cursor-pointer relative"
-                    onClick={() => router.push('/inquiries')}
+                    onClick={() => router.push('/messages')}
                   >
                     {i < recentActivity.length - 1 && (
                       <div
@@ -2134,7 +2134,7 @@ export default function LandlordDashboard() {
                         openPhoneUrl(user.phoneNumber, action.label === "Call" ? "tel" : "wa");
                       }
                     } else if (action.label === "Decline") {
-                      router.push("/inquiries");
+                      closeSheet();
                     }
                     closeSheet();
                   }}
