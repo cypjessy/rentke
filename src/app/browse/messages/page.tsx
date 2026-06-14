@@ -1126,7 +1126,7 @@ export default function MessagesPage() {
                               {msgTime}
                               <CheckCheck
                                 className="w-3.5 h-3.5 inline"
-                                style={{ color: "#047857" }}
+                                style={{ color: "#047857", opacity: msg.read ? 1 : 0.5 }}
                               />
                             </p>
                           )}
