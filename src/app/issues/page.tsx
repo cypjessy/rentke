@@ -198,8 +198,8 @@ export default function IssuesPage() {
       <div style={{ animation: "slideInUp 0.5s ease", paddingBottom: 80 }}>
         {/* ====== TABS ====== */}
         <div className="flex gap-2 px-3 mb-4">
-          <button onClick={() => setActiveTab("complaints")} className={`tab-btn ${activeTab === "complaints" ? "active" : ""}`}>Complaints</button>
-          <button onClick={() => setActiveTab("vacating")} className={`tab-btn ${activeTab === "vacating" ? "active" : ""}`}>Vacating</button>
+          <button onClick={(e) => { setActiveTab("complaints"); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }} className={`tab-btn ${activeTab === "complaints" ? "active" : ""}`}>Complaints</button>
+          <button onClick={(e) => { setActiveTab("vacating"); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }} className={`tab-btn ${activeTab === "vacating" ? "active" : ""}`}>Vacating</button>
         </div>
 
         {/* ====== COMPLAINTS TAB ====== */}

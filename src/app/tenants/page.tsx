@@ -14,12 +14,16 @@ import {
   Plus,
   DoorOpen,
   AlertCircle,
+  AlertTriangle,
   Check,
   X,
   Info,
   Building2,
   Loader2,
   Wrench,
+  Upload,
+  Download,
+  Camera,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "../components/AuthGuard";
@@ -28,8 +32,14 @@ import { useAuth } from "../AuthContext";
 import {
   collection,
   doc,
+  addDoc,
   updateDoc,
   serverTimestamp,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { listenToProperties, type PropertyData } from "../../lib/properties";
@@ -43,6 +53,8 @@ import {
   type LeaseFormData,
 } from "../../lib/units";
 import { LEASE_TERM_OPTIONS } from "../constants";
+import { createNotification } from "../../lib/notifications";
+import { uploadPhoto, openFilePicker } from "../../lib/upload";
 
 type SnackbarType = "success" | "error" | "info";
 
@@ -86,6 +98,31 @@ export default function TenantsPage() {
   const [renewEnd, setRenewEnd] = useState("");
   const [renewRent, setRenewRent] = useState("");
   const [renewSaving, setRenewSaving] = useState(false);
+
+  // ---- Tab Data: Payments ----
+  const [payments, setPayments] = useState<any[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+
+  // ---- Tab Data: Complaints (maintenance) ----
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+
+  // ---- Tab Data: Documents ----
+  interface DocData {
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    fileType: string;
+    uploadedAt: any;
+  }
+  const [documents, setDocuments] = useState<DocData[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
+  // ---- Tab Data: Vacating Notices ----
+  const [vacatingNotices, setVacatingNotices] = useState<any[]>([]);
+  const [vacatingNoticesLoading, setVacatingNoticesLoading] = useState(false);
 
   // ---- Form State: Maintenance ----
   const [maintReason, setMaintReason] = useState("Plumbing");
@@ -135,6 +172,114 @@ export default function TenantsPage() {
     );
     return () => unsub();
   }, [selectedProperty]);
+
+  // ---- Listen to payments for selected unit ----
+  useEffect(() => {
+    if (!selectedUnit || !user) {
+      setPayments([]);
+      return;
+    }
+    setPaymentsLoading(true);
+    const q = query(
+      collection(db, "payments"),
+      where("unitId", "==", selectedUnit.id),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setPayments(list);
+        setPaymentsLoading(false);
+      },
+      (err) => {
+        console.error("Error loading payments:", err);
+        setPaymentsLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [selectedUnit?.id, user]);
+
+  // ---- Listen to complaints (maintenance) for selected unit ----
+  useEffect(() => {
+    if (!selectedUnit) {
+      setComplaints([]);
+      return;
+    }
+    setComplaintsLoading(true);
+    const q = query(
+      collection(db, "maintenance"),
+      where("unitId", "==", selectedUnit.id),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setComplaints(list);
+        setComplaintsLoading(false);
+      },
+      (err) => {
+        console.error("Error loading complaints:", err);
+        setComplaintsLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [selectedUnit?.id]);
+
+  // ---- Listen to documents for selected unit ----
+  useEffect(() => {
+    if (!selectedUnit) {
+      setDocuments([]);
+      return;
+    }
+    setDocsLoading(true);
+    const q = query(
+      collection(db, "documents"),
+      where("unitId", "==", selectedUnit.id),
+      orderBy("uploadedAt", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as DocData));
+        setDocuments(list);
+        setDocsLoading(false);
+      },
+      (err) => {
+        console.error("Error loading documents:", err);
+        setDocsLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [selectedUnit?.id]);
+
+  // ---- Listen to vacating notices for selected unit ----
+  useEffect(() => {
+    if (!selectedUnit) {
+      setVacatingNotices([]);
+      return;
+    }
+    setVacatingNoticesLoading(true);
+    const q = query(
+      collection(db, "vacatingNotices"),
+      where("unitId", "==", selectedUnit.id),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setVacatingNotices(list);
+        setVacatingNoticesLoading(false);
+      },
+      (err) => {
+        console.error("Error loading vacating notices:", err);
+        setVacatingNoticesLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [selectedUnit?.id]);
 
   // ---- Pre-fill assign form when selected unit changes ----
   useEffect(() => {
@@ -310,9 +455,18 @@ export default function TenantsPage() {
     setMaintSaving(true);
     try {
       await setUnitMaintenance(selectedUnit.id, maintReason, maintNotes, maintDuration);
+      // Notify tenant
+      if (selectedUnit.tenantId) {
+        await createNotification(
+          selectedUnit.tenantId,
+          "maintenance_update",
+          "🔧 Maintenance Scheduled",
+          `${maintReason} work scheduled for ${selectedUnit.name} at ${selectedUnit.propertyName}. Expected duration: ${maintDuration || "TBD"} days.`
+        );
+      }
       setMaintSaving(false);
       closeSheet();
-      showSnackbar("Unit marked for maintenance 🔧", "info");
+      showSnackbar("Unit marked for maintenance — tenant notified 🔧", "info");
     } catch (err: any) {
       setMaintSaving(false);
       showSnackbar(err?.message || "Failed to set maintenance", "error");
@@ -322,9 +476,18 @@ export default function TenantsPage() {
   const handleVacate = async () => {
     if (!selectedUnit) return;
     try {
+      // Notify tenant before vacating
+      if (selectedUnit.tenantId) {
+        await createNotification(
+          selectedUnit.tenantId,
+          "vacate_notice",
+          "🚪 Unit Vacated",
+          `You have been vacated from ${selectedUnit.name} at ${selectedUnit.propertyName}. Please contact your landlord for deposit refund details.`
+        );
+      }
       await vacateUnit(selectedUnit.id);
       closeSheet();
-      setTimeout(() => showSnackbar("Unit vacated successfully", "info"), 300);
+      setTimeout(() => showSnackbar("Unit vacated — tenant notified", "info"), 300);
     } catch (err: any) {
       showSnackbar(err?.message || "Failed to vacate unit", "error");
     }
@@ -479,7 +642,10 @@ export default function TenantsPage() {
                         whiteSpace: "nowrap",
                         transition: "all 0.2s ease",
                       }}
-                      onClick={() => setActiveTab(tab)}
+                      onClick={(e) => {
+                        setActiveTab(tab);
+                        e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                      }}
                     >
                       {tab === "overview" ? "Overview" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -611,12 +777,12 @@ export default function TenantsPage() {
                       {/* Status Card */}
                       <div className="card p-4 text-center" style={{ background: isOccupied ? "rgba(234,179,8,0.05)" : "rgba(107,114,128,0.05)", borderColor: isOccupied ? "rgba(234,179,8,0.15)" : "rgba(107,114,128,0.15)" }}>
                         <p className="text-xs" style={{ color: "#a3a3a3" }}>Current Status</p>
-                        <p className="text-2xl font-bold mt-1" style={{ color: isOccupied ? "#eab308" : "#9ca3af" }}>
-                          {isOccupied ? "PENDING" : "N/A"}
+                        <p className="text-2xl font-bold mt-1" style={{ color: selectedUnit.payment === "Paid" ? "#059669" : isOccupied ? "#eab308" : "#9ca3af" }}>
+                          {selectedUnit.payment === "Paid" ? "PAID" : isOccupied ? "PENDING" : "N/A"}
                         </p>
                         <p className="text-sm mt-1 text-white">
                           {isOccupied
-                            ? `KSh ${selectedUnit.rent.toLocaleString()} due this month`
+                            ? `KSh ${selectedUnit.rent.toLocaleString()} for ${new Date().toLocaleString("default", { month: "long", year: "numeric" })}`
                             : "No tenant assigned"}
                         </p>
                         {isOccupied && (
@@ -644,12 +810,52 @@ export default function TenantsPage() {
                         </div>
                       </div>
 
-                      {/* Payment History placeholder */}
+                      {/* Payment History */}
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#525252" }}>Payment History</p>
-                        <div className="card p-4 text-center">
-                          <p className="text-sm" style={{ color: "#a3a3a3" }}>Payment history will appear here</p>
-                        </div>
+                        {paymentsLoading ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#525252" }} />
+                          </div>
+                        ) : payments.length === 0 ? (
+                          <div className="card p-4 text-center">
+                            <p className="text-sm" style={{ color: "#a3a3a3" }}>No payment records yet</p>
+                          </div>
+                        ) : (
+                          <div className="card overflow-hidden">
+                            {payments.map((p, i) => {
+                              const dateStr = p.verifiedAt?.toDate ? p.verifiedAt.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+                              return (
+                                <div
+                                  key={p.id}
+                                  className="card-row"
+                                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : undefined }}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: p.status === "verified" ? "rgba(4,120,87,0.15)" : "rgba(234,179,8,0.15)" }}>
+                                      {p.status === "verified" ? (
+                                        <Check className="w-4 h-4" style={{ color: "#047857" }} />
+                                      ) : (
+                                        <AlertCircle className="w-4 h-4" style={{ color: "#eab308" }} />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-white">KSh {(p.amount || selectedUnit.rent).toLocaleString()}</p>
+                                      <p className="text-xs" style={{ color: "#525252" }}>{dateStr} · {p.period || "—"}</p>
+                                    </div>
+                                  </div>
+                                  <span className="chip" style={{
+                                    fontSize: "10px", padding: "3px 8px",
+                                    background: p.status === "verified" ? "rgba(4,120,87,0.1)" : "rgba(234,179,8,0.1)",
+                                    color: p.status === "verified" ? "#047857" : "#eab308",
+                                  }}>
+                                    {p.status === "verified" ? "Verified" : "Pending"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -657,26 +863,162 @@ export default function TenantsPage() {
                   {/* ===== COMPLAINTS TAB ===== */}
                   {activeTab === "complaints" && (
                     <div className="space-y-5">
-                      <div className="card p-6 text-center">
-                        <AlertCircle className="w-10 h-10 mx-auto mb-3" style={{ color: "#525252" }} />
-                        <p className="text-sm font-medium text-white">No complaints yet</p>
-                        <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
-                          Tenant complaints and maintenance requests will appear here
-                        </p>
-                      </div>
+                      {complaintsLoading ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#525252" }} />
+                        </div>
+                      ) : complaints.length === 0 ? (
+                        <div className="card p-6 text-center">
+                          <AlertCircle className="w-10 h-10 mx-auto mb-3" style={{ color: "#525252" }} />
+                          <p className="text-sm font-medium text-white">No complaints yet</p>
+                          <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
+                            Tenant complaints and maintenance requests will appear here
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {complaints.map((c: any) => {
+                            const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
+                              "open": { label: "Open", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+                              "in-progress": { label: "In Progress", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+                              "resolved": { label: "Resolved", color: "#059669", bg: "rgba(4,120,87,0.12)" },
+                              "closed": { label: "Closed", color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+                            };
+                            const sm = statusMeta[c.status] || statusMeta["open"];
+                            const dateStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                            const urgencyColors: Record<string, string> = { "Urgent": "#ef4444", "Medium": "#eab308", "Low": "#6b7280" };
+                            return (
+                              <div key={c.id} className="card p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{c.title || "Complaint"}</p>
+                                    <p className="text-xs mt-0.5" style={{ color: "#525252" }}>{dateStr} · {c.tenantName || "Anonymous"}</p>
+                                  </div>
+                                  <span className="chip flex-shrink-0 ml-2" style={{ fontSize: "10px", padding: "3px 8px", background: sm.bg, color: sm.color }}>
+                                    {sm.label}
+                                  </span>
+                                </div>
+                                {c.description && (
+                                  <p className="text-xs mt-2" style={{ color: "#a3a3a3", lineHeight: 1.5 }}>{c.description}</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-3">
+                                  {c.urgency && (
+                                    <span className="text-xs font-medium" style={{ color: urgencyColors[c.urgency] || "#6b7280" }}>
+                                      {c.urgency}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* ===== DOCUMENTS TAB ===== */}
                   {activeTab === "documents" && (
                     <div className="space-y-5">
-                      <button onClick={() => showSnackbar("Document upload coming soon", "info")} className="btn-ghost w-full text-center flex items-center justify-center gap-2" style={{ padding: "12px 20px", fontSize: "14px" }}>
-                        <Plus className="w-4 h-4" /> Upload Document
+                      <button
+                        onClick={async () => {
+                          if (!selectedUnit || !user || uploadingDoc) return;
+                          setUploadingDoc(true);
+                          try {
+                            // Only accept PDF and image files
+                            const files = await openFilePicker("application/pdf,image/*", false);
+                            if (!files || files.length === 0) {
+                              setUploadingDoc(false);
+                              return;
+                            }
+                            const file = files[0];
+                            // Upload to Bunny.net
+                            const result = await uploadPhoto(file, "documents", user.uid);
+                            // Store document metadata in Firestore
+                            await addDoc(collection(db, "documents"), {
+                              unitId: selectedUnit.id,
+                              propertyId: selectedUnit.propertyId,
+                              landlordId: user.uid,
+                              tenantId: selectedUnit.tenantId,
+                              tenantName: selectedUnit.tenantName,
+                              name: file.name,
+                              url: result.url,
+                              type: file.type,
+                              fileType: file.type.startsWith("image") ? "image" : "pdf",
+                              fileSize: file.size,
+                              uploadedAt: serverTimestamp(),
+                            });
+                            showSnackbar("Document uploaded successfully! ✅", "success");
+                          } catch (err: any) {
+                            console.error("Upload error:", err);
+                            showSnackbar(err?.message || "Failed to upload document", "error");
+                          }
+                          setUploadingDoc(false);
+                        }}
+                        className="w-full text-center flex items-center justify-center gap-2"
+                        style={{
+                          background: uploadingDoc ? "rgba(255,255,255,0.05)" : "linear-gradient(to right, #7c3aed, #a855f7)",
+                          color: "white", fontWeight: 600, padding: "12px 20px", borderRadius: "12px",
+                          border: "none", cursor: uploadingDoc ? "not-allowed" : "pointer",
+                          opacity: uploadingDoc ? 0.5 : 1,
+                          boxShadow: uploadingDoc ? "none" : "0 4px 15px rgba(168,85,247,0.3)",
+                        }}
+                      >
+                        {uploadingDoc ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        {uploadingDoc ? "Uploading..." : "Upload Document"}
                       </button>
-                      <div className="card p-6 text-center">
-                        <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: "#525252" }} />
-                        <p className="text-sm" style={{ color: "#a3a3a3" }}>No documents uploaded yet</p>
-                      </div>
+
+                      {docsLoading ? (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#525252" }} />
+                        </div>
+                      ) : documents.length === 0 ? (
+                        <div className="card p-6 text-center">
+                          <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: "#525252" }} />
+                          <p className="text-sm" style={{ color: "#a3a3a3" }}>No documents uploaded yet</p>
+                          <p className="text-xs mt-1" style={{ color: "#525252" }}>Upload lease agreements, ID copies, or other files</p>
+                        </div>
+                      ) : (
+                        <div className="card overflow-hidden">
+                          {documents.map((doc, i) => {
+                            const dateStr = doc.uploadedAt?.toDate ? doc.uploadedAt.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                            return (
+                              <div
+                                key={doc.id}
+                                className="card-row"
+                                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderTop: i > 0 ? "1px solid rgba(255,255,255,0.04)" : undefined }}
+                              >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: doc.fileType === "pdf" ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)" }}>
+                                    {doc.fileType === "pdf" ? (
+                                      <FileText className="w-4 h-4" style={{ color: "#ef4444" }} />
+                                    ) : (
+                                      <Camera className="w-4 h-4" style={{ color: "#3b82f6" }} />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-white truncate">{doc.name || "Document"}</p>
+                                    <p className="text-xs" style={{ color: "#525252" }}>{dateStr}</p>
+                                  </div>
+                                </div>
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ml-2"
+                                  style={{ background: "rgba(255,255,255,0.05)" }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Download className="w-4 h-4" style={{ color: "#a3a3a3" }} />
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -685,18 +1027,61 @@ export default function TenantsPage() {
                     <div className="space-y-5">
                       {isOccupied ? (
                         <>
-                          <div className="card p-4 text-center">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(4,120,87,0.15)" }}>
-                              <DoorOpen className="w-6 h-6" style={{ color: "#059669" }} />
+                          {/* Vacating Notice Status */}
+                          {vacatingNoticesLoading ? (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#525252" }} />
                             </div>
-                            <h4 className="text-base font-bold text-white">No Active Notice</h4>
-                            <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
-                              {selectedUnit.tenantName} has not submitted a vacating notice.
-                            </p>
-                            <button onClick={() => openSheet("vacating-process")} className="mt-4 text-sm" style={{ padding: "12px 20px", fontSize: "14px", background: "linear-gradient(to right, #d97706, #f59e0b)", color: "white", fontWeight: 600, border: "none", borderRadius: "12px", cursor: "pointer", boxShadow: "0 4px 15px rgba(217,119,6,0.3)" }}>
-                              Initiate Move-Out
-                            </button>
-                          </div>
+                          ) : vacatingNotices.length > 0 ? (
+                            <div className="card p-4">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(239,68,68,0.15)" }}>
+                                  <DoorOpen className="w-5 h-5" style={{ color: "#ef4444" }} />
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-bold text-white">Vacating Notice Submitted</h4>
+                                  <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                                    {vacatingNotices[0].createdAt?.toDate
+                                      ? `Submitted ${vacatingNotices[0].createdAt.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                                      : "Recently submitted"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="chip" style={{
+                                  fontSize: "11px", padding: "4px 10px",
+                                  background: vacatingNotices[0].status === "approved" ? "rgba(4,120,87,0.12)" : vacatingNotices[0].status === "pending" ? "rgba(234,179,8,0.12)" : "rgba(59,130,246,0.12)",
+                                  color: vacatingNotices[0].status === "approved" ? "#059669" : vacatingNotices[0].status === "pending" ? "#eab308" : "#3b82f6",
+                                }}>
+                                  {vacatingNotices[0].status === "approved" ? "Approved" : vacatingNotices[0].status === "pending" ? "Pending" : vacatingNotices[0].status || "Submitted"}
+                                </span>
+                                {vacatingNotices[0].reason && (
+                                  <span className="text-xs" style={{ color: "#525252" }}>{vacatingNotices[0].reason}</span>
+                                )}
+                              </div>
+                              {vacatingNotices[0].notes && (
+                                <p className="text-xs mt-2" style={{ color: "#a3a3a3" }}>{vacatingNotices[0].notes}</p>
+                              )}
+                              {vacatingNotices[0].status === "approved" && (
+                                <button onClick={() => openSheet("vacating-process")} className="btn-danger w-full text-center mt-4" style={{ padding: "12px 20px", fontSize: "14px" }}>
+                                  Process Move-Out Now
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="card p-4 text-center">
+                              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(4,120,87,0.15)" }}>
+                                <DoorOpen className="w-6 h-6" style={{ color: "#059669" }} />
+                              </div>
+                              <h4 className="text-base font-bold text-white">No Active Notice</h4>
+                              <p className="text-xs mt-1" style={{ color: "#a3a3a3" }}>
+                                {selectedUnit.tenantName} has not submitted a vacating notice.
+                              </p>
+                              <button onClick={() => openSheet("vacating-process")} className="mt-4 text-sm" style={{ padding: "12px 20px", fontSize: "14px", background: "linear-gradient(to right, #d97706, #f59e0b)", color: "white", fontWeight: 600, border: "none", borderRadius: "12px", cursor: "pointer", boxShadow: "0 4px 15px rgba(217,119,6,0.3)" }}>
+                                Initiate Move-Out
+                              </button>
+                            </div>
+                          )}
 
                           <div className="card overflow-hidden">
                             <div className="p-4" style={{ background: "rgba(59,130,246,0.05)" }}>
@@ -1103,14 +1488,30 @@ export default function TenantsPage() {
             <div className="flex gap-3 mt-5">
               <button onClick={closeSheet} className="btn-ghost flex-1 text-center" style={{ padding: "12px 20px", fontSize: "14px" }}>Close</button>
               <button onClick={async () => {
-                if (!selectedUnit) return;
+                if (!selectedUnit || !user) return;
                 try {
+                  // Update unit payment status
                   await updateDoc(doc(collection(db, "units"), selectedUnit.id), {
                     payment: "Paid",
                     updatedAt: serverTimestamp(),
                   });
+                  // Record payment in payments collection
+                  await addDoc(collection(db, "payments"), {
+                    unitId: selectedUnit.id,
+                    propertyId: selectedUnit.propertyId,
+                    landlordId: user.uid,
+                    tenantId: selectedUnit.tenantId,
+                    tenantName: selectedUnit.tenantName,
+                    amount: selectedUnit.rent,
+                    period: new Date().toISOString().slice(0, 7),
+                    method: "manual",
+                    status: "verified",
+                    verifiedBy: user.uid,
+                    verifiedAt: serverTimestamp(),
+                    createdAt: serverTimestamp(),
+                  });
                   closeSheet();
-                  showSnackbar("Payment marked as Paid ✅", "success");
+                  showSnackbar("Payment verified and recorded ✅", "success");
                 } catch (err: any) {
                   showSnackbar(err?.message || "Failed to update payment", "error");
                 }

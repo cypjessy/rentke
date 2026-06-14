@@ -800,109 +800,141 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* PORTFOLIO SNAPSHOT */}
+            {/* PORTFOLIO SNAPSHOT — Premium */}
             <div
-              className="card mt-5 animate-in stagger-5"
-              style={{ padding: "20px" }}
+              style={{
+                borderRadius: "20px",
+                background: "linear-gradient(135deg, rgba(4,120,87,0.08) 0%, rgba(5,5,5,1) 60%)",
+                border: "1px solid rgba(4,120,87,0.15)",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+              }}
+              className="mt-5 animate-in stagger-5"
+              onClick={() => router.push("/properties")}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-base font-bold text-white">Portfolio Snapshot</h3>
-                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>
-                    {dataLoading ? "Loading..." : `${totalProperties} properties · ${totalUnits} units`}
-                  </p>
+              {/* Subtle glow */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "-40px",
+                  right: "-40px",
+                  width: "160px",
+                  height: "160px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(4,120,87,0.12) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div style={{ padding: "20px", position: "relative", zIndex: 1 }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white" style={{ letterSpacing: "-0.3px" }}>Portfolio Snapshot</h3>
+                    <p className="text-xs mt-0.5" style={{ color: "#737373" }}>
+                      {dataLoading ? "Loading..." : `${totalProperties} properties · ${totalUnits} units`}
+                    </p>
+                  </div>
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: "#a855f7" }}
+                  >
+                    Manage →
+                  </span>
                 </div>
-                <button
-                  onClick={() => router.push("/properties")}
-                  className="text-xs font-semibold"
-                  style={{ color: "#a855f7" }}
-                >
-                  Manage Properties →
-                </button>
-              </div>
 
-              {/* Property Type Distribution */}
-              {!dataLoading && properties.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>
-                    Property Types
-                  </h4>
-                  <div className="space-y-2">
-                    {(() => {
-                      const typeCounts = properties.reduce((acc: Record<string, number>, p) => {
-                        acc[p.type] = (acc[p.type] || 0) + 1;
-                        return acc;
-                      }, {});
-                      const maxCount = Math.max(...Object.values(typeCounts), 1);
-                      const typeColors: Record<string, string> = {
-                        "Apartment": "#047857",
-                        "Bedsitter": "#3b82f6",
-                        "Studio": "#a855f7",
-                        "Villa": "#f97316",
-                        "Townhouse": "#eab308",
-                        "Commercial": "#ec4899",
-                      };
-                      return Object.entries(typeCounts)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([type, count]) => {
-                          const color = typeColors[type] || "#6b7280";
-                          const pct = Math.round((count / maxCount) * 100);
-                          return (
-                            <div key={type} className="flex items-center gap-3">
-                              <span className="text-xs font-medium w-20 text-white truncate">{type}</span>
-                              <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                {/* Property Type Distribution */}
+                {!dataLoading && properties.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>
+                      Property Types
+                    </h4>
+                    <div className="space-y-2">
+                      {(() => {
+                        const typeCounts = properties.reduce((acc: Record<string, number>, p) => {
+                          acc[p.type] = (acc[p.type] || 0) + 1;
+                          return acc;
+                        }, {});
+                        const maxCount = Math.max(...Object.values(typeCounts), 1);
+                        const typeColors: Record<string, string> = {
+                          "Apartment": "#047857",
+                          "Bedsitter": "#3b82f6",
+                          "Studio": "#a855f7",
+                          "Villa": "#f97316",
+                          "Townhouse": "#eab308",
+                          "Commercial": "#ec4899",
+                        };
+                        return Object.entries(typeCounts)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([type, count]) => {
+                            const color = typeColors[type] || "#6b7280";
+                            const pct = Math.round((count / maxCount) * 100);
+                            return (
+                              <div key={type} className="flex items-center gap-3">
+                                <span className="text-xs font-medium w-20 text-white truncate">{type}</span>
+                                <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color, boxShadow: pct > 0 ? `0 0 6px ${color}66` : "none" }} />
+                                </div>
+                                <span className="text-xs font-semibold" style={{ color }}>{count}</span>
                               </div>
-                              <span className="text-xs font-semibold" style={{ color }}>{count}</span>
-                            </div>
-                          );
-                        });
-                    })()}
+                            );
+                          });
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Occupancy Summary */}
+                <div className="mb-4 p-3.5 rounded-2xl" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#737373" }}>Occupancy</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{dataLoading ? "..." : `${occupancyPct}%`}</span>
+                      <div className="w-2 h-2 rounded-full" style={{ background: occupancyPct >= 80 ? "#10b981" : occupancyPct >= 50 ? "#eab308" : "#ef4444", boxShadow: `0 0 6px ${occupancyPct >= 80 ? "rgba(16,185,129,0.5)" : occupancyPct >= 50 ? "rgba(234,179,8,0.5)" : "rgba(239,68,68,0.5)"}` }} />
+                    </div>
+                  </div>
+                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${occupancyPct}%`, background: "linear-gradient(to right, #047857, #10b981)", boxShadow: "0 0 10px rgba(4,120,87,0.3)" }} />
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs" style={{ color: "#737373" }}>
+                      <span className="text-white font-medium">{occupiedUnits}</span> occupied
+                    </span>
+                    <span className="text-xs" style={{ color: "#737373" }}>
+                      <span className="text-white font-medium">{vacantUnits}</span> vacant
+                    </span>
                   </div>
                 </div>
-              )}
 
-              {/* Occupancy Summary */}
-              <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#525252" }}>Occupancy</h4>
-                  <span className="text-sm font-bold text-white">{dataLoading ? "..." : `${occupancyPct}%`}</span>
-                </div>
-                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${occupancyPct}%`, background: "linear-gradient(to right, #047857, #10b981)", boxShadow: "0 0 10px rgba(4,120,87,0.4)" }} />
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs" style={{ color: "#a3a3a3" }}>{occupiedUnits} occupied</span>
-                  <span className="text-xs" style={{ color: "#a3a3a3" }}>{vacantUnits} vacant</span>
-                </div>
-              </div>
-
-              {/* Occupancy by Property */}
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>By Property</h4>
-                <div className="space-y-2">
-                  {properties.slice(0, 5).map((prop) => {
-                    const propUnits = units.filter((u) => u.propertyId === prop.id);
-                    const total = propUnits.length;
-                    const occupied = propUnits.filter((u) => u.status === "Occupied").length;
-                    const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
-                    const color = pct >= 80 ? "#047857" : pct >= 50 ? "#eab308" : "#ef4444";
-                    return (
-                      <div key={prop.id} className="flex items-center gap-3" onClick={() => router.push("/properties")} style={{ cursor: "pointer" }}>
-                        <span className="text-xs font-medium w-28 truncate text-white">{prop.name}</span>
-                        <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                {/* Occupancy by Property */}
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#525252" }}>By Property</h4>
+                  <div className="space-y-2.5">
+                    {properties.slice(0, 5).map((prop) => {
+                      const propUnits = units.filter((u) => u.propertyId === prop.id);
+                      const total = propUnits.length;
+                      const occupied = propUnits.filter((u) => u.status === "Occupied").length;
+                      const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
+                      const color = pct >= 80 ? "#047857" : pct >= 50 ? "#eab308" : "#ef4444";
+                      return (
+                        <div key={prop.id} className="flex items-center gap-3" style={{ cursor: "pointer" }}>
+                          <span className="text-xs font-medium w-28 truncate" style={{ color: "#e5e5e5" }}>{prop.name}</span>
+                          <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color, boxShadow: pct > 0 ? `0 0 6px ${color}44` : "none" }} />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold" style={{ color }}>{occupied}/{total}</span>
+                            <span className="text-[10px]" style={{ color: "#525252" }}>({pct}%)</span>
+                          </div>
                         </div>
-                        <span className="text-xs font-semibold" style={{ color }}>{occupied}/{total}</span>
-                      </div>
-                    );
-                  })}
-                  {properties.length === 0 && !dataLoading && (
-                    <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No properties yet</p>
-                  )}
-                  {dataLoading && (
-                    <div className="text-xs text-center py-4" style={{ color: "#525252" }}>Loading...</div>
-                  )}
+                      );
+                    })}
+                    {properties.length === 0 && !dataLoading && (
+                      <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No properties yet</p>
+                    )}
+                    {dataLoading && (
+                      <div className="text-xs text-center py-4" style={{ color: "#525252" }}>Loading...</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1128,68 +1160,94 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* INQUIRY SUMMARY */}
+            {/* INQUIRY SUMMARY — Premium */}
             <div
-              className="card mt-5 animate-in stagger-8"
-              style={{ padding: "20px" }}
+              style={{
+                borderRadius: "20px",
+                background: "linear-gradient(135deg, rgba(4,120,87,0.08) 0%, rgba(5,5,5,1) 60%)",
+                border: "1px solid rgba(4,120,87,0.15)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+              className="mt-5 animate-in stagger-8"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-white">Inquiry Summary</h3>
-                <button
-                  onClick={() => router.push("/messages")}
-                  className="text-xs font-semibold"
-                  style={{ color: "#a855f7" }}
-                >
-                  View All →
-                </button>
-              </div>
+              {/* Subtle glow */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "-40px",
+                  right: "-40px",
+                  width: "160px",
+                  height: "160px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(4,120,87,0.12) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div style={{ padding: "20px", position: "relative", zIndex: 1 }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-white" style={{ letterSpacing: "-0.3px" }}>Inquiry Summary</h3>
+                    <p className="text-xs mt-0.5" style={{ color: "#737373" }}>
+                      {dataLoading ? "..." : `${inquiries.length} total inquiries`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => router.push("/messages")}
+                    className="text-xs font-semibold"
+                    style={{ color: "#a855f7" }}
+                  >
+                    View All →
+                  </button>
+                </div>
 
-              {/* Status breakdown */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
-                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "new").length}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>New</p>
+                {/* Status breakdown */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="p-3.5 rounded-2xl text-center" style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}>
+                    <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "new").length}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#737373" }}>New</p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl text-center" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
+                    <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "progress").length}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#737373" }}>Active</p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl text-center" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)" }}>
+                    <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "responded" || i.status === "archived").length}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#737373" }}>Done</p>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
-                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "progress").length}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>Active</p>
-                </div>
-                <div className="p-3 rounded-xl text-center" style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)" }}>
-                  <p className="text-lg font-bold text-white">{dataLoading ? "..." : inquiries.filter(i => i.status === "responded" || i.status === "archived").length}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#a3a3a3" }}>Done</p>
-                </div>
-              </div>
 
-              {/* Recent inquiries */}
-              <div className="space-y-2">
-                {inquiries.slice(0, 3).map((inq) => {
-                  const statusColor = inq.status === "new" ? "#047857" : inq.status === "progress" ? "#3b82f6" : inq.status === "responded" ? "#a855f7" : "#6b7280";
-                  const statusBg = inq.status === "new" ? "rgba(4,120,87,0.1)" : inq.status === "progress" ? "rgba(59,130,246,0.1)" : inq.status === "responded" ? "rgba(168,85,247,0.1)" : "rgba(107,114,128,0.1)";
-                  return (
-                    <div
-                      key={inq.id}
-                      className="flex items-start gap-3 p-3 rounded-xl cursor-pointer"
-                      style={{ background: "rgba(255,255,255,0.03)" }}
-                      onClick={() => router.push("/messages")}
-                    >
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: statusBg }}>
-                        <MessageCircle className="w-4 h-4" style={{ color: statusColor }} />
+                {/* Recent inquiries */}
+                <div className="space-y-2">
+                  {inquiries.slice(0, 3).map((inq) => {
+                    const statusColor = inq.status === "new" ? "#047857" : inq.status === "progress" ? "#3b82f6" : inq.status === "responded" ? "#a855f7" : "#6b7280";
+                    const statusBg = inq.status === "new" ? "rgba(4,120,87,0.1)" : inq.status === "progress" ? "rgba(59,130,246,0.1)" : inq.status === "responded" ? "rgba(168,85,247,0.1)" : "rgba(107,114,128,0.1)";
+                    return (
+                      <div
+                        key={inq.id}
+                        className="flex items-start gap-3 p-3 rounded-2xl cursor-pointer"
+                        style={{ background: "rgba(255,255,255,0.03)" }}
+                        onClick={() => router.push("/messages")}
+                      >
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: statusBg }}>
+                          <MessageCircle className="w-4 h-4" style={{ color: statusColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white">{inq.tenantName || "Tenant"}</p>
+                          <p className="text-xs mt-0.5 truncate" style={{ color: "#737373" }}>
+                            {inq.propertyName}{inq.unitName ? ` — ${inq.unitName}` : ""}
+                          </p>
+                        </div>
+                        <span className="chip text-xs" style={{ background: statusBg, color: statusColor, fontSize: "10px", padding: "2px 8px", flexShrink: 0 }}>
+                          {inq.status.charAt(0).toUpperCase() + inq.status.slice(1)}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white">{inq.tenantName || "Tenant"}</p>
-                        <p className="text-xs mt-0.5 truncate" style={{ color: "#a3a3a3" }}>
-                          {inq.propertyName}{inq.unitName ? ` — ${inq.unitName}` : ""}
-                        </p>
-                      </div>
-                      <span className="chip text-xs" style={{ background: statusBg, color: statusColor, fontSize: "10px", padding: "2px 8px", flexShrink: 0 }}>
-                        {inq.status.charAt(0).toUpperCase() + inq.status.slice(1)}
-                      </span>
-                    </div>
-                  );
-                })}
-                {inquiries.length === 0 && (
-                  <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No inquiries yet</p>
-                )}
+                    );
+                  })}
+                  {inquiries.length === 0 && (
+                    <p className="text-xs text-center py-4" style={{ color: "#525252" }}>No inquiries yet</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1610,7 +1668,7 @@ export default function LandlordDashboard() {
               </div>
             </div>
 
-            {/* RECENT ACTIVITY */}
+            {/* RECENT ACTIVITY — Premium */}
             <div className="mt-7 animate-in stagger-14">
               <div className="section-header">
                 <h3 className="section-title">Recent Activity</h3>                  <button
@@ -1620,60 +1678,84 @@ export default function LandlordDashboard() {
                     View All
                   </button>
               </div>
-              <div className="card" style={{ padding: "4px 0" }}>
-                {recentActivity.map((item, i) => (
-                  <div
-                    key={i}
-                    className="activity-item flex items-start gap-3 px-3 py-3 cursor-pointer relative"
-                    onClick={() => router.push('/messages')}
-                  >
-                    {i < recentActivity.length - 1 && (
-                      <div
-                        className="activity-line"
-                        style={{ position: "absolute", left: "19px", top: "36px", bottom: "-12px", width: "2px", background: "rgba(255,255,255,0.06)" }}
-                      />
-                    )}
+              <div
+                style={{
+                  borderRadius: "20px",
+                  background: "linear-gradient(135deg, rgba(4,120,87,0.08) 0%, rgba(5,5,5,1) 60%)",
+                  border: "1px solid rgba(4,120,87,0.15)",
+                  position: "relative",
+                  overflow: "hidden",
+                  padding: "4px 0",
+                }}
+              >
+                {/* Subtle glow */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-40px",
+                    right: "-40px",
+                    width: "160px",
+                    height: "160px",
+                    borderRadius: "50%",
+                    background: "radial-gradient(circle, rgba(4,120,87,0.12) 0%, transparent 70%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  {recentActivity.map((item, i) => (
                     <div
-                      className="activity-dot mt-1"
-                      style={{
-                        background: item.dotColor,
-                        boxShadow: `0 0 8px ${item.dotColor}66`,
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-white">
-                          {item.title}
-                        </p>
-                        <span className="text-xs" style={{ color: "#525252" }}>
-                          {item.time}
-                        </span>
-                      </div>
-                      <p
-                        className="text-xs mt-0.5 truncate"
-                        style={{ color: "#a3a3a3" }}
-                      >
-                        {item.desc}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span
-                          className="chip"
-                          style={{
-                            background: item.chipBg,
-                            color: item.chipColor,
-                            fontSize: "11px",
-                          }}
+                      key={i}
+                      className="activity-item flex items-start gap-3 px-3 py-3 cursor-pointer relative"
+                      onClick={() => router.push('/messages')}
+                    >
+                      {i < recentActivity.length - 1 && (
+                        <div
+                          className="activity-line"
+                          style={{ position: "absolute", left: "19px", top: "36px", bottom: "-12px", width: "2px", background: "rgba(255,255,255,0.06)" }}
+                        />
+                      )}
+                      <div
+                        className="activity-dot mt-1"
+                        style={{
+                          background: item.dotColor,
+                          boxShadow: `0 0 8px ${item.dotColor}66`,
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-white">
+                            {item.title}
+                          </p>
+                          <span className="text-xs" style={{ color: "#525252" }}>
+                            {item.time}
+                          </span>
+                        </div>
+                        <p
+                          className="text-xs mt-0.5 truncate"
+                          style={{ color: "#737373" }}
                         >
-                          {item.chip}
-                        </span>
+                          {item.desc}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span
+                            className="chip"
+                            style={{
+                              background: item.chipBg,
+                              color: item.chipColor,
+                              fontSize: "11px",
+                            }}
+                          >
+                            {item.chip}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* UPCOMING VIEWINGS */}
+            {/* UPCOMING VIEWINGS — Premium */}
             <div className="mt-7 animate-in stagger-15">
               <div className="section-header">
                 <h3 className="section-title">Upcoming Viewings</h3>                  <button
@@ -1699,9 +1781,29 @@ export default function LandlordDashboard() {
                   return (
                     <div
                       key={v.id}
-                      className="card flex items-center gap-4"
-                      style={{ padding: "14px" }}
+                      style={{
+                        borderRadius: "20px",
+                        background: "linear-gradient(135deg, rgba(4,120,87,0.08) 0%, rgba(5,5,5,1) 60%)",
+                        border: "1px solid rgba(4,120,87,0.15)",
+                        position: "relative",
+                        overflow: "hidden",
+                        padding: "14px",
+                      }}
+                      className="flex items-center gap-4"
                     >
+                      {/* Subtle glow */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-40px",
+                          right: "-40px",
+                          width: "160px",
+                          height: "160px",
+                          borderRadius: "50%",
+                          background: "radial-gradient(circle, rgba(4,120,87,0.12) 0%, transparent 70%)",
+                          pointerEvents: "none",
+                        }}
+                      />
                       <div
                         className="flex-shrink-0 w-12 h-12 rounded-2xl flex flex-col items-center justify-center"
                         style={{ background: statusBg, border: `1px solid ${statusColor}33` }}

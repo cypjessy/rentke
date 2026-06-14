@@ -9,6 +9,7 @@ import {
   query,
   where,
   orderBy,
+  getDocs,
   type Unsubscribe,
   type Timestamp,
 } from "firebase/firestore";
@@ -215,7 +216,7 @@ export async function updateUnit(
   });
 }
 
-/** Mark unit for maintenance. */
+/** Mark unit for maintenance and pause any associated listing. */
 export async function setUnitMaintenance(
   unitId: string,
   reason: string,
@@ -227,6 +228,52 @@ export async function setUnitMaintenance(
     description: `[Maintenance] ${reason}: ${notes} (Expected: ${expectedDays} days)`,
     updatedAt: serverTimestamp(),
   });
+  // Pause any active listing for this unit
+  await pauseListingForUnit(unitId);
+}
+
+/** Resume a unit from maintenance — sets back to Vacant and re-activates any paused listing. */
+export async function resumeUnit(unitId: string): Promise<void> {
+  await updateDoc(doc(unitsRef, unitId), {
+    status: "Vacant",
+    updatedAt: serverTimestamp(),
+  });
+  // Re-activate any paused listing for this unit
+  await activateListingForUnit(unitId);
+}
+
+/** Find and pause any active listing linked to this unit. */
+async function pauseListingForUnit(unitId: string): Promise<void> {
+  try {
+    const listingsRef = collection(db, "listings");
+    const q = query(listingsRef, where("unitId", "==", unitId), where("status", "==", "active"));
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      await updateDoc(doc(listingsRef, docSnap.id), {
+        status: "paused",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to pause listing:", err);
+  }
+}
+
+/** Find and re-activate any paused listing linked to this unit. */
+async function activateListingForUnit(unitId: string): Promise<void> {
+  try {
+    const listingsRef = collection(db, "listings");
+    const q = query(listingsRef, where("unitId", "==", unitId), where("status", "==", "paused"));
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      await updateDoc(doc(listingsRef, docSnap.id), {
+        status: "active",
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to activate listing:", err);
+  }
 }
 
 /** Vacate a unit (remove tenant). */
@@ -262,7 +309,18 @@ export function listenToTenantUnits(
   }, (err) => onError(err));
 }
 
-/** Delete a unit. */
+/** Delete a unit and any associated listings. */
 export async function deleteUnit(unitId: string): Promise<void> {
+  // Delete any associated listings
+  try {
+    const listingsRef = collection(db, "listings");
+    const q = query(listingsRef, where("unitId", "==", unitId));
+    const snapshot = await getDocs(q);
+    for (const docSnap of snapshot.docs) {
+      await deleteDoc(doc(listingsRef, docSnap.id));
+    }
+  } catch (err) {
+    console.warn("Failed to delete associated listings:", err);
+  }
   await deleteDoc(doc(unitsRef, unitId));
 }

@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  addDoc,
   updateDoc,
   deleteDoc,
   serverTimestamp,
@@ -23,7 +24,9 @@ export type NotificationType =
   | "viewing_reminder"
   | "price_drop"
   | "inquiry_update"
-  | "message";
+  | "message"
+  | "maintenance_update"
+  | "vacate_notice";
 
 export interface NotificationData {
   id: string;
@@ -56,6 +59,10 @@ function getNotificationMeta(type: NotificationType): {
       return { icon: "📩", iconBg: "rgba(168,85,247,0.15)", iconColor: "#a855f7" };
     case "message":
       return { icon: "✉️", iconBg: "rgba(4,120,87,0.15)", iconColor: "#047857" };
+    case "maintenance_update":
+      return { icon: "🔧", iconBg: "rgba(168,85,247,0.15)", iconColor: "#a855f7" };
+    case "vacate_notice":
+      return { icon: "🚪", iconBg: "rgba(234,179,8,0.15)", iconColor: "#eab308" };
   }
 }
 
@@ -67,6 +74,8 @@ function getNotificationLink(type: NotificationType): string {
     case "price_drop": return "/browse/saved";
     case "inquiry_update": return "/browse/messages";
     case "message": return "/browse/messages";
+    case "maintenance_update": return "/browse/my-unit";
+    case "vacate_notice": return "/browse/my-unit";
   }
 }
 
@@ -115,6 +124,26 @@ export function listenToNotifications(
 }
 
 // ---- Read / Unread ----
+
+/** Send a notification to a user. */
+export async function createNotification(
+  userId: string,
+  type: NotificationType,
+  title: string,
+  description: string,
+  link?: string
+): Promise<string> {
+  const docRef = await addDoc(notificationsRef, {
+    userId,
+    type,
+    title,
+    description,
+    link: link || getNotificationLink(type),
+    read: false,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
 
 /** Mark a single notification as read. */
 export async function markNotificationRead(notifId: string): Promise<void> {

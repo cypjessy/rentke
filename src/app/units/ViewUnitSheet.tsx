@@ -19,6 +19,7 @@ import { ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   setUnitMaintenance,
+  resumeUnit,
   vacateUnit,
   deleteUnit,
   recordLease,
@@ -57,7 +58,7 @@ export default function ViewUnitSheet({
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarAnimClass, setSnackbarAnimClass] = useState("");
 
-  // ---- Maintenance Form State ----
+  // ---- Resume Form State ----
   const [maintReason, setMaintReason] = useState("Plumbing");
   const [maintNotes, setMaintNotes] = useState("");
   const [maintDuration, setMaintDuration] = useState("");
@@ -134,6 +135,20 @@ export default function ViewUnitSheet({
     } catch (err: any) {
       setFormLoading(null);
       showSnackbar(err?.message || "Failed to set maintenance", "error");
+    }
+  };
+
+  const handleResume = async () => {
+    if (!pd) return;
+    setFormLoading("resume");
+    try {
+      await resumeUnit(pd.id);
+      setFormLoading(null);
+      closeSubSheet();
+      showSnackbar("Unit resumed from maintenance ✅", "success");
+    } catch (err: any) {
+      setFormLoading(null);
+      showSnackbar(err?.message || "Failed to resume unit", "error");
     }
   };
 
@@ -276,7 +291,7 @@ export default function ViewUnitSheet({
               <div
                 key={tab}
                 className={`detail-tab ${activeDetailTab === tab ? "active" : ""}`}
-                onClick={() => setActiveDetailTab(tab as DetailTab)}
+                onClick={(e) => { setActiveDetailTab(tab as DetailTab); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
               >
                 {tab === "overview" ? "Overview" : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </div>
@@ -428,32 +443,55 @@ export default function ViewUnitSheet({
                   </>
                 )}
 
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => openSubSheet("maintenance")}
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl"
-                    style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)" }}
-                  >
-                    <Wrench className="w-4 h-4" style={{ color: "#a855f7" }} />
-                    <span className="text-xs font-medium" style={{ color: "#a855f7" }}>Maintenance</span>
-                  </button>
-                  <button
-                    onClick={() => openSubSheet("vacate")}
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl"
-                    style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.12)" }}
-                  >
-                    <UserX className="w-4 h-4" style={{ color: "#eab308" }} />
-                    <span className="text-xs font-medium" style={{ color: "#eab308" }}>Vacate</span>
-                  </button>
-                  <button
-                    onClick={() => openSubSheet("delete")}
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl"
-                    style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.12)" }}
-                  >
-                    <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
-                    <span className="text-xs font-medium" style={{ color: "#ef4444" }}>Delete</span>
-                  </button>
-                </div>
+                {/* Contextual action buttons based on status */}
+                {pd.status === "Maintenance" ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => openSubSheet("resume")}
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl"
+                      style={{ background: "rgba(4,120,87,0.06)", border: "1px solid rgba(4,120,87,0.12)" }}
+                    >
+                      <Check className="w-4 h-4" style={{ color: "#047857" }} />
+                      <span className="text-xs font-medium" style={{ color: "#047857" }}>Resume</span>
+                    </button>
+                    <button
+                      onClick={() => openSubSheet("delete")}
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl"
+                      style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.12)" }}
+                    >
+                      <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
+                      <span className="text-xs font-medium" style={{ color: "#ef4444" }}>Delete</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className={`grid ${pd.status === "Occupied" ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
+                    <button
+                      onClick={() => openSubSheet("maintenance")}
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl"
+                      style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.12)" }}
+                    >
+                      <Wrench className="w-4 h-4" style={{ color: "#a855f7" }} />
+                      <span className="text-xs font-medium" style={{ color: "#a855f7" }}>Maintenance</span>
+                    </button>
+                    {pd.status === "Occupied" && (
+                      <button
+                        onClick={() => openSubSheet("vacate")}
+                        className="flex flex-col items-center gap-1 p-3 rounded-xl"
+                      >
+                        <UserX className="w-4 h-4" style={{ color: "#eab308" }} />
+                        <span className="text-xs font-medium" style={{ color: "#eab308" }}>Vacate</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => openSubSheet("delete")}
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl"
+                      style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.12)" }}
+                    >
+                      <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
+                      <span className="text-xs font-medium" style={{ color: "#ef4444" }}>Delete</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -524,6 +562,32 @@ export default function ViewUnitSheet({
               disabled={formLoading === "maintenance"}
             >
               {formLoading === "maintenance" ? <div className="spinner mx-auto" /> : <span>Set Maintenance</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ====== RESUME SUB-SHEET ====== */}
+      <div className={`sheet-overlay ${subSheet === "resume" ? "active" : ""}`} onClick={closeSubSheet} />
+      <div className={`bottom-sheet ${subSheet === "resume" ? "active" : ""}`}>
+        <div className="sheet-handle" />
+        <div className="p-5 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: "rgba(4,120,87,0.1)", border: "1px solid rgba(4,120,87,0.2)" }}>
+            <Check className="w-8 h-8" style={{ color: "#047857" }} />
+          </div>
+          <h3 className="text-lg font-bold text-white">Resume Unit?</h3>
+          <p className="text-sm mt-2 leading-relaxed" style={{ color: "#a3a3a3" }}>
+            This will set <strong className="text-white">{pd.name}</strong> back to <strong className="text-white">Vacant</strong> status and re-activate any paused marketplace listing.
+          </p>
+          <div className="flex gap-3 mt-6">
+            <button onClick={closeSubSheet} className="btn-secondary flex-1" style={{ padding: "14px" }}>Cancel</button>
+            <button
+              onClick={handleResume}
+              className="btn-danger flex-1"
+              style={{ padding: "14px", background: "rgba(4,120,87,0.1)", border: "1px solid rgba(4,120,87,0.2)", color: "#047857" }}
+              disabled={formLoading === "resume"}
+            >
+              {formLoading === "resume" ? <div className="spinner mx-auto" /> : <span>Resume Unit</span>}
             </button>
           </div>
         </div>

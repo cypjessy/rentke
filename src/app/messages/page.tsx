@@ -467,8 +467,9 @@ export default function MessagesPage() {
               <div
                 key={f.key}
                 className={`msg-tab ${filterTab === f.key ? "active" : ""}`}
-                onClick={() => {
+                onClick={(e) => {
                   setFilterTab(f.key);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   showSnackbar(`Showing ${f.label.toLowerCase()} chats`, "info");
                 }}
               >

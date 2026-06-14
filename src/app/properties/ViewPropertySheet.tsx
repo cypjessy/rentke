@@ -434,9 +434,10 @@ export default function ViewPropertySheet({
                 key={tab.key}
                 className={`detail-tab ${activeDetailTab === tab.key ? "active" : ""}`}
                 style={{ padding: "0 16px 12px", cursor: "pointer" }}
-                onClick={() =>
-                  setActiveDetailTab(tab.key as DetailTab)
-                }
+                onClick={(e) => {
+                  setActiveDetailTab(tab.key as DetailTab);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                }}
               >
                 {tab.label}
               </div>

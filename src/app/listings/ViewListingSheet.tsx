@@ -187,7 +187,7 @@ export default function ViewListingSheet({
                 <div
                   key={tab}
                   className={`detail-tab ${activeDetailTab === tab ? "active" : ""}`}
-                  onClick={() => setActiveDetailTab(tab)}
+                  onClick={(e) => { setActiveDetailTab(tab); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); }}
                 >
                   {tab === "overview"
                     ? "Overview"

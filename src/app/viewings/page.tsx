@@ -431,7 +431,7 @@ export default function ViewingRequests() {
               <div
                 key={f.key}
                 className={`viewing-tab ${filterTab === f.key ? "active" : ""}`}
-                onClick={() => { setFilterTab(f.key); showSnackbar(`Showing ${f.label.toLowerCase()} viewings`, "info"); }}
+                onClick={(e) => { setFilterTab(f.key); e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }); showSnackbar(`Showing ${f.label.toLowerCase()} viewings`, "info"); }}
               >
                 {f.label} <span className="tab-count">{f.count}</span>
               </div>
