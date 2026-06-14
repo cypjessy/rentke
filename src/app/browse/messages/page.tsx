@@ -116,6 +116,7 @@ export default function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeChatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { user } = useAuth();
 
@@ -169,10 +170,13 @@ export default function MessagesPage() {
       setCurrentMessages([]);
       return;
     }
+    setMessagesLoading(true);
     const unsub = listenToMessages(activeChat, (data) => {
       setCurrentMessages(data);
+      setMessagesLoading(false);
     }, (err) => {
       console.error("Messages listener error:", err);
+      setMessagesLoading(false);
     });
     // Mark read
     if (user?.uid) markConversationRead(activeChat, user.uid);
@@ -275,6 +279,11 @@ export default function MessagesPage() {
 
   // ---- Open Chat ----
   const openChat = (id: string) => {
+    // Cancel any pending close chat timeout to prevent race condition
+    if (closeChatTimeoutRef.current) {
+      clearTimeout(closeChatTimeoutRef.current);
+      closeChatTimeoutRef.current = null;
+    }
     setActiveChat(id);
     setOtherParticipantPhone(null);
     // Mark as read
@@ -300,7 +309,8 @@ export default function MessagesPage() {
 
   const closeChat = () => {
     setChatClosing(true);
-    setTimeout(() => {
+    closeChatTimeoutRef.current = setTimeout(() => {
+      closeChatTimeoutRef.current = null;
       setActiveChat(null);
       setChatClosing(false);
       setReplyContext(null);
@@ -720,7 +730,10 @@ export default function MessagesPage() {
         <div
           className="flex flex-col"
           style={{
-            height: "100dvh",
+            position: "fixed",
+            inset: 0,
+            zIndex: 60,
+            background: "#0a0a0a",
             animation: chatClosing
               ? "slideOutRight 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards"
               : "slideInRight 0.35s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -939,19 +952,33 @@ export default function MessagesPage() {
               </span>
             </div>
 
-            {(displayChat?.messages || []).map((msg, i) => {
+            {messagesLoading && currentMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                <div className="spinner mx-auto mb-4" />
+                <p className="text-sm" style={{ color: "#525252" }}>Loading messages...</p>
+              </div>
+            )}
+
+            {!messagesLoading && currentMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                <MessageCircle className="w-10 h-10 mb-3" style={{ color: "#525252" }} />
+                <p className="text-sm" style={{ color: "#a3a3a3" }}>No messages yet. Start a conversation!</p>
+              </div>
+            )}
+
+            {currentMessages.map((msg, i) => {
+              const isSent = msg.senderId === uid;
+              const msgTime = msg.createdAt?.toDate ? formatTime(msg.createdAt.toDate()) : "";
               const isHighlighted =
                 chatSearchQuery &&
                 msg.text
                   .toLowerCase()
                   .includes(chatSearchQuery.toLowerCase());
               const reaction = reactedMessages[i];
-              // Check if the actual Firestore message has images
-              const actualMsg = currentMessages[i];
-              const hasImages = actualMsg?.attachments?.some((a) => a.type === "image");
+              const hasImages = msg.attachments?.some((a) => a.type === "image");
               return (
-                <div key={i} className="new-msg-anim relative">
-                  {msg.type === "received" ? (
+                <div key={msg.id || i} className="new-msg-anim relative">
+                  {!isSent ? (
                     <>
                       <div
                         className="flex gap-2"
@@ -984,7 +1011,7 @@ export default function MessagesPage() {
                             }`}
                           >
                             {msg.text && msg.text !== "📷 Photo" && <p className="text-sm mb-1">{msg.text}</p>}
-                            {hasImages && actualMsg.attachments?.filter((a) => a.type === "image").map((att, j) => (
+                            {hasImages && msg.attachments?.filter((a) => a.type === "image").map((att, j) => (
                               <img
                                 key={j}
                                 src={att.url}
@@ -995,12 +1022,12 @@ export default function MessagesPage() {
                               />
                             ))}
                           </div>
-                          {!hasImages && (
+                          {!hasImages && msgTime && (
                             <p
                               className="text-xs mt-1 ml-2"
                               style={{ color: "#525252" }}
                             >
-                              {msg.time}
+                              {msgTime}
                             </p>
                           )}
                           {/* Reaction on received messages */}
@@ -1080,7 +1107,7 @@ export default function MessagesPage() {
                             }`}
                           >
                             {msg.text && msg.text !== "📷 Photo" && <p className="text-sm mb-1">{msg.text}</p>}
-                            {hasImages && actualMsg.attachments?.filter((a) => a.type === "image").map((att, j) => (
+                            {hasImages && msg.attachments?.filter((a) => a.type === "image").map((att, j) => (
                               <img
                                 key={j}
                                 src={att.url}
@@ -1096,7 +1123,7 @@ export default function MessagesPage() {
                               className="text-xs mt-1 mr-2 text-right flex items-center justify-end gap-1"
                               style={{ color: "#525252" }}
                             >
-                              {msg.time}
+                              {msgTime}
                               <CheckCheck
                                 className="w-3.5 h-3.5 inline"
                                 style={{ color: "#047857" }}

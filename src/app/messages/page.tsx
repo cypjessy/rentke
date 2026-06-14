@@ -146,6 +146,7 @@ export default function MessagesPage() {
   const [convsLoading, setConvsLoading] = useState(true);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
 
   // ---- Listen to conversations ----
   useEffect(() => {
@@ -163,10 +164,13 @@ export default function MessagesPage() {
   // ---- Listen to messages for active chat ----
   useEffect(() => {
     if (!activeChatId) { setCurrentMessages([]); return; }
+    setMessagesLoading(true);
     const unsub = listenToMessages(activeChatId, (data) => {
       setCurrentMessages(data);
+      setMessagesLoading(false);
     }, (err) => {
       console.error("Messages error:", err);
+      setMessagesLoading(false);
     });
     if (uid) markConversationRead(activeChatId, uid);
     return () => unsub();
@@ -998,8 +1002,14 @@ export default function MessagesPage() {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-            {currentMessages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-center py-10">
+            {messagesLoading && currentMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                <div className="spinner mx-auto mb-4" />
+                <p className="text-sm" style={{ color: "#525252" }}>Loading messages...</p>
+              </div>
+            )}
+            {!messagesLoading && currentMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-20">
                 <MessageSquare className="w-10 h-10 mb-3" style={{ color: "#525252" }} />
                 <p className="text-sm" style={{ color: "#a3a3a3" }}>No messages yet. Start a conversation!</p>
               </div>
